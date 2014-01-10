@@ -1,0 +1,6 @@
+<?php
+
+/**
+ * @file
+ * Client implementation for OpenID Connect.
+ */

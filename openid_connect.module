@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Client implementation for OpenID Connect.
+ * OpenID Connect client implementation.
  */
 
 /**
  * Implements hook_block_info().
  */
-function openid_connect_client_block_info() {
+function openid_connect_block_info() {
   return array(
     'google_login' => array(
       'info' => t('Log in with Google'),
@@ -19,11 +19,11 @@ function openid_connect_client_block_info() {
 /**
  * Implements hook_block_view().
  */
-function openid_connect_client_block_view($delta = '') {
+function openid_connect_block_view($delta = '') {
   if ($delta == 'google_login') {
     return array(
       'subject' => t('Testing OpenID Connect'),
-      'content' => drupal_get_form('openid_connect_client_login_form'),
+      'content' => drupal_get_form('openid_connect_login_form'),
     );
   }
 }
@@ -31,7 +31,7 @@ function openid_connect_client_block_view($delta = '') {
 /**
  * Form builder: Log in with Google form.
  */
-function openid_connect_client_login_form($form, &$form_state) {
+function openid_connect_login_form($form, &$form_state) {
   $form['google_login'] = array(
     '#type' => 'submit',
     '#value' => t('Log in with Google'),
@@ -42,8 +42,8 @@ function openid_connect_client_login_form($form, &$form_state) {
 /**
  * Form submit handler: Log in with Google form.
  */
-function openid_connect_client_login_form_submit(&$form, &$form_state) {
+function openid_connect_login_form_submit(&$form, &$form_state) {
   // Create a state token to prevent request forgery. Store it in the session
   // for later validation.
-  $_SESSION['openid_connect_client_state'] = md5(rand());
+  $_SESSION['openid_connect_state'] = md5(rand());
 }

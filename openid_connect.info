@@ -1,0 +1,4 @@
+name = OpenID Connect
+description = OpenID Connect client implementation.
+core = 7.x
+package = "OAuth2"

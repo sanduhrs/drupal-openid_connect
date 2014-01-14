@@ -100,6 +100,7 @@ function openid_connect_redirect_access() {
  * Page callback: Redirect page.
  */
 function openid_connect_redirect_page() {
+  // @todo Validate if parameters URI parameters are available.
   // Exchange `code` for access token and ID token.
   $post_data = array(
     'code' => $_GET['code'],
@@ -119,5 +120,21 @@ function openid_connect_redirect_page() {
   );
   $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/token', $url_options);
   $response = drupal_http_request($request_url, $request_options);
-  return 'Signing in with Google.';
+  // @todo Make sure request was successful.
+
+  // Obtain user information from the ID token.
+  // @todo Do this properly by retrieving Google’s public keys and performing
+  // the validation locally.
+  $response_data = drupal_json_decode($response->data);
+  $url_options = array(
+    'query' => array(
+      'id_token' => $response_data['id_token'],
+    ),
+    'external' => TRUE,
+  );
+  $request_url = url('https://www.googleapis.com/oauth2/v1/tokeninfo', $url_options);
+  $response = drupal_http_request($request_url);
+  // @todo Make sure request was successful.
+  $response_data = drupal_json_decode($response->data);
+  return t('Hello !email_address!', array('!email_address' => $response_data['email']));
 }

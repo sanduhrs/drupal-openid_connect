@@ -136,5 +136,31 @@ function openid_connect_redirect_page() {
   $response = drupal_http_request($request_url);
   // @todo Make sure request was successful.
   $response_data = drupal_json_decode($response->data);
+  openid_connect_login_user($response_data['email']);
   return t('Hello !email_address!', array('!email_address' => $response_data['email']));
+}
+
+/**
+ * Logs in a user based on their email address.
+ */
+function openid_connect_login_user($email) {
+  $account = user_load_by_mail($email);
+  if (!$account) {
+    $account = openid_connect_create_user($email);
+  }
+  $form_state['uid'] = $account->uid;
+  user_login_submit(array(), $form_state);
+}
+
+/**
+ * Creates a user simply using an email address.
+ */
+function openid_connect_create_user($email) {
+  $edit = array(
+    'name' => $email,
+    'mail' => $email,
+    'status' => 1,
+  );
+  $account = user_save(NULL, $edit);
+  return $account;
 }

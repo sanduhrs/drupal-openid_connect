@@ -6,7 +6,8 @@
  */
 
 define('OPENID_CONNECT_GOOGLE_CLIENT_ID', '954801329498-5akdmhupetm4c1q06olplo4uqps183ka.apps.googleusercontent.com');
-define('OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI', 'https://accounts.google.com/o/oauth2/auth');
+define('OPENID_CONNECT_GOOGLE_CLIENT_SECRET', 'OqkuQcWQ25_4ADGKIpY43j_n');
+define('OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI', 'https://accounts.google.com/o/oauth2');
 define('OPENID_CONNECT_GOOGLE_REDIRECT_URI', 'oauth2callback');
 
 /**
@@ -74,10 +75,8 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
       'redirect_uri' => url(OPENID_CONNECT_GOOGLE_REDIRECT_URI, array('absolute' => TRUE)),
       'state' => $state,
     ),
-    'external' => TRUE,
-    'https' => TRUE,
   );
-  $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI, $url_options);
+  $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/auth', $url_options);
   $response = drupal_http_request($request_url);
   if ($response->code == 200 && isset($response->redirect_url)) {
     drupal_goto($response->redirect_url);
@@ -101,5 +100,24 @@ function openid_connect_redirect_access() {
  * Page callback: Redirect page.
  */
 function openid_connect_redirect_page() {
+  // Exchange `code` for access token and ID token.
+  $post_data = array(
+    'code' => $_GET['code'],
+    'client_id' => OPENID_CONNECT_GOOGLE_CLIENT_ID,
+    'client_secret' => OPENID_CONNECT_GOOGLE_CLIENT_SECRET,
+    'redirect_uri' => url(OPENID_CONNECT_GOOGLE_REDIRECT_URI, array('absolute' => TRUE)),
+    'grant_type' => 'authorization_code',
+  );
+  $request_options = array(
+    'method' => 'POST',
+    'data' => drupal_http_build_query($post_data),
+    'timeout' => 15,
+    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+  );
+  $url_options = array(
+    'external' => TRUE,
+  );
+  $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/token', $url_options);
+  $response = drupal_http_request($request_url, $request_options);
   return 'Signing in with Google.';
 }

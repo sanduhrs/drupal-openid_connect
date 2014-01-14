@@ -5,6 +5,24 @@
  * OpenID Connect client implementation.
  */
 
+define('OPENID_CONNECT_GOOGLE_CLIENT_ID', '954801329498-5akdmhupetm4c1q06olplo4uqps183ka.apps.googleusercontent.com');
+define('OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI', 'https://accounts.google.com/o/oauth2/auth');
+define('OPENID_CONNECT_GOOGLE_REDIRECT_URI', 'oauth2callback');
+
+/**
+ * Implements hook_menu().
+ */
+function openid_connect_menu() {
+  $items = array();
+  $items[OPENID_CONNECT_GOOGLE_REDIRECT_URI] = array(
+    'title' => 'OpenID Connect redirect page',
+    'page callback' => 'openid_connect_redirect_page',
+    'access callback' => 'openid_connect_redirect_access',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
 /**
  * Implements hook_block_info().
  */
@@ -45,5 +63,43 @@ function openid_connect_login_form($form, &$form_state) {
 function openid_connect_login_form_submit(&$form, &$form_state) {
   // Create a state token to prevent request forgery. Store it in the session
   // for later validation.
-  $_SESSION['openid_connect_state'] = md5(rand());
+  $state = md5(rand());
+  $_SESSION['openid_connect_state'] = $state;
+
+  $url_options = array(
+    'query' => array(
+      'client_id' => OPENID_CONNECT_GOOGLE_CLIENT_ID,
+      'response_type' => 'code',
+      'scope' => 'openid email',
+      'redirect_uri' => url(OPENID_CONNECT_GOOGLE_REDIRECT_URI, array('absolute' => TRUE)),
+      'state' => $state,
+    ),
+    'external' => TRUE,
+    'https' => TRUE,
+  );
+  $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI, $url_options);
+  $response = drupal_http_request($request_url);
+  if ($response->code == 200 && isset($response->redirect_url)) {
+    drupal_goto($response->redirect_url);
+  }
+  else {
+    // @todo Do a more granular error check.
+    drupal_set_message('The Google sign in could not be completed due to an error.');
+  }
+}
+
+/**
+ * Access callback: Redirect page.
+ */
+function openid_connect_redirect_access() {
+  // Confirm anti-forgery state token. This round-trip verification helps to
+  // ensure that the user, not a malicious script, is making the request.
+  return $_GET['state'] == $_SESSION['openid_connect_state'];
+}
+
+/**
+ * Page callback: Redirect page.
+ */
+function openid_connect_redirect_page() {
+  return 'Signing in with Google.';
 }

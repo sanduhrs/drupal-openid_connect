@@ -160,7 +160,60 @@ function openid_connect_create_user($email) {
     'name' => $email,
     'mail' => $email,
     'status' => 1,
+    'openid_connect_google' => TRUE,
   );
   $account = user_save(NULL, $edit);
   return $account;
+}
+
+/**
+ * Implements hook_user_insert().
+ */
+function openid_connect_user_insert(&$edit, &$account, $category) {
+  if (isset($edit['openid_connect_google'])) {
+    user_set_authmaps($account, array('authname_openid_connect_google' => $edit['name']));
+  }
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+function openid_connect_user_delete($account) {
+  user_set_authmaps($account, array('authname_openid_connect_google' => FALSE));
+}
+
+/**
+ * Implements hook_user_cancel().
+ */
+function openid_connect_user_cancel($edit, $account, $method) {
+  user_set_authmaps($account, array('authname_openid_connect_google' => FALSE));
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
+  if (isset($form['account'])) {
+    $account_form = &$form['account'];
+  }
+  else {
+    $account_form = &$form;
+  }
+
+  if (openid_connect_get_user_authname($form['#user']->uid)) {
+    // Do not let the user the set a password if they are authenticated by a
+    // remote service that this module supports.
+    // @todo Might need to reconsider this.
+    $account_form['current_pass']['#access'] = FALSE;
+    $account_form['current_pass_required_values']['#value'] = array();
+    $account_form['pass']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Gets the remote authentication name of a user authenticated by this module.
+ */
+function openid_connect_get_user_authname($uid) {
+  $authname = db_query("SELECT authname FROM {authmap} WHERE uid = :uid AND module = 'openid_connect_google'", array(':uid' => $uid))->fetchColumn(0);
+  return !empty($authname) ? $authname : FALSE;
 }

@@ -25,6 +25,43 @@ function openid_connect_menu() {
 }
 
 /**
+ * Implements hook_ctools_plugin_directory().
+ */
+function openid_connect_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'openid_connect') {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_type().
+ */
+function openid_connect_ctools_plugin_type() {
+  $plugins['openid_connect_client'] = array(
+    'classes' => array('class'),
+  );
+
+  return $plugins;
+}
+
+/**
+ * Returns the available OpenID Connect client plugins.
+ */
+function commerce_license_billing_get_plugins($type) {
+  ctools_include('plugins');
+  $plugins = ctools_get_plugins('openid_connect_client', $type);
+  foreach ($plugins as $key => $plugin) {
+    if (!class_exists($plugin['class'])) {
+      // Invalid class specified.
+      unset($plugins[$key]);
+      continue;
+    }
+  }
+  uasort($plugins, 'ctools_plugin_sort');
+  return $plugins;
+}
+
+/**
  * Implements hook_block_info().
  */
 function openid_connect_block_info() {

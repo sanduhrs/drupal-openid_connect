@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for OpenID Connect module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function openid_connect_uninstall() {
+  db_delete('variable')->condition('name', 'openid_connect%', 'LIKE')->execute();
+  cache_clear_all('variables', 'cache_bootstrap');
+}

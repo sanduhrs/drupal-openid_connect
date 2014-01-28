@@ -11,18 +11,9 @@
 class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
 
   /**
-   * Implements OpenIDConnectClientInterface::createStateToken().
-   */
-  public function createStateToken() {
-    $state = md5(rand());
-    $_SESSION['openid_connect_google_state'] = $state;
-    return $state;
-  }
-
-  /**
    * Implements OpenIDConnectClientInterface::sendAuthenticationRequest().
    */
-  public function sendAuthenticationRequest($client_id, $scope, $oauth_endpoint, $redirect_url, $state_token) {
+  public static function sendAuthenticationRequest($client_id, $scope, $authentication_endpoint, $redirect_url, $state_token) {
     $url_options = array(
       'query' => array(
         'client_id' => $client_id,
@@ -32,7 +23,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
         'state' => $state_token,
       ),
     );
-    $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/auth', $url_options);
+    $request_url = url($authentication_endpoint, $url_options);
     $response = drupal_http_request($request_url);
     if ($response->code == 200 && isset($response->redirect_url)) {
       drupal_goto($response->redirect_url);
@@ -44,22 +35,15 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::confirmStateToken().
-   */
-  public function confirmStateToken($state_token) {
-    return $state_token == $_SESSION['openid_connect_google_state'];
-  }
-
-  /**
    * Implements OpenIDConnectClientInterface::retrieveIDToken().
    */
   public function retrieveIDToken($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
     // Exchange `code` for access token and ID token.
     $post_data = array(
-      'code' => $_GET['code'],
-      'client_id' => OPENID_CONNECT_GOOGLE_CLIENT_ID,
-      'client_secret' => OPENID_CONNECT_GOOGLE_CLIENT_SECRET,
-      'redirect_uri' => url(OPENID_CONNECT_GOOGLE_REDIRECT_URI, array('absolute' => TRUE)),
+      'code' => $authorization_code,
+      'client_id' => $client_id,
+      'client_secret' => $client_secret,
+      'redirect_uri' => $redirect_url,
       'grant_type' => 'authorization_code',
     );
     $request_options = array(
@@ -68,10 +52,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
       'timeout' => 15,
       'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
     );
-    $url_options = array(
-      'external' => TRUE,
-    );
-    $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/token', $url_options);
+    $request_url = url($token_endpoint, array('external' => TRUE));
     $response = drupal_http_request($request_url, $request_options);
     // @todo Make sure request was successful.
     $response_data = drupal_json_decode($response->data);

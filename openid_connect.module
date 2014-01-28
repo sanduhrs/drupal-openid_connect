@@ -5,23 +5,40 @@
  * OpenID Connect client implementation.
  */
 
-define('OPENID_CONNECT_GOOGLE_CLIENT_ID', '954801329498-5akdmhupetm4c1q06olplo4uqps183ka.apps.googleusercontent.com');
-define('OPENID_CONNECT_GOOGLE_CLIENT_SECRET', 'OqkuQcWQ25_4ADGKIpY43j_n');
-define('OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI', 'https://accounts.google.com/o/oauth2');
-define('OPENID_CONNECT_GOOGLE_REDIRECT_URI', 'oauth2callback');
+define('OPENID_CONNECT_REDIRECT_URI_BASE', 'openid-connect');
 
 /**
  * Implements hook_menu().
  */
 function openid_connect_menu() {
   $items = array();
-  $items[OPENID_CONNECT_GOOGLE_REDIRECT_URI] = array(
+  $items['admin/config/services/openid-connect'] = array(
+    'title' => 'OpenID Connect',
+    'description' => 'Config OpenID Connect, choose active OpenID Connect clients etc.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openid_connect_admin_form'),
+    'access arguments' => array('configure openid clients'),
+    'file' => 'includes/openid_connect.admin.inc',
+  );
+  $items[OPENID_CONNECT_REDIRECT_URI_BASE . '/%'] = array(
     'title' => 'OpenID Connect redirect page',
     'page callback' => 'openid_connect_redirect_page',
+    'page arguments' => array(1),
     'access callback' => 'openid_connect_redirect_access',
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function openid_connect_permission() {
+  return array(
+    'configure openid connect clients' => array(
+      'title' => t('Configure OpenID Connect Clients'),
+    ),
+  );
 }
 
 /**
@@ -40,19 +57,20 @@ function openid_connect_ctools_plugin_type() {
   $plugins['openid_connect_client'] = array(
     'classes' => array('class'),
   );
-
   return $plugins;
 }
 
 /**
  * Returns the available OpenID Connect client plugins.
  */
-function commerce_license_billing_get_plugins($type) {
+function openid_connect_get_plugins($enabled_only = FALSE) {
   ctools_include('plugins');
-  $plugins = ctools_get_plugins('openid_connect_client', $type);
+  $plugins = ctools_get_plugins('openid_connect', 'openid_connect_client');
+  $plugins_enabled = variable_get('openid_connect_clients_enabled', array());
   foreach ($plugins as $key => $plugin) {
-    if (!class_exists($plugin['class'])) {
-      // Invalid class specified.
+    if (!class_exists($plugin['class']) || ($enabled_only && empty($plugins_enabled[$plugin['name']]))) {
+      // Invalid class specified or client is not enabled and we only suppose to
+      // return those that are active.
       unset($plugins[$key]);
       continue;
     }
@@ -66,8 +84,8 @@ function commerce_license_billing_get_plugins($type) {
  */
 function openid_connect_block_info() {
   return array(
-    'google_login' => array(
-      'info' => t('Log in with Google'),
+    'openid_connect_login' => array(
+      'info' => t('OpenID Connect login'),
     ),
   );
 }
@@ -76,9 +94,9 @@ function openid_connect_block_info() {
  * Implements hook_block_view().
  */
 function openid_connect_block_view($delta = '') {
-  if ($delta == 'google_login') {
+  if ($delta == 'openid_connect_login') {
     return array(
-      'subject' => t('Testing OpenID Connect'),
+      'subject' => t('Log in'),
       'content' => drupal_get_form('openid_connect_login_form'),
     );
   }
@@ -88,40 +106,58 @@ function openid_connect_block_view($delta = '') {
  * Form builder: Log in with Google form.
  */
 function openid_connect_login_form($form, &$form_state) {
-  $form['google_login'] = array(
-    '#type' => 'submit',
-    '#value' => t('Log in with Google'),
-  );
+  foreach (openid_connect_get_plugins(TRUE) as $client) {
+    $form['openid_connect_client_' . $client['name'] . '_login'] = array(
+      '#type' => 'submit',
+      '#value' => t('Log in with !client_title', array('!client_title' => $client['title'])),
+      '#name' => $client['name'],
+    );
+  }
   return $form;
 }
 
 /**
- * Form submit handler: Log in with Google form.
+ * Form submit handler: Log in with an OpenID Connect login provider.
  */
 function openid_connect_login_form_submit(&$form, &$form_state) {
-  // Create a state token to prevent request forgery. Store it in the session
-  // for later validation.
-  $state = md5(rand());
-  $_SESSION['openid_connect_state'] = $state;
+  ctools_include('plugins');
+  $client_plugin_name = $form_state['triggering_element']['#name'];
+  $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
+  $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
 
-  $url_options = array(
-    'query' => array(
-      'client_id' => OPENID_CONNECT_GOOGLE_CLIENT_ID,
-      'response_type' => 'code',
-      'scope' => 'openid email',
-      'redirect_uri' => url(OPENID_CONNECT_GOOGLE_REDIRECT_URI, array('absolute' => TRUE)),
-      'state' => $state,
-    ),
+  $plugin['class']::sendAuthenticationRequest(
+    $client_id,
+    'openid email',
+    $plugin['login_provider_endpoint']['authentication'],
+    url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE)),
+    openid_connect_create_state_token()
   );
-  $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/auth', $url_options);
-  $response = drupal_http_request($request_url);
-  if ($response->code == 200 && isset($response->redirect_url)) {
-    drupal_goto($response->redirect_url);
-  }
-  else {
-    // @todo Do a more granular error check.
-    drupal_set_message('The Google sign in could not be completed due to an error.');
-  }
+}
+
+/**
+ * Creates a state token and stores it in the session for later validation.
+ *
+ * @return string
+ *   A state token that later can be validated to prevent request forgery.
+ */
+function openid_connect_create_state_token() {
+  $state = md5(rand());
+  $_SESSION['openid_connect_google_state'] = $state;
+  return $state;
+}
+
+/**
+ * Confirms anti-forgery state token.
+ *
+ * @param string $state_token
+ *   The state token that is used for validation.
+ *
+ * @return bool
+ *   Whether the state token matches the previously created one that is stored
+ *   in the session.
+ */
+function confirm_state_token($state_token) {
+  return $state_token == $_SESSION['openid_connect_google_state'];
 }
 
 /**
@@ -130,51 +166,33 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
 function openid_connect_redirect_access() {
   // Confirm anti-forgery state token. This round-trip verification helps to
   // ensure that the user, not a malicious script, is making the request.
-  return $_GET['state'] == $_SESSION['openid_connect_state'];
+  return !empty($_GET['state']) && confirm_state_token($_GET['state']);
 }
 
 /**
- * Page callback: Redirect page.
+ * Page callback: Page whereto OpenID Connect login provider redirects.
  */
-function openid_connect_redirect_page() {
-  // @todo Validate if parameters URI parameters are available.
-  // Exchange `code` for access token and ID token.
-  $post_data = array(
-    'code' => $_GET['code'],
-    'client_id' => OPENID_CONNECT_GOOGLE_CLIENT_ID,
-    'client_secret' => OPENID_CONNECT_GOOGLE_CLIENT_SECRET,
-    'redirect_uri' => url(OPENID_CONNECT_GOOGLE_REDIRECT_URI, array('absolute' => TRUE)),
-    'grant_type' => 'authorization_code',
-  );
-  $request_options = array(
-    'method' => 'POST',
-    'data' => drupal_http_build_query($post_data),
-    'timeout' => 15,
-    'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-  );
-  $url_options = array(
-    'external' => TRUE,
-  );
-  $request_url = url(OPENID_CONNECT_GOOGLE_OAUTH2_SERVER_BASE_URI . '/token', $url_options);
-  $response = drupal_http_request($request_url, $request_options);
-  // @todo Make sure request was successful.
+function openid_connect_redirect_page($client_plugin_name) {
+  ctools_include('plugins');
+  $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
+  if (!$plugin || !isset($_GET['code'])) {
+    return MENU_NOT_FOUND;
+  }
 
-  // Obtain user information from the ID token.
-  // @todo Do this properly by retrieving Google’s public keys and performing
-  // the validation locally.
-  $response_data = drupal_json_decode($response->data);
-  $url_options = array(
-    'query' => array(
-      'id_token' => $response_data['id_token'],
-    ),
-    'external' => TRUE,
+  $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
+  $client_secret = variable_get('openid_connect_client_' . $client_plugin_name . '_client_secret');
+
+  $id_token = $plugin['class']::retrieveIDToken(
+    $_GET['code'],
+    $plugin['login_provider_endpoint']['token'],
+    $client_id,
+    $client_secret,
+    url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
-  $request_url = url('https://www.googleapis.com/oauth2/v1/tokeninfo', $url_options);
-  $response = drupal_http_request($request_url);
-  // @todo Make sure request was successful.
-  $response_data = drupal_json_decode($response->data);
-  openid_connect_login_user($response_data['email']);
-  return t('Hello !email_address!', array('!email_address' => $response_data['email']));
+
+  $user_data = $plugin['class']::decodeIDToken($id_token);
+  openid_connect_login_user($user_data['email']);
+  return t('Hello !email_address!', array('!email_address' => $user_data['email']));
 }
 
 /**
@@ -187,6 +205,7 @@ function openid_connect_login_user($email) {
   }
   $form_state['uid'] = $account->uid;
   user_login_submit(array(), $form_state);
+  drupal_goto('user/' . $account->uid);
 }
 
 /**
@@ -238,7 +257,7 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
   }
 
   if (openid_connect_get_user_authname($form['#user']->uid)) {
-    // Do not let the user the set a password if they are authenticated by a
+    // Do not let the user to set a password if they are authenticated by a
     // remote service that this module supports.
     // @todo Might need to reconsider this.
     $account_form['current_pass']['#access'] = FALSE;

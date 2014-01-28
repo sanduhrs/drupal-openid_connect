@@ -8,14 +8,6 @@
 interface OpenIDConnectClientInterface {
 
   /**
-   * Creates a state token and stores it in the session for later validation.
-   *
-   * @return string
-   *   A state token that later can be validated to prevent request forgery.
-   */
-  public function createStateToken();
-
-  /**
    * Sends an authentication request towards the login provider.
    *
    * @param string $client_id
@@ -23,7 +15,7 @@ interface OpenIDConnectClientInterface {
    * @param string $scope
    *   Name of scope(s) that with user consent will provide access to otherwise
    *   restricted user data.
-   * @param string $oauth_endpoint
+   * @param string $authentication_endpoint
    *   URI of the endpoint whereto send the authentication request.
    * @param string $redirect_url
    *   URI of the client-side (your Drupal installation) endpoint that will
@@ -31,19 +23,7 @@ interface OpenIDConnectClientInterface {
    * @param string $state_token
    *   The state token that is later used for validation.
    */
-  public function sendAuthenticationRequest($client_id, $scope, $oauth_endpoint, $redirect_url, $state_token);
-
-  /**
-   * Confirms anti-forgery state token.
-   *
-   * @param string $state_token
-   *   The state token that is used for validation.
-   *
-   * @return bool
-   *   Whether the state token matches the previously created one that is stored
-   *   in the session.
-   */
-  public function confirmStateToken($state_token);
+  public static function sendAuthenticationRequest($client_id, $scope, $authentication_endpoint, $redirect_url, $state_token);
 
   /**
    * Retrieve access token and ID token.

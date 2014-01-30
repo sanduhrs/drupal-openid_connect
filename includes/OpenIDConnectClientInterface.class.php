@@ -63,4 +63,9 @@ interface OpenIDConnectClientInterface {
    */
   public function decodeIDToken($id_token);
 
+  /**
+   * Retrieves user info: additional user profile data.
+   */
+  //public function retrieveUserInfo();
+
 }

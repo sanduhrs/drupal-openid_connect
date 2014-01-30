@@ -125,9 +125,11 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
   $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
   $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
 
+  $scopes = openid_connect_get_scopes(variable_get('openid_connect_userinfo_mapping_claims', array()));
+
   $plugin['class']::sendAuthenticationRequest(
     $client_id,
-    'openid email',
+    $scopes,
     $plugin['login_provider_endpoint']['authentication'],
     url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE)),
     openid_connect_create_state_token()
@@ -272,4 +274,106 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
 function openid_connect_get_user_authname($uid) {
   $authname = db_query("SELECT authname FROM {authmap} WHERE uid = :uid AND module = 'openid_connect_google'", array(':uid' => $uid))->fetchColumn(0);
   return !empty($authname) ? $authname : FALSE;
+}
+
+/**
+ * Returns standard OpenID Connect claims.
+ *
+ * @see http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+ * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+ */
+function openid_connect_claims() {
+  return array(
+    'name' => array(
+      'scope' => 'profile',
+    ),
+    'family_name' => array(
+      'scope' => 'profile',
+    ),
+    'given_name' => array(
+      'scope' => 'profile',
+    ),
+    'middle_name' => array(
+      'scope' => 'profile',
+    ),
+    'nickname' => array(
+      'scope' => 'profile',
+    ),
+    'preferred_username' => array(
+      'scope' => 'profile',
+    ),
+    'profile' => array(
+      'scope' => 'profile',
+    ),
+    'picture' => array(
+      'scope' => 'profile',
+    ),
+    'website' => array(
+      'scope' => 'profile',
+    ),
+    'gender' => array(
+      'scope' => 'profile',
+    ),
+    'birthdate' => array(
+      'scope' => 'profile',
+    ),
+    'zoneinfo' => array(
+      'scope' => 'profile',
+    ),
+    'locale' => array(
+      'scope' => 'profile',
+    ),
+    'updated_at' => array(
+      'scope' => 'profile',
+    ),
+    'email' => array(
+      'scope' => 'email',
+    ),
+    'email_verified' => array(
+      'scope' => 'email',
+    ),
+    'address' => array(
+      'scope' => 'address',
+    ),
+    'phone_number' => array(
+      'scope' => 'phone',
+    ),
+    'phone_number_verified' => array(
+      'scope' => 'phone',
+    ),
+  );
+}
+
+/**
+ * Returns OpenID Connect standard Claims as a Form API options array.
+ */
+function openid_connect_claims_options() {
+  $options = array();
+  foreach (openid_connect_claims() as $claim_name => $claim) {
+    $options[$claim['scope']][$claim_name] = $claim_name;
+  }
+  return $options;
+}
+
+/**
+ * Returns scopes that have to be requested for certain scopes.
+ *
+ * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+ *
+ * @param array $claims
+ *   Claims that are being requested.
+ *
+ * @return string
+ *   Space delimited case sensitive list of ASCII scope values.
+ */
+function openid_connect_get_scopes($claims) {
+  $default_scopes = 'openid email';
+  $scopes = array();
+  $claims_info = openid_connect_claims();
+  foreach ($claims as $claim) {
+    if (isset($claims_info[$claim]) && !isset($scopes[$claims_info[$claim]['scope']]) && $claim != 'email') {
+      $scopes[$claims_info[$claim]['scope']] = $claims_info[$claim]['scope'];
+    }
+  }
+  return $default_scopes . ' ' . implode(' ', $scopes);
 }

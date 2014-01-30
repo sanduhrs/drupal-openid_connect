@@ -29,6 +29,30 @@ function openid_connect_admin_form($form, &$form_state) {
     '#options' => $options,
     '#default_value' => variable_get('openid_connect_clients_enabled', array()),
   );
+  $form['general_settings']['userinfo_mapping'] = array(
+    '#title' => t('User info mapping'),
+    '#type' => 'fieldset',
+  );
+
+  $user_entity_wrapper = entity_metadata_wrapper('user');
+
+  $claims = openid_connect_claims_options();
+  $properties = $user_entity_wrapper->getPropertyInfo();
+  $properties_skip = drupal_map_assoc(array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme'));
+  foreach ($properties as $property_name => $property) {
+    if (isset($properties_skip[$property_name])) {
+      continue;
+    }
+    $form['general_settings']['userinfo_mapping']['openid_connect_userinfo_mapping_property_' . $property_name] = array(
+      '#type' => 'select',
+      '#title' => $property['label'],
+      '#description' => $property['description'],
+      '#options' => $claims,
+      '#empty_value' => 0,
+      '#empty_option' => t('- No mapping -'),
+      '#default_value' => variable_get('openid_connect_userinfo_mapping_property_' . $property_name, 0),
+    );
+  }
 
   if ($client_plugins_enabled = openid_connect_get_plugins(TRUE)) {
     $form['clients'] = array(
@@ -53,5 +77,29 @@ function openid_connect_admin_form($form, &$form_state) {
     }
   }
 
+  $form['#tree'] = TRUE;
+  $form['#submit'][] = 'openid_connect_admin_form_save_claims';
   return system_settings_form($form);
+}
+
+/**
+ * Form submit handler; Saves claims into a list from mapped user info.
+ */
+function openid_connect_admin_form_save_claims($form, &$form_state) {
+  $claims = array();
+  foreach ($form_state['values']['general_settings']['userinfo_mapping'] as $variable => $claim) {
+    if (!empty($claim)) {
+      $claims[] = $claim;
+      variable_set($variable, $claim);
+    }
+    else {
+      variable_del($variable);
+    }
+  }
+  if (!empty($claims)) {
+    variable_set('openid_connect_userinfo_mapping_claims', $claims);
+  }
+  else {
+    variable_del('openid_connect_userinfo_mapping_claims');
+  }
 }

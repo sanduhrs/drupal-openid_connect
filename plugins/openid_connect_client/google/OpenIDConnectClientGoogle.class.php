@@ -23,15 +23,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
         'state' => $state_token,
       ),
     );
-    $request_url = url($authentication_endpoint, $url_options);
-    $response = drupal_http_request($request_url);
-    if ($response->code == 200 && isset($response->redirect_url)) {
-      drupal_goto($response->redirect_url);
-    }
-    else {
-      // @todo Do a more granular error check and log the error.
-      drupal_set_message('The Google sign in could not be completed due to an error.', 'error');
-    }
+    drupal_goto($authentication_endpoint, $url_options);
   }
 
   /**

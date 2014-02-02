@@ -29,7 +29,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
   /**
    * Implements OpenIDConnectClientInterface::retrieveIDToken().
    */
-  public function retrieveIDToken($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
+  public function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
     // Exchange `code` for access token and ID token.
     $post_data = array(
       'code' => $authorization_code,
@@ -48,7 +48,11 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
     $response = drupal_http_request($request_url, $request_options);
     // @todo Make sure request was successful.
     $response_data = drupal_json_decode($response->data);
-    return $response_data['id_token'];
+    return array(
+      'id_token' => $response_data['id_token'],
+      'access_token' => $response_data['access_token'],
+      'expire' => REQUEST_TIME + $response_data['expires_in'],
+    );
   }
 
   /**

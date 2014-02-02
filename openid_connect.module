@@ -184,7 +184,7 @@ function openid_connect_redirect_page($client_plugin_name) {
   $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
   $client_secret = variable_get('openid_connect_client_' . $client_plugin_name . '_client_secret');
 
-  $id_token = $plugin['class']::retrieveIDToken(
+  $tokens = $plugin['class']::retrieveTokens(
     $_GET['code'],
     $plugin['login_provider_endpoint']['token'],
     $client_id,
@@ -192,7 +192,7 @@ function openid_connect_redirect_page($client_plugin_name) {
     url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
 
-  $user_data = $plugin['class']::decodeIDToken($id_token);
+  $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
   openid_connect_login_user($user_data['email']);
   return t('Hello !email_address!', array('!email_address' => $user_data['email']));
 }

@@ -20,7 +20,7 @@ class OpenIDConnectClientAmazon implements OpenIDConnectClientInterface {
   /**
    * Implements OpenIDConnectClientInterface::retrieveIDToken().
    */
-  public function retrieveIDToken($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
+  public function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
 
   }
 

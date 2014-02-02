@@ -28,11 +28,13 @@ interface OpenIDConnectClientInterface {
   /**
    * Retrieve access token and ID token.
    *
-   * An ID token, which is a cryptographically signed JSON object encoded in
-   * base64. It contains the user data.
-   *
    * Exchanging the authorization code that is received as the result of the
    * authentication request for an access token and an ID token.
+   *
+   * The ID token is a cryptographically signed JSON object encoded in base64.
+   * It contains digitally signed identity information about the user.
+   * The access token can be sent to the login provider to obtain user profile
+   * information.
    *
    * @param string $authorization_code
    *   Authorization code received as a result of the the authorization request.
@@ -47,10 +49,14 @@ interface OpenIDConnectClientInterface {
    *   URI of the client-side (your Drupal installation) endpoint that receive
    *   the response for the authentication request.
    *
-   * @return string
-   *   An ID token containing the user data.
+   * @return array
+   *   An associative array containing:
+   *   - id_token: The ID token that holds user data.
+   *   - access_token: Access token that can be used to obtain user profile
+   *     information.
+   *   - expire: Unix timestamp of the expiration date of the access token.
    */
-  public function retrieveIDToken($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url);
+  public function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url);
 
   /**
    * Decodes ID token to access user data.

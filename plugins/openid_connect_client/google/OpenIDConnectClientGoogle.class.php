@@ -74,4 +74,19 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
     return drupal_json_decode($response->data);
   }
 
+  /**
+   * Implements OpenIDConnectClientInterface::retrieveUserInfo().
+   */
+  public function retrieveUserInfo($access_token, $userinfo_endpoint) {
+    $request_options = array(
+      'headers' => array(
+        'Authorization' => 'Bearer ' . $access_token,
+      ),
+    );
+    $request_url = url($userinfo_endpoint);
+    $response = drupal_http_request($request_url, $request_options);
+    // @todo Make sure request was successful.
+    return drupal_json_decode($response->data);
+  }
+
 }

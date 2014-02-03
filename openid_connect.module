@@ -192,6 +192,12 @@ function openid_connect_redirect_page($client_plugin_name) {
     url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
 
+  $user_profile = $plugin['class']::retrieveUserInfo(
+    $tokens['access_token'],
+    $plugin['login_provider_endpoint']['userinfo']
+  );
+  // @todo Save user profile information.
+
   $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
   openid_connect_login_user($user_data['email']);
   return t('Hello !email_address!', array('!email_address' => $user_data['email']));

@@ -31,4 +31,11 @@ class OpenIDConnectClientAmazon implements OpenIDConnectClientInterface {
 
   }
 
+  /**
+   * Implements OpenIDConnectClientInterface::retrieveUserInfo().
+   */
+  public function retrieveUserInfo($access_token, $userinfo_endpoint) {
+
+  }
+
 }

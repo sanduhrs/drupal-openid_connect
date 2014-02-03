@@ -32,7 +32,7 @@ interface OpenIDConnectClientInterface {
    * authentication request for an access token and an ID token.
    *
    * The ID token is a cryptographically signed JSON object encoded in base64.
-   * It contains digitally signed identity information about the user.
+   * It contains identity information about the user.
    * The access token can be sent to the login provider to obtain user profile
    * information.
    *
@@ -65,13 +65,22 @@ interface OpenIDConnectClientInterface {
    *   The encoded ID token containing the user data.
    *
    * @return array
-   *   User data.
+   *   User identity information.
    */
   public function decodeIDToken($id_token);
 
   /**
    * Retrieves user info: additional user profile data.
+   *
+   * @param string $access_token
+   *   Access token.
+   * @param string $userinfo_endpoint
+   *   URI of the endpoint whereto send the request for obtaining user profile
+   *   information.
+   *
+   * @return array
+   *   User profile information.
    */
-  //public function retrieveUserInfo();
+  public function retrieveUserInfo($access_token, $userinfo_endpoint);
 
 }

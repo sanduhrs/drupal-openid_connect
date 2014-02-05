@@ -192,15 +192,47 @@ function openid_connect_redirect_page($client_plugin_name) {
     url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
 
-  $user_profile = $plugin['class']::retrieveUserInfo(
-    $tokens['access_token'],
-    $plugin['login_provider_endpoint']['userinfo']
-  );
-  // @todo Save user profile information.
-
   $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
   openid_connect_login_user($user_data['email']);
-  return t('Hello !email_address!', array('!email_address' => $user_data['email']));
+  $userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token']);
+  global $user;
+  openid_connect_save_userinfo($user, $userinfo);
+  drupal_goto('user');
+}
+
+/**
+ * Retrieves user profile information from the login provider.
+ */
+function openid_connect_retrieve_userinfo($client_plugin_name, $access_token) {
+  ctools_include('plugins');
+  $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
+  if (!$plugin) {
+    return FALSE;
+  }
+  $user_profile = $plugin['class']::retrieveUserInfo(
+    $access_token,
+    $plugin['login_provider_endpoint']['userinfo']
+  );
+  return $user_profile;
+}
+
+/**
+ * Saves user profile information into a user account.
+ */
+function openid_connect_save_userinfo($account, $user_profile) {
+  $account_wrapper = entity_metadata_wrapper('user', $account);
+  $properties = $account_wrapper->getPropertyInfo();
+  $properties_skip = drupal_map_assoc(array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme'));
+  foreach ($properties as $property_name => $property) {
+    if (isset($properties_skip[$property_name])) {
+      continue;
+    }
+    $claim = variable_get('openid_connect_userinfo_mapping_property_' . $property_name, NULL);
+    if ($claim && isset($user_profile[$claim])) {
+      $account_wrapper->{$property_name} = $user_profile[$claim];
+    }
+  }
+  $account_wrapper->save();
 }
 
 /**
@@ -213,7 +245,6 @@ function openid_connect_login_user($email) {
   }
   $form_state['uid'] = $account->uid;
   user_login_submit(array(), $form_state);
-  drupal_goto('user/' . $account->uid);
 }
 
 /**

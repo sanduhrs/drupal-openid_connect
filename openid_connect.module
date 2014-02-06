@@ -236,6 +236,28 @@ function openid_connect_save_userinfo($account, $user_profile) {
     }
   }
   $account_wrapper->save();
+
+  // Fetch and save user picture from the login provider.
+  if (variable_get('user_pictures') && variable_get('openid_connect_user_pictures', TRUE) && !empty($user_profile['picture'])) {
+    $picture_directory = file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
+    if (file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)) {
+      $picture_request_response = drupal_http_request($user_profile['picture']);
+      if ($picture_request_response->code == 200) {
+        $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->uid . '-' . REQUEST_TIME . '.jpg');
+        $picture_file = file_save_data($picture_request_response->data, $picture_path, FILE_EXISTS_REPLACE);
+        // Check to make sure the picture isn't too large for the site settings.
+        file_validate_image_resolution($picture_file, variable_get('user_picture_dimensions', '1024x1024'));
+        // Update the user record.
+        $picture_file->uid = $account->uid;
+        $picture_file = file_save($picture_file);
+        file_usage_add($picture_file, 'user', 'user', $account->uid);
+        db_update('users')
+          ->fields(array('picture' => $picture_file->fid))
+          ->condition('uid', $account->uid)
+          ->execute();
+      }
+    }
+  }
 }
 
 /**

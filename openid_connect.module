@@ -199,7 +199,7 @@ function openid_connect_redirect_page($client_plugin_name) {
   openid_connect_login_user($user_data['email']);
   $userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token']);
   global $user;
-  openid_connect_save_userinfo($user, $userinfo);
+  openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
   drupal_goto('user');
 }
 
@@ -222,7 +222,10 @@ function openid_connect_retrieve_userinfo($client_plugin_name, $access_token) {
 /**
  * Saves user profile information into a user account.
  */
-function openid_connect_save_userinfo($account, $user_profile) {
+function openid_connect_save_userinfo($account, $user_profile, $client_plugin_name) {
+  // Allow modules to alter the user profile information.
+  drupal_alter('openid_connect_' . $client_plugin_name . '_userinfo', $user_profile);
+
   $account_wrapper = entity_metadata_wrapper('user', $account);
   $properties = $account_wrapper->getPropertyInfo();
   $properties_skip = _openid_connect_user_properties_to_skip();
@@ -446,4 +449,16 @@ function openid_connect_get_scopes($claims) {
 function _openid_connect_user_properties_to_skip() {
   $properties_to_skip = array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
   return drupal_map_assoc($properties_to_skip);
+}
+
+/**
+ * Implements openid_connect_LOGIN_PROVIDER_userinfo_alter().
+ */
+function openid_connect_openid_connect_google_userinfo_alter(&$userinfo) {
+  // For some reason Google returns the URI of the profile picture in a weird
+  // format: "https:" appears twice in the beginning of the URI.
+  // Using a regular expression matching for fixing it guarantees that things
+  // won't break if Google changes the way the URI is returned.
+  preg_match('/https:\/\/*.*/', $userinfo['picture'], $matches);
+  $userinfo['picture'] = $matches[0];
 }

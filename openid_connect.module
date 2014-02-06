@@ -5,7 +5,10 @@
  * OpenID Connect client implementation.
  */
 
-define('OPENID_CONNECT_REDIRECT_URI_BASE', 'openid-connect');
+/**
+ * Base path where to login providers can redirect in the OAuth2 flow.
+ */
+define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
 
 /**
  * Implements hook_menu().
@@ -20,7 +23,7 @@ function openid_connect_menu() {
     'access arguments' => array('configure openid clients'),
     'file' => 'includes/openid_connect.admin.inc',
   );
-  $items[OPENID_CONNECT_REDIRECT_URI_BASE . '/%'] = array(
+  $items[OPENID_CONNECT_REDIRECT_PATH_BASE . '/%'] = array(
     'title' => 'OpenID Connect redirect page',
     'page callback' => 'openid_connect_redirect_page',
     'page arguments' => array(1),
@@ -131,7 +134,7 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
     $client_id,
     $scopes,
     $plugin['login_provider_endpoint']['authentication'],
-    url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE)),
+    url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE)),
     openid_connect_create_state_token()
   );
 }
@@ -189,7 +192,7 @@ function openid_connect_redirect_page($client_plugin_name) {
     $plugin['login_provider_endpoint']['token'],
     $client_id,
     $client_secret,
-    url(OPENID_CONNECT_REDIRECT_URI_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
+    url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
 
   $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);

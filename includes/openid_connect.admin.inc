@@ -38,7 +38,7 @@ function openid_connect_admin_form($form, &$form_state) {
 
   $claims = openid_connect_claims_options();
   $properties = $user_entity_wrapper->getPropertyInfo();
-  $properties_skip = drupal_map_assoc(array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme'));
+  $properties_skip = _openid_connect_user_properties_to_skip();
   foreach ($properties as $property_name => $property) {
     if (isset($properties_skip[$property_name])) {
       continue;

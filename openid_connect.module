@@ -225,7 +225,7 @@ function openid_connect_retrieve_userinfo($client_plugin_name, $access_token) {
 function openid_connect_save_userinfo($account, $user_profile) {
   $account_wrapper = entity_metadata_wrapper('user', $account);
   $properties = $account_wrapper->getPropertyInfo();
-  $properties_skip = drupal_map_assoc(array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme'));
+  $properties_skip = _openid_connect_user_properties_to_skip();
   foreach ($properties as $property_name => $property) {
     if (isset($properties_skip[$property_name])) {
       continue;
@@ -416,4 +416,12 @@ function openid_connect_get_scopes($claims) {
     }
   }
   return $default_scopes . ' ' . implode(' ', $scopes);
+}
+
+/**
+ * Return user properties that can be skipped when mapping user profile info.
+ */
+function _openid_connect_user_properties_to_skip() {
+  $properties_to_skip = array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
+  return drupal_map_assoc($properties_to_skip);
 }

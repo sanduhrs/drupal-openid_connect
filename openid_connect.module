@@ -147,7 +147,7 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
  */
 function openid_connect_create_state_token() {
   $state = md5(rand());
-  $_SESSION['openid_connect_google_state'] = $state;
+  $_SESSION['openid_connect_state'] = $state;
   return $state;
 }
 
@@ -162,7 +162,7 @@ function openid_connect_create_state_token() {
  *   in the session.
  */
 function confirm_state_token($state_token) {
-  return $state_token == $_SESSION['openid_connect_google_state'];
+  return $state_token == $_SESSION['openid_connect_state'];
 }
 
 /**

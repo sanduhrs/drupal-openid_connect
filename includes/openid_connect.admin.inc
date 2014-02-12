@@ -40,6 +40,7 @@ function openid_connect_admin_form($form, &$form_state) {
   $form['general_settings']['userinfo_mapping'] = array(
     '#title' => t('User info mapping'),
     '#type' => 'fieldset',
+    '#tree' => TRUE,
   );
 
   $user_entity_wrapper = entity_metadata_wrapper('user');
@@ -85,7 +86,6 @@ function openid_connect_admin_form($form, &$form_state) {
     }
   }
 
-  $form['#tree'] = TRUE;
   $form['#submit'][] = 'openid_connect_admin_form_save_claims';
   return system_settings_form($form);
 }
@@ -95,7 +95,7 @@ function openid_connect_admin_form($form, &$form_state) {
  */
 function openid_connect_admin_form_save_claims($form, &$form_state) {
   $claims = array();
-  foreach ($form_state['values']['general_settings']['userinfo_mapping'] as $variable => $claim) {
+  foreach ($form_state['values']['userinfo_mapping'] as $variable => $claim) {
     if (!empty($claim)) {
       $claims[] = $claim;
       variable_set($variable, $claim);

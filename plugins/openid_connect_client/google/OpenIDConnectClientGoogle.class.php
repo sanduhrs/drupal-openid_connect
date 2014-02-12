@@ -46,13 +46,18 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
     );
     $request_url = url($token_endpoint, array('external' => TRUE));
     $response = drupal_http_request($request_url, $request_options);
-    // @todo Make sure request was successful.
-    $response_data = drupal_json_decode($response->data);
-    return array(
-      'id_token' => $response_data['id_token'],
-      'access_token' => $response_data['access_token'],
-      'expire' => REQUEST_TIME + $response_data['expires_in'],
-    );
+    if (!isset($response->error) && $response->code == 200) {
+      $response_data = drupal_json_decode($response->data);
+      return array(
+        'id_token' => $response_data['id_token'],
+        'access_token' => $response_data['access_token'],
+        'expire' => REQUEST_TIME + $response_data['expires_in'],
+      );
+    }
+    else {
+      openid_connect_log_request_error(__FUNCTION__, 'google', $response->error, $response->code, $response->data);
+      return FALSE;
+    }
   }
 
   /**
@@ -85,8 +90,13 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
     );
     $request_url = url($userinfo_endpoint);
     $response = drupal_http_request($request_url, $request_options);
-    // @todo Make sure request was successful.
-    return drupal_json_decode($response->data);
+    if (!isset($response->error) && $response->code == 200) {
+      return drupal_json_decode($response->data);
+    }
+    else {
+      openid_connect_log_request_error(__FUNCTION__, 'google', $response->error, $response->code, $response->data);
+      return FALSE;
+    }
   }
 
 }

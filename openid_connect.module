@@ -194,12 +194,19 @@ function openid_connect_redirect_page($client_plugin_name) {
     $client_secret,
     url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
-  $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
-  openid_connect_login_user($user_data['user_id'], $user_data['email'], $client_plugin_name);
-  $userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token']);
-  global $user;
-  openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
-  drupal_goto('user');
+  if ($tokens) {
+    $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
+    openid_connect_login_user($user_data['user_id'], $user_data['email'], $client_plugin_name);
+    if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
+      global $user;
+      openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
+    }
+    drupal_goto('user');
+  }
+
+  drupal_set_message(t('Sign in could not be completed due to an error.'), 'error');
+  drupal_goto('<front>');
+
 }
 
 /**
@@ -215,7 +222,7 @@ function openid_connect_retrieve_userinfo($client_plugin_name, $access_token) {
     $access_token,
     $plugin['login_provider_endpoint']['userinfo']
   );
-  return $user_profile;
+  return $user_profile ? $user_profile : FALSE;
 }
 
 /**
@@ -482,6 +489,30 @@ function openid_connect_get_scopes($claims) {
 function _openid_connect_user_properties_to_skip() {
   $properties_to_skip = array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
   return drupal_map_assoc($properties_to_skip);
+}
+
+/**
+ * Logs an error occured during a request towards a login provider.
+ */
+function openid_connect_log_request_error($method, $client_plugin_name, $response_error, $response_code, $response_data) {
+  switch ($method) {
+    case 'retrieveTokens':
+      $message = 'Could not retrieve tokens';
+      break;
+
+    case 'retrieveUserInfo':
+      $message = 'Could not retrieve user profile information';
+      break;
+
+    default:
+      return;
+  }
+  $variables = array(
+    '@error' => $response_error,
+    '@code' => $response_code,
+    '@details' => print_r(drupal_json_decode($response_data), TRUE),
+  );
+  watchdog('openid_connect_google', $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
 }
 
 /**

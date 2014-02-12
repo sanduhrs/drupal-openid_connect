@@ -194,9 +194,8 @@ function openid_connect_redirect_page($client_plugin_name) {
     $client_secret,
     url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
   );
-
   $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
-  openid_connect_login_user($user_data['email']);
+  openid_connect_login_user($user_data['user_id'], $user_data['email'], $client_plugin_name);
   $userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token']);
   global $user;
   openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
@@ -264,26 +263,27 @@ function openid_connect_save_userinfo($account, $user_profile, $client_plugin_na
 }
 
 /**
- * Logs in a user based on their email address.
+ * Logs in a user based on the sub-id returned by the login provider.
  */
-function openid_connect_login_user($email) {
-  $account = user_load_by_mail($email);
+function openid_connect_login_user($sub, $email, $client_plugin_name) {
+  $account = openid_connect_user_load_by_sub($sub, $client_plugin_name);
   if (!$account) {
-    $account = openid_connect_create_user($email);
+    $account = openid_connect_create_user($sub, $email, $client_plugin_name);
   }
   $form_state['uid'] = $account->uid;
   user_login_submit(array(), $form_state);
 }
 
 /**
- * Creates a user simply using an email address.
+ * Creates a user indicating sub-id and login provider.
  */
-function openid_connect_create_user($email) {
+function openid_connect_create_user($sub, $email, $client_plugin_name) {
   $edit = array(
     'name' => $email,
     'mail' => $email,
     'status' => 1,
-    'openid_connect_google' => TRUE,
+    'openid_connect_client' => $client_plugin_name,
+    'openid_connect_sub' => $sub,
   );
   $account = user_save(NULL, $edit);
   return $account;
@@ -293,8 +293,8 @@ function openid_connect_create_user($email) {
  * Implements hook_user_insert().
  */
 function openid_connect_user_insert(&$edit, &$account, $category) {
-  if (isset($edit['openid_connect_google'])) {
-    user_set_authmaps($account, array('authname_openid_connect_google' => $edit['name']));
+  if (isset($edit['openid_connect_client'])) {
+    user_set_authmaps($account, array('authname_openid_connect_' . $edit['openid_connect_client'] => $edit['openid_connect_sub']));
   }
 }
 
@@ -302,14 +302,14 @@ function openid_connect_user_insert(&$edit, &$account, $category) {
  * Implements hook_user_delete().
  */
 function openid_connect_user_delete($account) {
-  user_set_authmaps($account, array('authname_openid_connect_google' => FALSE));
+  db_query("DELETE FROM {authmap} WHERE module LIKE 'openid_connect_%'");
 }
 
 /**
  * Implements hook_user_cancel().
  */
 function openid_connect_user_cancel($edit, $account, $method) {
-  user_set_authmaps($account, array('authname_openid_connect_google' => FALSE));
+  db_query("DELETE FROM {authmap} WHERE module LIKE 'openid_connect_%'");
 }
 
 /**
@@ -337,8 +337,41 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
  * Gets the remote authentication name of a user authenticated by this module.
  */
 function openid_connect_get_user_authname($uid) {
-  $authname = db_query("SELECT authname FROM {authmap} WHERE uid = :uid AND module = 'openid_connect_google'", array(':uid' => $uid))->fetchColumn(0);
-  return !empty($authname) ? $authname : FALSE;
+  $plugins = openid_connect_get_plugins(TRUE);
+  $modules = array();
+  foreach ($plugins as $plugin) {
+    $modules[] = 'openid_connect_' . $plugin['name'];
+  }
+  if (!empty($modules)) {
+    $result = db_select('authmap', 'a')
+      ->fields('a', array('authname'))
+      ->condition('uid', $uid)
+      ->condition('module', $modules, 'IN')
+      ->execute()
+      ->fetchCol(0);
+
+    return $result;
+  }
+  return FALSE;
+}
+
+/**
+ * Load a user based on a sub-id and a login provider.
+ */
+function openid_connect_user_load_by_sub($sub, $client_plugin_name) {
+  $result = db_select('authmap', 'a')
+    ->fields('a', array('uid', 'module'))
+    ->condition('authname', $sub)
+    ->condition('module', 'openid_connect_' . $client_plugin_name)
+    ->execute()
+    ->fetchAssoc();
+  if ($result) {
+    $account = user_load($result['uid']);
+    if (is_object($account)) {
+      return $account;
+    }
+  }
+  return FALSE;
 }
 
 /**

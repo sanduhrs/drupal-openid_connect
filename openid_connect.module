@@ -71,7 +71,7 @@ function openid_connect_get_plugins($enabled_only = FALSE) {
   $plugins = ctools_get_plugins('openid_connect', 'openid_connect_client');
   $plugins_enabled = variable_get('openid_connect_clients_enabled', array());
   foreach ($plugins as $key => $plugin) {
-    if (!class_exists($plugin['class']) || ($enabled_only && empty($plugins_enabled[$plugin['name']]))) {
+    if (!class_exists($plugin['class']) || empty($plugin['sub_key']) || ($enabled_only && empty($plugins_enabled[$plugin['name']]))) {
       // Invalid class specified or client is not enabled and we only suppose to
       // return those that are active.
       unset($plugins[$key]);

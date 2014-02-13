@@ -196,12 +196,12 @@ function openid_connect_redirect_page($client_plugin_name) {
   );
   if ($tokens) {
     $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
-    openid_connect_login_user($user_data['user_id'], $user_data['email'], $client_plugin_name);
     if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
       global $user;
       openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
+      openid_connect_login_user($user_data[$plugin['sub_key']], $userinfo['email'], $client_plugin_name);
+      drupal_goto('user');
     }
-    drupal_goto('user');
   }
 
   drupal_set_message(t('Sign in with !login-provider could not be completed due to an error.', array('!login-provider' => $plugin['title'])), 'error');

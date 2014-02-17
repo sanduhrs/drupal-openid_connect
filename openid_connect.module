@@ -71,7 +71,7 @@ function openid_connect_get_plugins($enabled_only = FALSE) {
   $plugins = ctools_get_plugins('openid_connect', 'openid_connect_client');
   $plugins_enabled = variable_get('openid_connect_clients_enabled', array());
   foreach ($plugins as $key => $plugin) {
-    if (!class_exists($plugin['class']) || empty($plugin['sub_key']) || ($enabled_only && empty($plugins_enabled[$plugin['name']]))) {
+    if (!class_exists($plugin['class']) || ($enabled_only && empty($plugins_enabled[$plugin['name']]))) {
       // Invalid class specified or client is not enabled and we only suppose to
       // return those that are active.
       unset($plugins[$key]);
@@ -199,7 +199,7 @@ function openid_connect_redirect_page($client_plugin_name) {
     if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
       global $user;
       openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
-      openid_connect_login_user($user_data[$plugin['sub_key']], $userinfo['email'], $client_plugin_name);
+      openid_connect_login_user($user_data['sub'], $userinfo['email'], $client_plugin_name);
       drupal_goto('user');
     }
   }

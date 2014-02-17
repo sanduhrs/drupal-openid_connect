@@ -64,19 +64,10 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
    * Implements OpenIDConnectClientInterface::decodeIDToken().
    */
   public function decodeIDToken($id_token) {
-    // Obtain user information from the ID token.
-    // @todo Do this properly by retrieving Google’s public keys and performing
-    // the validation locally.
-    $url_options = array(
-      'query' => array(
-        'id_token' => $id_token,
-      ),
-      'external' => TRUE,
-    );
-    $request_url = url('https://www.googleapis.com/oauth2/v1/tokeninfo', $url_options);
-    $response = drupal_http_request($request_url);
-    // @todo Make sure request was successful.
-    return drupal_json_decode($response->data);
+    list($headerb64, $claims64, $signatureb64) = explode('.', $id_token);
+    $claims64 = str_replace(array('-', '_'), array('+', '/'), $claims64);
+    $claims64 = base64_decode($claims64);
+    return drupal_json_decode($claims64);
   }
 
   /**

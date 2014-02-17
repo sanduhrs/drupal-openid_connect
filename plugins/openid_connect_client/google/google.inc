@@ -13,5 +13,4 @@ $plugin = array(
     'token' => 'https://accounts.google.com/o/oauth2/token',
     'userinfo' => 'https://www.googleapis.com/plus/v1/people/me/openIdConnect',
   ),
-  'sub_key' => 'user_id',
 );

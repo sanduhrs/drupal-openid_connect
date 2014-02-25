@@ -180,8 +180,12 @@ function openid_connect_redirect_access() {
 function openid_connect_redirect_page($client_plugin_name) {
   ctools_include('plugins');
   $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
-  if (!$plugin || !isset($_GET['code'])) {
+  if (!isset($_GET['error']) && (!$plugin || !isset($_GET['code']))) {
     return MENU_NOT_FOUND;
+  }
+  elseif (isset($_GET['error']) && $_GET['error'] == 'access_denied') {
+    drupal_set_message(t('Sign in with !login-provider has been canceled.', array('!login-provider' => $plugin['title'])), 'warning');
+    drupal_goto('<front>');
   }
 
   $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');

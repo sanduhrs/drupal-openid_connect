@@ -520,7 +520,7 @@ function openid_connect_log_request_error($method, $client_plugin_name, $respons
     '@code' => $response_code,
     '@details' => print_r(drupal_json_decode($response_data), TRUE),
   );
-  watchdog('openid_connect_google', $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
+  watchdog('openid_connect_' . $client_plugin_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
 }
 
 /**

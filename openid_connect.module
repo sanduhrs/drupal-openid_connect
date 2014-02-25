@@ -182,14 +182,20 @@ function openid_connect_redirect_page($client_plugin_name) {
   ctools_include('plugins');
   $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
   if (!isset($_GET['error']) && (!$plugin || !isset($_GET['code']))) {
+    // In case we don't have an error, but the plugin could not be loaded or
+    // there is no state token specified, the URI is probably being visited
+    // outside of the login flow.
     return MENU_NOT_FOUND;
   }
   elseif (isset($_GET['error'])) {
     if ($_GET['error'] == 'access_denied') {
+      // If we have an "access denied" error, that means the user hasn't granted
+      // the authorization for the claims.
       drupal_set_message(t('Sign in with !login-provider has been canceled.', array('!login-provider' => $plugin['title'])), 'warning');
       drupal_goto('<front>');
     }
     else {
+      // Any other error should be logged. E.g. invalid scope.
       $variables = array(
         '@error' => $_GET['error'],
         '@details' => $_GET['error_description'],
@@ -198,6 +204,7 @@ function openid_connect_redirect_page($client_plugin_name) {
     }
   }
   else {
+    // Everything is fine, proceed with the login.
     $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
     $client_secret = variable_get('openid_connect_client_' . $client_plugin_name . '_client_secret');
 
@@ -209,13 +216,16 @@ function openid_connect_redirect_page($client_plugin_name) {
       url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
     );
     if ($tokens) {
+      // ID token and access tokens are retrieved, decode the ID token.
       $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
       if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
-        global $user;
-        openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
-        openid_connect_login_user($user_data['sub'], $userinfo['email'], $client_plugin_name);
-        drupal_goto('user');
+        // The sub ID is used by the login provider to identify the user. We
+        // also register it in the `authmap` table.
+        $account = openid_connect_user_load_by_sub($user_data['sub'], $client_plugin_name);
+        openid_connect_login_user($user_data['sub'], $account, $userinfo['email'], $client_plugin_name);
+        openid_connect_save_userinfo($account, $userinfo, $client_plugin_name);
       }
+      drupal_goto('user');
     }
   }
 
@@ -286,8 +296,7 @@ function openid_connect_save_userinfo($account, $user_profile, $client_plugin_na
 /**
  * Logs in a user based on the sub-id returned by the login provider.
  */
-function openid_connect_login_user($sub, $email, $client_plugin_name) {
-  $account = openid_connect_user_load_by_sub($sub, $client_plugin_name);
+function openid_connect_login_user($sub, &$account, $email, $client_plugin_name) {
   if (!$account) {
     $account = openid_connect_create_user($sub, $email, $client_plugin_name);
   }

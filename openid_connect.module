@@ -184,34 +184,43 @@ function openid_connect_redirect_page($client_plugin_name) {
   if (!isset($_GET['error']) && (!$plugin || !isset($_GET['code']))) {
     return MENU_NOT_FOUND;
   }
-  elseif (isset($_GET['error']) && $_GET['error'] == 'access_denied') {
-    drupal_set_message(t('Sign in with !login-provider has been canceled.', array('!login-provider' => $plugin['title'])), 'warning');
-    drupal_goto('<front>');
+  elseif (isset($_GET['error'])) {
+    if ($_GET['error'] == 'access_denied') {
+      drupal_set_message(t('Sign in with !login-provider has been canceled.', array('!login-provider' => $plugin['title'])), 'warning');
+      drupal_goto('<front>');
+    }
+    else {
+      $variables = array(
+        '@error' => $_GET['error'],
+        '@details' => $_GET['error_description'],
+      );
+      watchdog('openid_connect_' . $client_plugin_name, 'Authorization failed: @error. Details: @details', $variables, WATCHDOG_ERROR);
+    }
   }
+  else {
+    $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
+    $client_secret = variable_get('openid_connect_client_' . $client_plugin_name . '_client_secret');
 
-  $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
-  $client_secret = variable_get('openid_connect_client_' . $client_plugin_name . '_client_secret');
-
-  $tokens = $plugin['class']::retrieveTokens(
-    $_GET['code'],
-    $plugin['login_provider_endpoint']['token'],
-    $client_id,
-    $client_secret,
-    url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
-  );
-  if ($tokens) {
-    $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
-    if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
-      global $user;
-      openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
-      openid_connect_login_user($user_data['sub'], $userinfo['email'], $client_plugin_name);
-      drupal_goto('user');
+    $tokens = $plugin['class']::retrieveTokens(
+      $_GET['code'],
+      $plugin['login_provider_endpoint']['token'],
+      $client_id,
+      $client_secret,
+      url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
+    );
+    if ($tokens) {
+      $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
+      if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
+        global $user;
+        openid_connect_save_userinfo($user, $userinfo, $client_plugin_name);
+        openid_connect_login_user($user_data['sub'], $userinfo['email'], $client_plugin_name);
+        drupal_goto('user');
+      }
     }
   }
 
   drupal_set_message(t('Sign in with !login-provider could not be completed due to an error.', array('!login-provider' => $plugin['title'])), 'error');
   drupal_goto('<front>');
-
 }
 
 /**

@@ -29,7 +29,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
   /**
    * Implements OpenIDConnectClientInterface::retrieveIDToken().
    */
-  public function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
+  public static function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url) {
     // Exchange `code` for access token and ID token.
     $post_data = array(
       'code' => $authorization_code,
@@ -63,7 +63,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
   /**
    * Implements OpenIDConnectClientInterface::decodeIDToken().
    */
-  public function decodeIDToken($id_token) {
+  public static function decodeIDToken($id_token) {
     list($headerb64, $claims64, $signatureb64) = explode('.', $id_token);
     $claims64 = str_replace(array('-', '_'), array('+', '/'), $claims64);
     $claims64 = base64_decode($claims64);
@@ -73,7 +73,7 @@ class OpenIDConnectClientGoogle implements OpenIDConnectClientInterface {
   /**
    * Implements OpenIDConnectClientInterface::retrieveUserInfo().
    */
-  public function retrieveUserInfo($access_token, $userinfo_endpoint) {
+  public static function retrieveUserInfo($access_token, $userinfo_endpoint) {
     $request_options = array(
       'headers' => array(
         'Authorization' => 'Bearer ' . $access_token,

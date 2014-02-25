@@ -56,7 +56,7 @@ interface OpenIDConnectClientInterface {
    *     information.
    *   - expire: Unix timestamp of the expiration date of the access token.
    */
-  public function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url);
+  public static function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url);
 
   /**
    * Decodes ID token to access user data.
@@ -67,7 +67,7 @@ interface OpenIDConnectClientInterface {
    * @return array
    *   User identity information.
    */
-  public function decodeIDToken($id_token);
+  public static function decodeIDToken($id_token);
 
   /**
    * Retrieves user info: additional user profile data.
@@ -81,6 +81,6 @@ interface OpenIDConnectClientInterface {
    * @return array
    *   User profile information.
    */
-  public function retrieveUserInfo($access_token, $userinfo_endpoint);
+  public static function retrieveUserInfo($access_token, $userinfo_endpoint);
 
 }

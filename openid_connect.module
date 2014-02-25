@@ -329,17 +329,24 @@ function openid_connect_user_insert(&$edit, &$account, $category) {
 }
 
 /**
+ * Deletes a user's authmap entries.
+ */
+function openid_connect_authmap_delete($uid) {
+  db_query("DELETE FROM {authmap} WHERE uid = :uid AND module LIKE 'openid_connect_%'", array(':uid' => $uid));
+}
+
+/**
  * Implements hook_user_delete().
  */
 function openid_connect_user_delete($account) {
-  db_query("DELETE FROM {authmap} WHERE module LIKE 'openid_connect_%'");
+  openid_connect_authmap_delete($account->uid);
 }
 
 /**
  * Implements hook_user_cancel().
  */
 function openid_connect_user_cancel($edit, $account, $method) {
-  db_query("DELETE FROM {authmap} WHERE module LIKE 'openid_connect_%'");
+  openid_connect_authmap_delete($account->uid);
 }
 
 /**

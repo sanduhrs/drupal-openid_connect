@@ -97,12 +97,13 @@ function openid_connect_block_info() {
  * Implements hook_block_view().
  */
 function openid_connect_block_view($delta = '') {
-  if ($delta == 'openid_connect_login') {
+  if ($delta == 'openid_connect_login' && user_is_anonymous()) {
     return array(
       'subject' => t('Log in'),
       'content' => drupal_get_form('openid_connect_login_form'),
     );
   }
+  return array();
 }
 
 /**

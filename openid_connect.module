@@ -393,7 +393,7 @@ function openid_connect_get_user_authname($uid) {
 }
 
 /**
- * Load a user based on a sub-id and a login provider.
+ * Loads a user based on a sub-id and a login provider.
  */
 function openid_connect_user_load_by_sub($sub, $client_plugin_name) {
   $result = db_select('authmap', 'a')
@@ -517,7 +517,7 @@ function openid_connect_get_scopes($claims) {
 }
 
 /**
- * Return user properties that can be skipped when mapping user profile info.
+ * Returns user properties that can be skipped when mapping user profile info.
  */
 function _openid_connect_user_properties_to_skip() {
   $properties_to_skip = array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');

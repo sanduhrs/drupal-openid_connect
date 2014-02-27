@@ -120,5 +120,5 @@ before checked against the database).
 Credits
 =======
 Development is sponsored by Commerce Guys (http://commerceguys.com). Thanks to
-Bojan Živanović (http://drupal.org/user/86106) for helping to architect the
+Bojan Zivanovic (http://drupal.org/user/86106) for helping to architect the
 module.

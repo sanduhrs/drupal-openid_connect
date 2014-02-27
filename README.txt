@@ -72,6 +72,19 @@ You can also decide whether the user's profile picture should be fetched from
 the login provider. This option is available only if user pictures are enabled
 on your site.
 
+  Altering the fetched user profile information
+  ---------------------------------------------
+  Fields or user properties on the client site may require a different format
+  than the data is in based on the OpenID Connect specification or in the
+  unfortunate case when the login provider doesn't follow that specification.
+  You can implement *hook_openid_connect_LOGIN_PROVIDER_userinfo_alter()* to
+  alter the user profile information before saving it. Please check
+  `openid_connect.api.php` for documentation.
+  Hint: if you get an
+  "EntityMetadataWrapperException: Invalid data value given.", you most likely
+  need to look into what data is retrieved, what format your fields or
+  properties expect, and implement this hook.
+
 Sign in block
 -------------
 A standard Drupal block is available to sign in with the login providers for

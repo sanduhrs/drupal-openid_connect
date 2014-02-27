@@ -29,19 +29,20 @@ function openid_connect_admin_form($form, &$form_state) {
     '#options' => $options,
     '#default_value' => variable_get('openid_connect_clients_enabled', array()),
   );
+  $form['general_settings']['userinfo_mapping'] = array(
+    '#title' => t('User info mapping'),
+    '#type' => 'fieldset',
+    '#tree' => TRUE,
+  );
+
   if (variable_get('user_pictures')) {
-    $form['general_settings']['openid_connect_user_pictures'] = array(
+    $form['general_settings']['userinfo_mapping']['openid_connect_user_pictures'] = array(
       '#title' => t('Fetch user profile picture from login provider'),
       '#description' => t('Whether the user profile picture from the login provider should be fetched and saved locally.'),
       '#type' => 'checkbox',
       '#default_value' => variable_get('openid_connect_user_pictures', TRUE),
     );
   }
-  $form['general_settings']['userinfo_mapping'] = array(
-    '#title' => t('User info mapping'),
-    '#type' => 'fieldset',
-    '#tree' => TRUE,
-  );
 
   $user_entity_wrapper = entity_metadata_wrapper('user');
 

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * OpenID Connect client implementation.
+ * A pluggable client implementation for the OpenID Connect protocol.
  */
 
 /**
@@ -39,7 +39,7 @@ function openid_connect_menu() {
 function openid_connect_permission() {
   return array(
     'configure openid connect clients' => array(
-      'title' => t('Configure OpenID Connect Clients'),
+      'title' => t('Configure OpenID Connect clients'),
     ),
   );
 }

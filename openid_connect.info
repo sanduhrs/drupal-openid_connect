@@ -1,6 +1,9 @@
 name = OpenID Connect
-description = OpenID Connect client implementation.
+description = A pluggable client implementation for the OpenID Connect protocol.
 core = 7.x
 package = "OAuth2"
+configure = admin/config/services/openid-connect
+dependencies[] = entity
+dependencies[] = ctools
 
 files[] = includes/OpenIDConnectClientInterface.class.php

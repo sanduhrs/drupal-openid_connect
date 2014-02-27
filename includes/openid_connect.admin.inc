@@ -65,7 +65,7 @@ function openid_connect_admin_form($form, &$form_state) {
 
   if ($client_plugins_enabled = openid_connect_get_plugins(TRUE)) {
     $form['clients'] = array(
-      '#title' => t('OpenID Connect clients configuration'),
+      '#title' => t('OpenID Connect client configuration'),
       '#type' => 'fieldset',
     );
     foreach ($client_plugins_enabled as $client) {

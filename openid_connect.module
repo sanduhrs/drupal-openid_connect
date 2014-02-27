@@ -491,7 +491,7 @@ function openid_connect_claims_options() {
 }
 
 /**
- * Returns scopes that have to be requested for certain scopes.
+ * Returns scopes that have to be requested for certain Claims.
  *
  * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
  *

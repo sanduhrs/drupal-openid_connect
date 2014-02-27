@@ -22,7 +22,7 @@ provider for the first time on the website, a new Drupal user will be created.
 
 Google for instance uses this protocol for all its services. Check out the
 OpenID Foundation's announcement of launching OpenID Connect
-(http://openid.net/2014/02/25/a-great-day-for-internet-identity).
+(http://openid.net/2014/02/26/the-openid-foundation-launches-the-openid-connect-standard).
 
 Features
 ========

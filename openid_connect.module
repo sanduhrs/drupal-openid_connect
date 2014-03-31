@@ -20,7 +20,7 @@ function openid_connect_menu() {
     'description' => 'Config OpenID Connect, choose active OpenID Connect clients etc.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('openid_connect_admin_form'),
-    'access arguments' => array('configure openid clients'),
+    'access arguments' => array('configure openid connect clients'),
     'file' => 'includes/openid_connect.admin.inc',
   );
   $items[OPENID_CONNECT_REDIRECT_PATH_BASE . '/%'] = array(

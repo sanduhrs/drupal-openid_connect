@@ -236,6 +236,8 @@ function openid_connect_redirect_page($client_plugin_name) {
         openid_connect_login_user($user_data['sub'], $account, $userinfo['email'], $client_plugin_name);
         openid_connect_save_userinfo($account, $userinfo, $client_plugin_name);
       }
+
+      module_invoke_all('openid_connect_post_authorize', $tokens, $destination);
       drupal_goto($destination);
     }
   }

@@ -124,6 +124,10 @@ function openid_connect_login_form($form, &$form_state) {
  * Form submit handler: Log in with an OpenID Connect login provider.
  */
 function openid_connect_login_form_submit(&$form, &$form_state) {
+  // Save the current path in the session, so that we can redirect the user back
+  // there after the authorization.
+  $_SESSION['openid_connect_destination'] = request_uri();
+
   ctools_include('plugins');
   $client_plugin_name = $form_state['triggering_element']['#name'];
   $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
@@ -181,6 +185,10 @@ function openid_connect_redirect_access() {
 function openid_connect_redirect_page($client_plugin_name) {
   // Delete the state token, since it's already been confirmed.
   unset($_SESSION['openid_connect_state']);
+  // Get the destination from the session (than clean up after that, too), so
+  // that we can redirect the user back from where they initiated the login.
+  $destination = ltrim($_SESSION['openid_connect_destination'], '/');
+  unset($_SESSION['openid_connect_destination']);
 
   ctools_include('plugins');
   $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
@@ -228,12 +236,12 @@ function openid_connect_redirect_page($client_plugin_name) {
         openid_connect_login_user($user_data['sub'], $account, $userinfo['email'], $client_plugin_name);
         openid_connect_save_userinfo($account, $userinfo, $client_plugin_name);
       }
-      drupal_goto('user');
+      drupal_goto($destination);
     }
   }
 
   drupal_set_message(t('Sign in with !login-provider could not be completed due to an error.', array('!login-provider' => $plugin['title'])), 'error');
-  drupal_goto('<front>');
+  drupal_goto($destination);
 }
 
 /**

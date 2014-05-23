@@ -64,7 +64,24 @@ function openid_connect_ctools_plugin_type() {
 }
 
 /**
+ * Returns an OpenID Connect client plugin.
+ *
+ * @param $client_name
+ *   Name of the plugin.
+ *
+ * @return
+ *   An array with information about the requested operation type plugin.
+ */
+function openid_connect_get_plugin($client_name) {
+  ctools_include('plugins');
+  return ctools_get_plugins('openid_connect', 'openid_connect_client', $client_name);
+}
+
+/**
  * Returns the available OpenID Connect client plugins.
+ *
+ * @param $enabled_only
+ *   Whether to return only the plugins enabled by the administrator.
  */
 function openid_connect_get_plugins($enabled_only = FALSE) {
   ctools_include('plugins');
@@ -128,9 +145,8 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
   // there after the authorization.
   $_SESSION['openid_connect_destination'] = request_uri();
 
-  ctools_include('plugins');
   $client_plugin_name = $form_state['triggering_element']['#name'];
-  $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
+  $plugin = openid_connect_get_plugin($client_plugin_name);
   $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
 
   $scopes = openid_connect_get_scopes(variable_get('openid_connect_userinfo_mapping_claims', array()));
@@ -190,8 +206,7 @@ function openid_connect_redirect_page($client_plugin_name) {
   $destination = ltrim($_SESSION['openid_connect_destination'], '/');
   unset($_SESSION['openid_connect_destination']);
 
-  ctools_include('plugins');
-  $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
+  $plugin = openid_connect_get_plugin($client_plugin_name);
   if (!isset($_GET['error']) && (!$plugin || !isset($_GET['code']))) {
     // In case we don't have an error, but the plugin could not be loaded or
     // there is no state token specified, the URI is probably being visited
@@ -250,8 +265,7 @@ function openid_connect_redirect_page($client_plugin_name) {
  * Retrieves user profile information from the login provider.
  */
 function openid_connect_retrieve_userinfo($client_plugin_name, $access_token) {
-  ctools_include('plugins');
-  $plugin = ctools_get_plugins('openid_connect', 'openid_connect_client', $client_plugin_name);
+  $plugin = openid_connect_get_plugin($client_plugin_name);
   if (!$plugin) {
     return FALSE;
   }

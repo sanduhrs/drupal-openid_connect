@@ -165,7 +165,7 @@ function openid_connect_login_form($form, &$form_state) {
 function openid_connect_login_form_submit(&$form, &$form_state) {
   // Save the current path in the session, so that we can redirect the user back
   // there after the authorization.
-  $_SESSION['openid_connect_destination'] = request_uri();
+  $_SESSION['openid_connect_destination'] = request_path();
 
   $client_name = $form_state['triggering_element']['#name'];
   $client = openid_connect_get_client($client_name);

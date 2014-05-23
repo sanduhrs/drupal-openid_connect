@@ -7,3 +7,4 @@ dependencies[] = entity
 dependencies[] = ctools
 
 files[] = includes/OpenIDConnectClientInterface.class.php
+files[] = includes/OpenIDConnectClientBase.class.php

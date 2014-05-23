@@ -64,6 +64,28 @@ function openid_connect_ctools_plugin_type() {
 }
 
 /**
+ * Returns a client instance.
+ *
+ * @param $client_name
+ *   The name of the client to instantiate.
+ */
+function openid_connect_get_client($client_name) {
+  $clients = &drupal_static(__FUNCTION__);
+  if (!isset($clients[$client_name])) {
+    $plugin = openid_connect_get_plugin($client_name);
+    if ($plugin) {
+      $settings = variable_get('openid_connect_client_' . $client_name, array());
+      $clients[$client_name] = new $plugin['class']($client_name, $plugin['title'], $settings);
+    }
+    else {
+      $clients[$client_name] = FALSE;
+    }
+  }
+
+  return $clients[$client_name];
+}
+
+/**
  * Returns an OpenID Connect client plugin.
  *
  * @param $client_name
@@ -145,19 +167,10 @@ function openid_connect_login_form_submit(&$form, &$form_state) {
   // there after the authorization.
   $_SESSION['openid_connect_destination'] = request_uri();
 
-  $client_plugin_name = $form_state['triggering_element']['#name'];
-  $plugin = openid_connect_get_plugin($client_plugin_name);
-  $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
-
-  $scopes = openid_connect_get_scopes(variable_get('openid_connect_userinfo_mapping_claims', array()));
-
-  $plugin['class']::sendAuthenticationRequest(
-    $client_id,
-    $scopes,
-    $plugin['login_provider_endpoint']['authentication'],
-    url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE)),
-    openid_connect_create_state_token()
-  );
+  $client_name = $form_state['triggering_element']['#name'];
+  $client = openid_connect_get_client($client_name);
+  $scopes = openid_connect_get_scopes();
+  $client->authorize($scopes);
 }
 
 /**
@@ -198,7 +211,7 @@ function openid_connect_redirect_access() {
 /**
  * Page callback: Page whereto OpenID Connect login provider redirects.
  */
-function openid_connect_redirect_page($client_plugin_name) {
+function openid_connect_redirect_page($client_name) {
   // Delete the state token, since it's already been confirmed.
   unset($_SESSION['openid_connect_state']);
   // Get the destination from the session (than clean up after that, too), so
@@ -206,9 +219,9 @@ function openid_connect_redirect_page($client_plugin_name) {
   $destination = ltrim($_SESSION['openid_connect_destination'], '/');
   unset($_SESSION['openid_connect_destination']);
 
-  $plugin = openid_connect_get_plugin($client_plugin_name);
-  if (!isset($_GET['error']) && (!$plugin || !isset($_GET['code']))) {
-    // In case we don't have an error, but the plugin could not be loaded or
+  $client = openid_connect_get_client($client_name);
+  if (!isset($_GET['error']) && (!$client || !isset($_GET['code']))) {
+    // In case we don't have an error, but the client could not be loaded or
     // there is no state token specified, the URI is probably being visited
     // outside of the login flow.
     return MENU_NOT_FOUND;
@@ -226,30 +239,22 @@ function openid_connect_redirect_page($client_plugin_name) {
         '@error' => $_GET['error'],
         '@details' => $_GET['error_description'],
       );
-      watchdog('openid_connect_' . $client_plugin_name, 'Authorization failed: @error. Details: @details', $variables, WATCHDOG_ERROR);
+      watchdog('openid_connect_' . $client_name, 'Authorization failed: @error. Details: @details', $variables, WATCHDOG_ERROR);
     }
   }
   else {
     // Everything is fine, proceed with the login.
-    $client_id = variable_get('openid_connect_client_' . $client_plugin_name . '_client_id');
-    $client_secret = variable_get('openid_connect_client_' . $client_plugin_name . '_client_secret');
-
-    $tokens = $plugin['class']::retrieveTokens(
-      $_GET['code'],
-      $plugin['login_provider_endpoint']['token'],
-      $client_id,
-      $client_secret,
-      url(OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $plugin['name'], array('absolute' => TRUE))
-    );
+    $tokens = $client->retrieveTokens($_GET['code']);
     if ($tokens) {
       // ID token and access tokens are retrieved, decode the ID token.
-      $user_data = $plugin['class']::decodeIDToken($tokens['id_token']);
-      if ($userinfo = openid_connect_retrieve_userinfo($client_plugin_name, $tokens['access_token'])) {
+      $user_data = $client->decodeIdToken($tokens['id_token']);
+      $userinfo = $client->retrieveUserInfo($tokens['access_token']);
+      if ($userinfo) {
         // The sub ID is used by the login provider to identify the user. We
         // also register it in the `authmap` table.
-        $account = openid_connect_user_load_by_sub($user_data['sub'], $client_plugin_name);
-        openid_connect_login_user($user_data['sub'], $account, $userinfo['email'], $client_plugin_name);
-        openid_connect_save_userinfo($account, $userinfo, $client_plugin_name);
+        $account = openid_connect_user_load_by_sub($user_data['sub'], $client_name);
+        openid_connect_login_user($user_data['sub'], $account, $userinfo['email'], $client_name);
+        openid_connect_save_userinfo($account, $userinfo, $client_name);
       }
 
       module_invoke_all('openid_connect_post_authorize', $tokens, $destination);
@@ -257,31 +262,16 @@ function openid_connect_redirect_page($client_plugin_name) {
     }
   }
 
-  drupal_set_message(t('Sign in with !login-provider could not be completed due to an error.', array('!login-provider' => $plugin['title'])), 'error');
+  drupal_set_message(t('Sign in with !login-provider could not be completed due to an error.', array('!login-provider' => $client)), 'error');
   drupal_goto($destination);
-}
-
-/**
- * Retrieves user profile information from the login provider.
- */
-function openid_connect_retrieve_userinfo($client_plugin_name, $access_token) {
-  $plugin = openid_connect_get_plugin($client_plugin_name);
-  if (!$plugin) {
-    return FALSE;
-  }
-  $user_profile = $plugin['class']::retrieveUserInfo(
-    $access_token,
-    $plugin['login_provider_endpoint']['userinfo']
-  );
-  return $user_profile ? $user_profile : FALSE;
 }
 
 /**
  * Saves user profile information into a user account.
  */
-function openid_connect_save_userinfo($account, $user_profile, $client_plugin_name) {
+function openid_connect_save_userinfo($account, $user_profile, $client_name) {
   // Allow modules to alter the user profile information.
-  drupal_alter('openid_connect_' . $client_plugin_name . '_userinfo', $user_profile);
+  drupal_alter('openid_connect_' . $client_name . '_userinfo', $user_profile);
 
   $account_wrapper = entity_metadata_wrapper('user', $account);
   $properties = $account_wrapper->getPropertyInfo();
@@ -323,9 +313,9 @@ function openid_connect_save_userinfo($account, $user_profile, $client_plugin_na
 /**
  * Logs in a user based on the sub-id returned by the login provider.
  */
-function openid_connect_login_user($sub, &$account, $email, $client_plugin_name) {
+function openid_connect_login_user($sub, &$account, $email, $client_name) {
   if (!$account) {
-    $account = openid_connect_create_user($sub, $email, $client_plugin_name);
+    $account = openid_connect_create_user($sub, $email, $client_name);
   }
   $form_state['uid'] = $account->uid;
   user_login_submit(array(), $form_state);
@@ -334,12 +324,12 @@ function openid_connect_login_user($sub, &$account, $email, $client_plugin_name)
 /**
  * Creates a user indicating sub-id and login provider.
  */
-function openid_connect_create_user($sub, $email, $client_plugin_name) {
+function openid_connect_create_user($sub, $email, $client_name) {
   $edit = array(
     'name' => $email,
     'mail' => $email,
     'status' => 1,
-    'openid_connect_client' => $client_plugin_name,
+    'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
   );
   $account = user_save(NULL, $edit);
@@ -422,11 +412,11 @@ function openid_connect_get_user_authname($uid) {
 /**
  * Loads a user based on a sub-id and a login provider.
  */
-function openid_connect_user_load_by_sub($sub, $client_plugin_name) {
+function openid_connect_user_load_by_sub($sub, $client_name) {
   $result = db_select('authmap', 'a')
     ->fields('a', array('uid', 'module'))
     ->condition('authname', $sub)
-    ->condition('module', 'openid_connect_' . $client_plugin_name)
+    ->condition('module', 'openid_connect_' . $client_name)
     ->execute()
     ->fetchAssoc();
   if ($result) {
@@ -518,17 +508,15 @@ function openid_connect_claims_options() {
 }
 
 /**
- * Returns scopes that have to be requested for certain Claims.
+ * Returns scopes that have to be requested based on the configured claims.
  *
  * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
- *
- * @param array $claims
- *   Claims that are being requested.
  *
  * @return string
  *   Space delimited case sensitive list of ASCII scope values.
  */
-function openid_connect_get_scopes($claims) {
+function openid_connect_get_scopes() {
+  $claims = variable_get('openid_connect_userinfo_mapping_claims', array());
   $default_scopes = 'openid email';
   $scopes = array();
   $claims_info = openid_connect_claims();
@@ -554,7 +542,7 @@ function _openid_connect_user_properties_to_skip() {
 /**
  * Logs an error occured during a request towards a login provider.
  */
-function openid_connect_log_request_error($method, $client_plugin_name, $response_error, $response_code, $response_data) {
+function openid_connect_log_request_error($method, $client_name, $response_error, $response_code, $response_data) {
   switch ($method) {
     case 'retrieveTokens':
       $message = 'Could not retrieve tokens';
@@ -572,7 +560,7 @@ function openid_connect_log_request_error($method, $client_plugin_name, $respons
     '@code' => $response_code,
     '@details' => print_r(drupal_json_decode($response_data), TRUE),
   );
-  watchdog('openid_connect_' . $client_plugin_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
+  watchdog('openid_connect_' . $client_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
 }
 
 /**

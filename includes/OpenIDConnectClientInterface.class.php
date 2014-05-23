@@ -8,22 +8,71 @@
 interface OpenIDConnectClientInterface {
 
   /**
-   * Sends an authentication request towards the login provider.
+   * Returns the value of a setting.
+   */
+  public function getSetting($key, $default = NULL);
+
+  /**
+   * Returns the settings form.
    *
-   * @param string $client_id
-   *   ID that you obtain when you register your app at the login provider.
+   * The client settings form is embedded into the module's main settings form,
+   * and the configured values are injected into the client class through the
+   * constructor.
+   */
+  public function settingsForm();
+
+  /**
+   * Validates the settings form.
+   *
+   * @param $form
+   *   The settings form.
+   * @param $form_state
+   *   An array containing the current state of the form. Contains only
+   *   the 'values' key, since it is actually constructed on the fly by the
+   *   parent form.
+   * @param $error_element_base
+   *   The base to prepend to field names when using form_set_error().
+   */
+  public function settingsFormValidate($form, &$form_state, $error_element_base);
+
+  /**
+   * Handles the submitted settings form.
+   *
+   * Note that there is no need to handle saving the options, that is done
+   * by the parent form.
+   *
+   * @param $form
+   *   The settings form.
+   * @param $form_state
+   *   An array containing the current state of the form. Contains only
+   *   the 'values' key, since it is actually constructed on the fly by the
+   *   parent form.
+   */
+  public function settingsFormSubmit($form, &$form_state);
+
+  /**
+   * Returns an array of endpoints.
+   *
+   * @return
+   *   An array with the following keys:
+   *   - authorization: The full url to the authorization endpoint.
+   *   - token: The full url to the token endpoint.
+   *   - userinfo: The full url to the userinfo endpoint.
+   */
+  public function getEndpoints();
+
+  /**
+   * Redirects the user to the authorization endpoint.
+   *
+   * The authorization endpoint authenticates the user and returns them
+   * to the redirect_uri specified previously with an authorization code
+   * that can be exchanged for an access token.
+   *
    * @param string $scope
    *   Name of scope(s) that with user consent will provide access to otherwise
-   *   restricted user data.
-   * @param string $authentication_endpoint
-   *   URI of the endpoint whereto send the authentication request.
-   * @param string $redirect_url
-   *   URI of the client-side (your Drupal installation) endpoint that will
-   *   receive the response.
-   * @param string $state_token
-   *   The state token that is later used for validation.
+   *   restricted user data. Defaults to "openid email".
    */
-  public static function sendAuthenticationRequest($client_id, $scope, $authentication_endpoint, $redirect_url, $state_token);
+  public function authorize($scope);
 
   /**
    * Retrieve access token and ID token.
@@ -38,16 +87,6 @@ interface OpenIDConnectClientInterface {
    *
    * @param string $authorization_code
    *   Authorization code received as a result of the the authorization request.
-   * @param string $token_endpoint
-   *   URI of the endpoint whereto send the access token and ID token request.
-   * @param string $client_id
-   *   ID that you obtain when you register your app at the login provider.
-   * @param string $client_secret
-   *   Client secret that you obtain when you register your app at the login
-   *   provider.
-   * @param string $redirect_url
-   *   URI of the client-side (your Drupal installation) endpoint that receive
-   *   the response for the authentication request.
    *
    * @return array
    *   An associative array containing:
@@ -56,7 +95,7 @@ interface OpenIDConnectClientInterface {
    *     information.
    *   - expire: Unix timestamp of the expiration date of the access token.
    */
-  public static function retrieveTokens($authorization_code, $token_endpoint, $client_id, $client_secret, $redirect_url);
+  public function retrieveTokens($authorization_code);
 
   /**
    * Decodes ID token to access user data.
@@ -67,20 +106,17 @@ interface OpenIDConnectClientInterface {
    * @return array
    *   User identity information.
    */
-  public static function decodeIDToken($id_token);
+  public function decodeIdToken($id_token);
 
   /**
    * Retrieves user info: additional user profile data.
    *
    * @param string $access_token
    *   Access token.
-   * @param string $userinfo_endpoint
-   *   URI of the endpoint whereto send the request for obtaining user profile
-   *   information.
    *
    * @return array
    *   User profile information.
    */
-  public static function retrieveUserInfo($access_token, $userinfo_endpoint);
+  public function retrieveUserInfo($access_token);
 
 }

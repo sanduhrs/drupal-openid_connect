@@ -10,33 +10,41 @@
  */
 function openid_connect_admin_form($form, &$form_state) {
   $client_plugins = openid_connect_get_plugins();
-  if (!$client_plugins) {
-    return array(array('#markup' => t('No OpenID Connect plugins were found.')));
+  $options = array();
+  foreach ($client_plugins as $client_plugin) {
+    $options[$client_plugin['name']] = $client_plugin['title'];
   }
 
-  $form['general_settings'] = array(
-    '#title' => t('General settings'),
-    '#type' => 'fieldset',
-  );
-  $options = array();
-  foreach ($client_plugins as $client) {
-    $options[$client['name']] = $client['title'];
-  }
-  $form['general_settings']['openid_connect_clients_enabled'] = array(
+  $form['#tree'] = TRUE;
+  $form['openid_connect_clients_enabled'] = array(
     '#title' => t('Enabled OpenID Connect clients'),
     '#description' => t('Choose enabled OpenID Connect clients.'),
     '#type' => 'checkboxes',
     '#options' => $options,
     '#default_value' => variable_get('openid_connect_clients_enabled', array()),
   );
-  $form['general_settings']['userinfo_mapping'] = array(
+  foreach ($client_plugins as $client_plugin) {
+    $client = openid_connect_get_client($client_plugin['name']);
+
+    $element = 'openid_connect_clients_enabled[' . $client_plugin['name'] . ']';
+    $form['clients'][$client_plugin['name']] = array(
+      '#title' => $client_plugin['title'],
+      '#type' => 'fieldset',
+      '#states' => array(
+        'visible' => array(
+          ':input[name="' . $element . '"]' => array('checked' => TRUE),
+        ),
+      ),
+    );
+    $form['clients'][$client_plugin['name']] += $client->settingsForm();
+  }
+
+  $form['userinfo_mapping'] = array(
     '#title' => t('User info mapping'),
     '#type' => 'fieldset',
-    '#tree' => TRUE,
   );
-
   if (variable_get('user_pictures')) {
-    $form['general_settings']['userinfo_mapping']['openid_connect_user_pictures'] = array(
+    $form['userinfo_mapping']['openid_connect_user_pictures'] = array(
       '#title' => t('Fetch user profile picture from login provider'),
       '#description' => t('Whether the user profile picture from the login provider should be fetched and saved locally.'),
       '#type' => 'checkbox',
@@ -45,7 +53,6 @@ function openid_connect_admin_form($form, &$form_state) {
   }
 
   $user_entity_wrapper = entity_metadata_wrapper('user');
-
   $claims = openid_connect_claims_options();
   $properties = $user_entity_wrapper->getPropertyInfo();
   $properties_skip = _openid_connect_user_properties_to_skip();
@@ -53,7 +60,7 @@ function openid_connect_admin_form($form, &$form_state) {
     if (isset($properties_skip[$property_name])) {
       continue;
     }
-    $form['general_settings']['userinfo_mapping']['openid_connect_userinfo_mapping_property_' . $property_name] = array(
+    $form['userinfo_mapping']['openid_connect_userinfo_mapping_property_' . $property_name] = array(
       '#type' => 'select',
       '#title' => $property['label'],
       '#description' => $property['description'],
@@ -64,37 +71,50 @@ function openid_connect_admin_form($form, &$form_state) {
     );
   }
 
-  if ($client_plugins_enabled = openid_connect_get_plugins(TRUE)) {
-    $form['clients'] = array(
-      '#title' => t('OpenID Connect client configuration'),
-      '#type' => 'fieldset',
-    );
-    foreach ($client_plugins_enabled as $client) {
-      $form['clients'][$client['name']] = array(
-        '#title' => $client['title'],
-        '#type' => 'fieldset',
-      );
-      $form['clients'][$client['name']]['openid_connect_client_' . $client['name'] . '_client_id'] = array(
-        '#title' => t('Client ID'),
-        '#type' => 'textfield',
-        '#default_value' => variable_get('openid_connect_client_' . $client['name'] . '_client_id', ''),
-      );
-      $form['clients'][$client['name']]['openid_connect_client_' . $client['name'] . '_client_secret'] = array(
-        '#title' => t('Client secret'),
-        '#type' => 'textfield',
-        '#default_value' => variable_get('openid_connect_client_' . $client['name'] . '_client_secret', ''),
-      );
-    }
-  }
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
 
-  $form['#submit'][] = 'openid_connect_admin_form_save_claims';
-  return system_settings_form($form);
+  return $form;
 }
 
 /**
- * Form submit handler; Saves claims into a list from mapped user info.
+ * Validation handler for openid_connect_admin_form.
  */
-function openid_connect_admin_form_save_claims($form, &$form_state) {
+function openid_connect_admin_form_validate($form, &$form_state) {
+  $enabled_clients = $form_state['values']['openid_connect_clients_enabled'];
+  $enabled_clients = array_filter($enabled_clients);
+  foreach ($enabled_clients as $client_name) {
+    // Give the client a chance to validate the submitted values.
+    $client = openid_connect_get_client($client_name);
+    $fake_form = $form['clients'][$client_name];
+    $fake_form_state = array('values' => $form_state['values']['clients'][$client_name]);
+    $error_element_base = 'clients][' . $client_name . '][';
+    $client->settingsFormValidate($fake_form, $fake_form_state, $error_element_base);
+  }
+}
+
+/**
+ * Submit handler for openid_connect_admin_form.
+ */
+function openid_connect_admin_form_submit($form, &$form_state) {
+  $enabled_clients = $form_state['values']['openid_connect_clients_enabled'];
+  $enabled_clients = array_filter($enabled_clients);
+  variable_set('openid_connect_clients_enabled', $enabled_clients);
+
+  foreach ($enabled_clients as $client_name) {
+    // Give the client a chance to modify the submitted values.
+    $client = openid_connect_get_client($client_name);
+    $fake_form = $form['clients'][$client_name];
+    $fake_form_state = array('values' => $form_state['values']['clients'][$client_name]);
+    $client->settingsFormSubmit($fake_form, $fake_form_state);
+
+    // Save the settings.
+    variable_set('openid_connect_client_' . $client_name, $fake_form_state['values']);
+  }
+
   $claims = array();
   foreach ($form_state['values']['userinfo_mapping'] as $variable => $claim) {
     if (!empty($claim)) {

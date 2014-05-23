@@ -270,9 +270,6 @@ function openid_connect_redirect_page($client_name) {
  * Saves user profile information into a user account.
  */
 function openid_connect_save_userinfo($account, $user_profile, $client_name) {
-  // Allow modules to alter the user profile information.
-  drupal_alter('openid_connect_' . $client_name . '_userinfo', $user_profile);
-
   $account_wrapper = entity_metadata_wrapper('user', $account);
   $properties = $account_wrapper->getPropertyInfo();
   $properties_skip = _openid_connect_user_properties_to_skip();
@@ -561,16 +558,4 @@ function openid_connect_log_request_error($method, $client_name, $response_error
     '@details' => print_r(drupal_json_decode($response_data), TRUE),
   );
   watchdog('openid_connect_' . $client_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
-}
-
-/**
- * Implements openid_connect_LOGIN_PROVIDER_userinfo_alter().
- */
-function openid_connect_openid_connect_google_userinfo_alter(&$userinfo) {
-  // For some reason Google returns the URI of the profile picture in a weird
-  // format: "https:" appears twice in the beginning of the URI.
-  // Using a regular expression matching for fixing it guarantees that things
-  // won't break if Google changes the way the URI is returned.
-  preg_match('/https:\/\/*.*/', $userinfo['picture'], $matches);
-  $userinfo['picture'] = $matches[0];
 }

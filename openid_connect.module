@@ -195,7 +195,7 @@ function openid_connect_create_state_token() {
  *   Whether the state token matches the previously created one that is stored
  *   in the session.
  */
-function confirm_state_token($state_token) {
+function openid_connect_confirm_state_token($state_token) {
   return $state_token == $_SESSION['openid_connect_state'];
 }
 
@@ -205,7 +205,7 @@ function confirm_state_token($state_token) {
 function openid_connect_redirect_access() {
   // Confirm anti-forgery state token. This round-trip verification helps to
   // ensure that the user, not a malicious script, is making the request.
-  return !empty($_GET['state']) && confirm_state_token($_GET['state']);
+  return !empty($_GET['state']) && openid_connect_confirm_state_token($_GET['state']);
 }
 
 /**

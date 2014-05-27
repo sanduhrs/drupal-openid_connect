@@ -514,18 +514,15 @@ function openid_connect_claims_options() {
  */
 function openid_connect_get_scopes() {
   $claims = variable_get('openid_connect_userinfo_mapping_claims', array());
-  $default_scopes = 'openid email';
-  $scopes = array();
+  $scopes = array('openid', 'email');
   $claims_info = openid_connect_claims();
   foreach ($claims as $claim) {
     if (isset($claims_info[$claim]) && !isset($scopes[$claims_info[$claim]['scope']]) && $claim != 'email') {
       $scopes[$claims_info[$claim]['scope']] = $claims_info[$claim]['scope'];
     }
   }
-  if (!empty($scopes)) {
-    return $default_scopes . ' ' . implode(' ', $scopes);
-  }
-  return $default_scopes;
+
+  return implode(' ', $scopes);
 }
 
 /**

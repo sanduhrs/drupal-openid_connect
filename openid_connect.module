@@ -539,7 +539,7 @@ function _openid_connect_user_properties_to_skip() {
 /**
  * Logs an error occured during a request towards a login provider.
  */
-function openid_connect_log_request_error($method, $client_name, $response_error, $response_code, $response_data) {
+function openid_connect_log_request_error($method, $client_name, $response) {
   switch ($method) {
     case 'retrieveTokens':
       $message = 'Could not retrieve tokens';
@@ -552,10 +552,16 @@ function openid_connect_log_request_error($method, $client_name, $response_error
     default:
       return;
   }
+
+  // Some error responses don't have a data key set.
+  $details = '';
+  if (!empty($response->data)) {
+    $details = print_r(drupal_json_decode($response->data), TRUE);
+  }
   $variables = array(
-    '@error' => $response_error,
-    '@code' => $response_code,
-    '@details' => print_r(drupal_json_decode($response_data), TRUE),
+    '@error' => $response->error,
+    '@code' => $response->code,
+    '@details' => $details,
   );
   watchdog('openid_connect_' . $client_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
 }

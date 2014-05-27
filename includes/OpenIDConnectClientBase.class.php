@@ -134,7 +134,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
       );
     }
     else {
-      openid_connect_log_request_error(__FUNCTION__, $this->name, $response->error, $response->code, $response->data);
+      openid_connect_log_request_error(__FUNCTION__, $this->name, $response);
       return FALSE;
     }
   }
@@ -164,7 +164,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
       return drupal_json_decode($response->data);
     }
     else {
-      openid_connect_log_request_error(__FUNCTION__, $this->name, $response->error, $response->code, $response->data);
+      openid_connect_log_request_error(__FUNCTION__, $this->name, $response);
       return FALSE;
     }
   }

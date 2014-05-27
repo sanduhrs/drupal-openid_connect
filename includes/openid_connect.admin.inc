@@ -60,6 +60,12 @@ function openid_connect_admin_form($form, &$form_state) {
     if (isset($properties_skip[$property_name])) {
       continue;
     }
+    // Always map the timezone.
+    $default_value = 0;
+    if ($property_name == 'timezone') {
+      $default_value = 'zoneinfo';
+    }
+
     $form['userinfo_mapping']['openid_connect_userinfo_mapping_property_' . $property_name] = array(
       '#type' => 'select',
       '#title' => $property['label'],
@@ -67,7 +73,7 @@ function openid_connect_admin_form($form, &$form_state) {
       '#options' => $claims,
       '#empty_value' => 0,
       '#empty_option' => t('- No mapping -'),
-      '#default_value' => variable_get('openid_connect_userinfo_mapping_property_' . $property_name, 0),
+      '#default_value' => variable_get('openid_connect_userinfo_mapping_property_' . $property_name, $default_value),
     );
   }
 

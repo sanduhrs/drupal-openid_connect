@@ -562,3 +562,22 @@ function openid_connect_log_request_error($method, $client_name, $response) {
   );
   watchdog('openid_connect_' . $client_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
 }
+
+/**
+ * Implements hook_entity_property_info_alter().
+ *
+ * Adds the missing timezone property.
+ */
+function openid_connect_entity_property_info_alter(&$info) {
+  $properties = &$info['user']['properties'];
+  if (!isset($properties['timezone'])) {
+    $properties['timezone'] = array(
+      'label' => t('Time zone'),
+      'description' => t("The user's time zone."),
+      'options list' => 'system_time_zones',
+      'getter callback' => 'entity_property_verbatim_get',
+      'setter callback' => 'entity_property_verbatim_set',
+      'schema field' => 'timezone',
+    );
+  }
+}

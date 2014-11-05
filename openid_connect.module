@@ -128,6 +128,7 @@ function openid_connect_block_info() {
   return array(
     'openid_connect_login' => array(
       'info' => t('OpenID Connect login'),
+      'cache' => DRUPAL_CACHE_PER_ROLE | DRUPAL_CACHE_PER_PAGE,
     ),
   );
 }

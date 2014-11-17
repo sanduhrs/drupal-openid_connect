@@ -101,6 +101,8 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
       ),
     );
     $endpoints = $this->getEndpoints();
+    // Clear $_GET['destination'] because we need to override it.
+    unset($_GET['destination']);
     drupal_goto($endpoints['authorization'], $url_options);
   }
 

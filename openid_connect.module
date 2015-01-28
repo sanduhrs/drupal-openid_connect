@@ -198,7 +198,7 @@ function openid_connect_create_state_token() {
  *   in the session.
  */
 function openid_connect_confirm_state_token($state_token) {
-  return $state_token == $_SESSION['openid_connect_state'];
+  return isset($_SESSION['openid_connect_state']) && $state_token == $_SESSION['openid_connect_state'];
 }
 
 /**

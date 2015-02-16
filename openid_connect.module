@@ -428,13 +428,18 @@ function openid_connect_user_load_by_sub($sub, $client_name) {
 }
 
 /**
- * Returns standard OpenID Connect claims.
+ * Returns OpenID Connect claims.
+ *
+ * This defines the standard claims, and allows them to be extended via an
+ * alter hook.
  *
  * @see http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
  * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+ *
+ * @return array
  */
 function openid_connect_claims() {
-  return array(
+  $claims = array(
     'name' => array(
       'scope' => 'profile',
     ),
@@ -493,6 +498,8 @@ function openid_connect_claims() {
       'scope' => 'phone',
     ),
   );
+  drupal_alter(__FUNCTION__, $claims);
+  return $claims;
 }
 
 /**

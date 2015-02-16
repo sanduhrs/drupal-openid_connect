@@ -24,5 +24,18 @@ function hook_openid_connect_post_authorize($tokens, $destination) {
 }
 
 /**
+ * Alter the list of possible scopes and claims.
+ *
+ * @see openid_connect_claims
+ *
+ * @param array &$claims
+ */
+function hook_openid_connect_claims_alter(array &$claims) {
+  $claims['my_custom_claim'] = array(
+    'scope' => 'profile',
+  );
+}
+
+/**
  * @} End of "addtogroup hooks".
  */

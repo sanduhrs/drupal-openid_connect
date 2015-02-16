@@ -66,8 +66,10 @@ function openid_connect_ctools_plugin_type() {
 /**
  * Returns a client instance.
  *
- * @param $client_name
+ * @param string $client_name
  *   The name of the client to instantiate.
+ *
+ * @return OpenIDConnectClientInterface
  */
 function openid_connect_get_client($client_name) {
   $clients = &drupal_static(__FUNCTION__);
@@ -88,10 +90,10 @@ function openid_connect_get_client($client_name) {
 /**
  * Returns an OpenID Connect client plugin.
  *
- * @param $client_name
+ * @param string $client_name
  *   Name of the plugin.
  *
- * @return
+ * @return array
  *   An array with information about the requested operation type plugin.
  */
 function openid_connect_get_plugin($client_name) {
@@ -232,7 +234,7 @@ function openid_connect_redirect_page($client_name) {
     if ($_GET['error'] == 'access_denied') {
       // If we have an "access denied" error, that means the user hasn't granted
       // the authorization for the claims.
-      drupal_set_message(t('Sign in with !login-provider has been canceled.', array('!login-provider' => $plugin['title'])), 'warning');
+      drupal_set_message(t('Sign in with @login-provider has been canceled.', array('@login-provider' => $client)), 'warning');
       drupal_goto('<front>');
     }
     else {
@@ -264,7 +266,7 @@ function openid_connect_redirect_page($client_name) {
     }
   }
 
-  drupal_set_message(t('Sign in with !login-provider could not be completed due to an error.', array('!login-provider' => $client)), 'error');
+  drupal_set_message(t('Sign in with @login-provider could not be completed due to an error.', array('@login-provider' => $client)), 'error');
   drupal_goto($destination);
 }
 

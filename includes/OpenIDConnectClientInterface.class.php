@@ -53,7 +53,7 @@ interface OpenIDConnectClientInterface {
   /**
    * Returns an array of endpoints.
    *
-   * @return
+   * @return array
    *   An array with the following keys:
    *   - authorization: The full url to the authorization endpoint.
    *   - token: The full url to the token endpoint.

@@ -327,7 +327,7 @@ function openid_connect_login_user($sub, &$account, $email, $client_name) {
  */
 function openid_connect_create_user($sub, $email, $client_name) {
   $edit = array(
-    'name' => $email,
+    'name' => $sub,
     'mail' => $email,
     'status' => 1,
     'openid_connect_client' => $client_name,

@@ -72,7 +72,7 @@ interface OpenIDConnectClientInterface {
    *   Name of scope(s) that with user consent will provide access to otherwise
    *   restricted user data. Defaults to "openid email".
    */
-  public function authorize($scope);
+  public function authorize($scope = 'openid email');
 
   /**
    * Retrieve access token and ID token.

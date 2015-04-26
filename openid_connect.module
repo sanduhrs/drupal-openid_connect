@@ -254,15 +254,23 @@ function openid_connect_redirect_page($client_name) {
       $user_data = $client->decodeIdToken($tokens['id_token']);
       $userinfo = $client->retrieveUserInfo($tokens['access_token']);
       if ($userinfo) {
-        // The sub ID is used by the login provider to identify the user. We
-        // also register it in the `authmap` table.
-        $account = openid_connect_user_load_by_sub($user_data['sub'], $client_name);
-        openid_connect_login_user($user_data['sub'], $account, $userinfo['email'], $client_name);
-        openid_connect_save_userinfo($account, $userinfo, $client_name);
+        // The sub is a unique ID for the login provider to identify the user.
+        $sub = isset($userinfo['sub']) ? $userinfo['sub'] : $user_data['sub'];
+        $account = openid_connect_user_load_by_sub($sub, $client_name);
+        if (!$account && user_load_by_mail($userinfo['email'])) {
+          drupal_set_message(t('The e-mail address is already taken: @email', array('@email' => $userinfo['email'])), 'error');
+        }
+        elseif (!$account) {
+          $account = openid_connect_create_user($sub, $userinfo['email'], $client_name);
+        }
+        if ($account) {
+          openid_connect_save_userinfo($account, $userinfo, $client_name);
+          openid_connect_login_user($account);
+          module_invoke_all('openid_connect_post_authorize', $tokens, $destination);
+          drupal_goto($destination);
+        }
       }
 
-      module_invoke_all('openid_connect_post_authorize', $tokens, $destination);
-      drupal_goto($destination);
     }
   }
 
@@ -273,7 +281,7 @@ function openid_connect_redirect_page($client_name) {
 /**
  * Saves user profile information into a user account.
  */
-function openid_connect_save_userinfo($account, $user_profile, $client_name) {
+function openid_connect_save_userinfo($account, $userinfo, $client_name) {
   $account_wrapper = entity_metadata_wrapper('user', $account);
   $properties = $account_wrapper->getPropertyInfo();
   $properties_skip = _openid_connect_user_properties_to_skip();
@@ -282,17 +290,24 @@ function openid_connect_save_userinfo($account, $user_profile, $client_name) {
       continue;
     }
     $claim = variable_get('openid_connect_userinfo_mapping_property_' . $property_name, NULL);
-    if ($claim && isset($user_profile[$claim])) {
-      $account_wrapper->{$property_name} = $user_profile[$claim];
+    if ($claim && isset($userinfo[$claim])) {
+      $account_wrapper->{$property_name} = $userinfo[$claim];
     }
   }
+
+  // Save the display name additionally in the user account 'data', for use in
+  // openid_connect_username_alter().
+  if (isset($userinfo['name'])) {
+    $account->data['oidc_name'] = $userinfo['name'];
+  }
+
   $account_wrapper->save();
 
   // Fetch and save user picture from the login provider.
-  if (variable_get('user_pictures') && variable_get('openid_connect_user_pictures', TRUE) && !empty($user_profile['picture'])) {
+  if (variable_get('user_pictures') && variable_get('openid_connect_user_pictures', TRUE) && !empty($userinfo['picture'])) {
     $picture_directory = file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
     if (file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)) {
-      $picture_request_response = drupal_http_request($user_profile['picture']);
+      $picture_request_response = drupal_http_request($userinfo['picture']);
       if ($picture_request_response->code == 200) {
         $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->uid . '-' . REQUEST_TIME . '.jpg');
         $picture_file = file_save_data($picture_request_response->data, $picture_path, FILE_EXISTS_REPLACE);
@@ -312,29 +327,40 @@ function openid_connect_save_userinfo($account, $user_profile, $client_name) {
 }
 
 /**
- * Logs in a user based on the sub-id returned by the login provider.
+ * Logs in a user.
  */
-function openid_connect_login_user($sub, &$account, $email, $client_name) {
-  if (!$account) {
-    $account = openid_connect_create_user($sub, $email, $client_name);
-  }
+function openid_connect_login_user($account) {
   $form_state['uid'] = $account->uid;
   user_login_submit(array(), $form_state);
 }
 
 /**
  * Creates a user indicating sub-id and login provider.
+ *
+ * @return object|FALSE
+ *   The user object or FALSE on failure.
  */
-function openid_connect_create_user($sub, $email, $client_name) {
+function openid_connect_create_user($sub, $mail, $client_name) {
   $edit = array(
-    'name' => $sub,
-    'mail' => $email,
+    'name' => 'oidc_' . $client_name . '_' . $sub,
+    'pass' => user_password(),
+    'mail' => $mail,
+    'init' => $mail,
     'status' => 1,
     'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
   );
-  $account = user_save(NULL, $edit);
-  return $account;
+
+  return user_save(NULL, $edit);
+}
+
+/**
+ * Implements hook_username_alter().
+ */
+function openid_connect_username_alter(&$name, $account) {
+  if (strpos($name, 'oidc_') === 0 && !empty($account->data['oidc_name'])) {
+    $name = $account->data['oidc_name'];
+  }
 }
 
 /**

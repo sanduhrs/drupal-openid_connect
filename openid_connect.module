@@ -569,7 +569,7 @@ function openid_connect_get_scopes() {
  * Returns user properties that can be skipped when mapping user profile info.
  */
 function _openid_connect_user_properties_to_skip() {
-  $properties_to_skip = array('uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
+  $properties_to_skip = array('name', 'mail', 'uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
   return drupal_map_assoc($properties_to_skip);
 }
 

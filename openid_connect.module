@@ -266,7 +266,7 @@ function openid_connect_redirect_page($client_name) {
         if ($account) {
           openid_connect_save_userinfo($account, $userinfo, $client_name);
           openid_connect_login_user($account);
-          module_invoke_all('openid_connect_post_authorize', $tokens, $destination);
+          module_invoke_all('openid_connect_post_authorize', $tokens, $destination, $account, $userinfo);
           drupal_goto($destination);
         }
       }

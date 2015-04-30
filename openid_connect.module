@@ -253,7 +253,9 @@ function openid_connect_redirect_page($client_name) {
       // ID token and access tokens are retrieved, decode the ID token.
       $user_data = $client->decodeIdToken($tokens['id_token']);
       $userinfo = $client->retrieveUserInfo($tokens['access_token']);
-      if ($userinfo) {
+
+      // @todo this needs refactoring
+      if ($userinfo && !empty($userinfo['email'])) {
         // The sub is a unique ID for the login provider to identify the user.
         $sub = isset($userinfo['sub']) ? $userinfo['sub'] : $user_data['sub'];
         $account = openid_connect_user_load_by_sub($sub, $client_name);
@@ -269,6 +271,9 @@ function openid_connect_redirect_page($client_name) {
           module_invoke_all('openid_connect_post_authorize', $tokens, $destination, $account, $userinfo);
           drupal_goto($destination);
         }
+      }
+      elseif ($userinfo && empty($userinfo['email'])) {
+        watchdog('openid_connect', 'No e-mail address provided by @login-provider', array('@login-provider' => $client), WATCHDOG_ERROR);
       }
 
     }

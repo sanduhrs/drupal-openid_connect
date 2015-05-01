@@ -310,25 +310,49 @@ function openid_connect_save_userinfo($account, $userinfo, $client_name) {
 
   // Fetch and save user picture from the login provider.
   if (variable_get('user_pictures') && variable_get('openid_connect_user_pictures', TRUE) && !empty($userinfo['picture'])) {
-    $picture_directory = file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
-    if (file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)) {
-      $picture_request_response = drupal_http_request($userinfo['picture']);
-      if ($picture_request_response->code == 200) {
-        $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->uid . '-' . REQUEST_TIME . '.jpg');
-        $picture_file = file_save_data($picture_request_response->data, $picture_path, FILE_EXISTS_REPLACE);
-        // Check to make sure the picture isn't too large for the site settings.
-        file_validate_image_resolution($picture_file, variable_get('user_picture_dimensions', '1024x1024'));
-        // Update the user record.
-        $picture_file->uid = $account->uid;
-        $picture_file = file_save($picture_file);
-        file_usage_add($picture_file, 'user', 'user', $account->uid);
-        db_update('users')
-          ->fields(array('picture' => $picture_file->fid))
-          ->condition('uid', $account->uid)
-          ->execute();
-      }
-    }
+    openid_connect_save_user_picture($account, $userinfo['picture']);
   }
+}
+
+/**
+ * Save an image as the user picture.
+ *
+ * @param object $account
+ *   The user account.
+ * @param string $picture_url
+ *   The URL to a user picture.
+ */
+function openid_connect_save_user_picture($account, $picture_url) {
+  $picture_directory = file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
+  if (!file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)) {
+    return;
+  }
+
+  $response = drupal_http_request($picture_url);
+  if ($response->code != 200) {
+    watchdog('openid_connect', 'The user picture could not be fetched from URL: @url', array('@url' => $picture_url));
+    return;
+  }
+
+  // Skip saving if the remote picture has not changed.
+  $hash = md5($response->data);
+  if (isset($account->data['oidc_picture_hash']) && $account->data['oidc_picture_hash'] === $hash) {
+    return;
+  }
+
+  $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->uid . '-' . REQUEST_TIME . '.jpg');
+  $picture_file = file_save_data($response->data, $picture_path, FILE_EXISTS_REPLACE);
+
+  // Check to make sure the picture isn't too large for the site settings.
+  // Suppress the status message that Drupal sets after a successful resizing.
+  $status_messages = isset($_SESSION['messages']['status']) ? $_SESSION['messages']['status'] : NULL;
+  file_validate_image_resolution($picture_file, variable_get('user_picture_dimensions', '1024x1024'));
+  $_SESSION['messages']['status'] = $status_messages;
+
+  // Update the user account object.
+  $account->picture = $picture_file;
+  $account->data['oidc_picture_hash'] = $hash;
+  user_save($account);
 }
 
 /**

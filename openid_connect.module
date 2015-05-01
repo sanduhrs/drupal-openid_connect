@@ -347,7 +347,12 @@ function openid_connect_save_user_picture($account, $picture_url) {
   // Suppress the status message that Drupal sets after a successful resizing.
   $status_messages = isset($_SESSION['messages']['status']) ? $_SESSION['messages']['status'] : NULL;
   file_validate_image_resolution($picture_file, variable_get('user_picture_dimensions', '1024x1024'));
-  $_SESSION['messages']['status'] = $status_messages;
+  if (isset($status_messages)) {
+    $_SESSION['messages']['status'] = $status_messages;
+  }
+  else {
+    unset($_SESSION['messages']['status']);
+  }
 
   // Update the user account object.
   $account->picture = $picture_file;

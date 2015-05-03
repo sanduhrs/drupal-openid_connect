@@ -8,6 +8,16 @@
 interface OpenIDConnectClientInterface {
 
   /**
+   * Get the client's human-readable label.
+   */
+  public function getLabel();
+
+  /**
+   * Get the client's machine name.
+   */
+  public function getName();
+
+  /**
    * Returns the value of a setting.
    */
   public function getSetting($key, $default = NULL);

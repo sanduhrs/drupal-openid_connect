@@ -34,8 +34,15 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
     $this->settings = $settings;
   }
 
-  public function __toString() {
+  public function getLabel() {
     return $this->label;
+  }
+
+  /**
+   * Implements OpenIDConnectClientInterface::getName().
+   */
+  public function getName() {
+    return $this->name;
   }
 
   /**

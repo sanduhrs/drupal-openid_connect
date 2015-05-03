@@ -337,7 +337,7 @@ function openid_connect_save_user_picture($account, $picture_url) {
 
   // Skip saving if the remote picture has not changed.
   $hash = md5($response->data);
-  if (isset($account->data['oidc_picture_hash']) && $account->data['oidc_picture_hash'] === $hash) {
+  if (!empty($account->picture) && isset($account->data['oidc_picture_hash']) && $account->data['oidc_picture_hash'] === $hash) {
     return;
   }
 

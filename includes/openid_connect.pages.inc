@@ -52,7 +52,7 @@ function openid_connect_redirect_page($client_name) {
     $tokens = $client->retrieveTokens($_GET['code']);
     if ($tokens) {
       if ($_SESSION['openid_connect_op'] ===  'login') {
-        $success = openid_connect_complete_authorization($client, $tokens);
+        $success = openid_connect_complete_authorization($client, $tokens, $destination);
         if (!$success) {
           drupal_set_message(t('Sign in with @provider could not be completed due to an error.', array('@provider' => $client->getLabel())), 'error');
         }
@@ -69,5 +69,11 @@ function openid_connect_redirect_page($client_name) {
     }
   }
 
-  drupal_goto($destination);
+  // It's possible to set 'options' in the redirect destination.
+  if (is_array($destination)) {
+    drupal_goto($destination[0], $destination[1]);
+  }
+  else {
+    drupal_goto($destination);
+  }
 }

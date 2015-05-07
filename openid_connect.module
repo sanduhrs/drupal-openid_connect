@@ -288,10 +288,35 @@ function openid_connect_save_user_picture($account, $picture_url) {
 
 /**
  * Logs in a user.
+ *
+ * @param object $account
+ *   The user account.
+ * @param string|array &$destination
+ *   The path to redirect to after login.
  */
-function openid_connect_login_user($account) {
+function openid_connect_login_user($account, &$destination) {
   $form_state['uid'] = $account->uid;
-  user_login_submit(array(), $form_state);
+  $form = array();
+
+  // TFA integration.
+  if (module_exists('tfa')) {
+    // The 'code' and 'state' parameters have now been used.
+    unset($_GET['code'], $_GET['state']);
+
+    // TFA will preserve the initial redirect if it is set in the $form_state.
+    $form_state['redirect'] = $destination;
+
+    tfa_login_submit($form, $form_state);
+    tfa_login_form_redirect($form, $form_state);
+  }
+  else {
+    user_login_submit($form, $form_state);
+  }
+
+  // TFA or other submit handlers may want to change the redirect destination.
+  if (isset($form_state['redirect'])) {
+    $destination = $form_state['redirect'];
+  }
 }
 
 /**
@@ -679,11 +704,13 @@ function openid_connect_extract_sub($user_data, $userinfo) {
  *   The client.
  * @param array $tokens
  *   The tokens as returned from OpenIDConnectClientInterface::retrieveTokens().
+ * @param string|array &$destination
+ *   The path to redirect to after authorization.
  *
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function openid_connect_complete_authorization($client, $tokens) {
+function openid_connect_complete_authorization($client, $tokens, &$destination) {
   if (user_is_logged_in()) {
     throw new \RuntimeException('User already logged in');
   }
@@ -716,7 +743,7 @@ function openid_connect_complete_authorization($client, $tokens) {
   }
 
   openid_connect_save_userinfo($account, $userinfo);
-  openid_connect_login_user($account);
+  openid_connect_login_user($account, $destination);
 
   module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo);
 

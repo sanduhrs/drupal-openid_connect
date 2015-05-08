@@ -47,9 +47,25 @@ function openid_connect_connect_form($form, &$form_state, $account) {
 
   $form_state['account'] = $account;
 
+  $clients = openid_connect_get_plugins(TRUE);
+
+  $form['help'] = array(
+    '#prefix' => '<p class="description">',
+    '#suffix' => '</p>',
+  );
+
+  if ($clients) {
+    $form['help']['#markup'] = t('You can connect your account with these external providers.');
+  }
+  else {
+    $form['help']['#markup'] = t('No external account providers are available.');
+
+    return $form;
+  }
+
   $connected_accounts = openid_connect_get_connected_accounts($account);
 
-  foreach (openid_connect_get_plugins(TRUE) as $client) {
+  foreach ($clients as $client) {
     $form[$client['name']] = array(
       '#type' => 'fieldset',
       '#title' => t('Provider: @title', array('@title' => $client['title'])),

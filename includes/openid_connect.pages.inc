@@ -12,17 +12,19 @@ function openid_connect_redirect_page($client_name) {
   // Delete the state token, since it's already been confirmed.
   unset($_SESSION['openid_connect_state']);
 
-  // Ensure some defaults.
-  $_SESSION += array(
-    'openid_connect_destination' => 'user',
-    'openid_connect_op' => 'login',
-    'openid_connect_connect_uid' => NULL,
+  // Get parameters from the session, and then clean up.
+  $parameters = array(
+    'destination' => 'user',
+    'op' => 'login',
+    'connect_uid' => NULL,
   );
-
-  // Get the destination from the session (than clean up after that, too), so
-  // that we can redirect the user back from where they initiated the login.
-  $destination = ltrim($_SESSION['openid_connect_destination'], '/');
-  unset($_SESSION['openid_connect_destination']);
+  foreach ($parameters as $key => $default) {
+    if (isset($_SESSION['openid_connect_' . $key])) {
+      $parameters[$key] = $_SESSION['openid_connect_' . $key];
+      unset($_SESSION['openid_connect_' . $key]);
+    }
+  }
+  $destination = $parameters['destination'];
 
   $client = openid_connect_get_client($client_name);
   if (!isset($_GET['error']) && (!$client || !isset($_GET['code']))) {
@@ -32,11 +34,13 @@ function openid_connect_redirect_page($client_name) {
     return MENU_NOT_FOUND;
   }
 
+  $provider_param = array('@provider' => $client->getLabel());
+
   if (isset($_GET['error'])) {
     if ($_GET['error'] == 'access_denied') {
       // If we have an "access denied" error, that means the user hasn't granted
       // the authorization for the claims.
-      drupal_set_message(t('Sign in with @provider has been canceled.', array('@provider' => $client->getLabel())), 'warning');
+      drupal_set_message(t('Logging in with @provider has been canceled.', $provider_param), 'warning');
     }
     else {
       // Any other error should be logged. E.g. invalid scope.
@@ -51,19 +55,19 @@ function openid_connect_redirect_page($client_name) {
     // Process the login or connect operations.
     $tokens = $client->retrieveTokens($_GET['code']);
     if ($tokens) {
-      if ($_SESSION['openid_connect_op'] ===  'login') {
+      if ($parameters['op'] === 'login') {
         $success = openid_connect_complete_authorization($client, $tokens, $destination);
         if (!$success) {
-          drupal_set_message(t('Sign in with @provider could not be completed due to an error.', array('@provider' => $client->getLabel())), 'error');
+          drupal_set_message(t('Logging in with @provider could not be completed due to an error.', $provider_param), 'error');
         }
       }
-      elseif ($_SESSION['openid_connect_op'] === 'connect' && $_SESSION['openid_connect_connect_uid'] === $GLOBALS['user']->uid) {
+      elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $GLOBALS['user']->uid) {
         $success = openid_connect_connect_current_user($client, $tokens);
         if ($success) {
-          drupal_set_message(t('Account successfully connected with @provider.', array('@provider' => $client->getLabel())));
+          drupal_set_message(t('Account successfully connected with @provider.', $provider_param));
         }
         else {
-          drupal_set_message(t('Connecting with @provider could not be completed due to an error.', array('@provider' => $client->getLabel())), 'error');
+          drupal_set_message(t('Connecting with @provider could not be completed due to an error.', $provider_param), 'error');
         }
       }
     }

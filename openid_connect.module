@@ -776,22 +776,24 @@ function openid_connect_connect_current_user($client, $tokens) {
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
+  $provider_param = array('@provider' => $client->getLabel());
+
   if ($userinfo && empty($userinfo['email'])) {
-    watchdog('openid_connect', 'No e-mail address provided by @provider', array('@provider' => $client->getLabel()), WATCHDOG_ERROR);
+    watchdog('openid_connect', 'No e-mail address provided by @provider', $provider_param, WATCHDOG_ERROR);
 
     return FALSE;
   }
 
   $sub = openid_connect_extract_sub($user_data, $userinfo);
   if (empty($sub)) {
-    watchdog('openid_connect', 'No "sub" found from @provider', array('@provider' => $client->getLabel()), WATCHDOG_ERROR);
+    watchdog('openid_connect', 'No "sub" found from @provider', $provider_param, WATCHDOG_ERROR);
 
     return FALSE;
   }
 
   $account = openid_connect_user_load_by_sub($sub, $client->getName());
   if ($account && $account->uid !== $user->uid) {
-    drupal_set_message(t('Another user is already connected to this external account.'), 'error');
+    drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
 
     return FALSE;
   }

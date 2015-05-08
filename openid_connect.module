@@ -730,17 +730,25 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   }
 
   $account = openid_connect_user_load_by_sub($sub, $client->getName());
-  if (!$account && user_load_by_mail($userinfo['email'])) {
-    drupal_set_message(t('The e-mail address is already taken: @email', array('@email' => $userinfo['email'])), 'error');
+  if ($account) {
+    // An existing account was found. Save user claims.
+    if (variable_get('openid_connect_always_save_userinfo', TRUE)) {
+      openid_connect_save_userinfo($account, $userinfo);
+    }
   }
-  elseif (!$account) {
+  else {
+    // Check whether there is an e-mail address conflict.
+    if (user_load_by_mail($userinfo['email'])) {
+      drupal_set_message(t('The e-mail address is already taken: @email', array('@email' => $userinfo['email'])), 'error');
+
+      return FALSE;
+    }
+
+    // Create a new account.
     $account = openid_connect_create_user($sub, $userinfo['email'], $client->getName());
-  }
-  if (!$account) {
-    return FALSE;
+    openid_connect_save_userinfo($account, $userinfo);
   }
 
-  openid_connect_save_userinfo($account, $userinfo);
   openid_connect_login_user($account, $destination);
 
   module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo);
@@ -793,7 +801,9 @@ function openid_connect_connect_current_user($client, $tokens) {
     openid_connect_connect_account($account, $client->getName(), $sub);
   }
 
-  openid_connect_save_userinfo($account, $userinfo);
+  if (variable_get('openid_connect_always_save_userinfo', TRUE)) {
+    openid_connect_save_userinfo($account, $userinfo);
+  }
 
   return TRUE;
 }

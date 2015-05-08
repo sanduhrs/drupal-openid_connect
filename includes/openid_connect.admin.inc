@@ -39,18 +39,26 @@ function openid_connect_admin_form($form, &$form_state) {
     $form['clients'][$client_plugin['name']] += $client->settingsForm();
   }
 
-  $form['userinfo_mapping'] = array(
-    '#title' => t('User info mapping'),
-    '#type' => 'fieldset',
+  $form['openid_connect_always_save_userinfo'] = array(
+    '#title' => t('Save user claims on every login'),
+    '#description' => t('If disabled, user claims will only be saved when the account is first created.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('openid_connect_always_save_userinfo', TRUE),
   );
+
   if (variable_get('user_pictures')) {
-    $form['userinfo_mapping']['openid_connect_user_pictures'] = array(
+    $form['openid_connect_user_pictures'] = array(
       '#title' => t('Fetch user profile picture from login provider'),
       '#description' => t('Whether the user profile picture from the login provider should be fetched and saved locally.'),
       '#type' => 'checkbox',
       '#default_value' => variable_get('openid_connect_user_pictures', TRUE),
     );
   }
+
+  $form['userinfo_mapping'] = array(
+    '#title' => t('User claims mapping'),
+    '#type' => 'fieldset',
+  );
 
   $user_entity_wrapper = entity_metadata_wrapper('user');
   $claims = openid_connect_claims_options();
@@ -136,5 +144,15 @@ function openid_connect_admin_form_submit($form, &$form_state) {
   }
   else {
     variable_del('openid_connect_userinfo_mapping_claims');
+  }
+
+  $default_enabled = array(
+    'openid_connect_always_save_userinfo',
+    'openid_connect_user_pictures',
+  );
+  foreach ($default_enabled as $variable) {
+    if (isset($form_state['values'][$variable]) && empty($form_state['values'][$variable])) {
+      variable_set($variable, $form_state['values'][$variable]);
+    }
   }
 }

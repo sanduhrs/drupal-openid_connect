@@ -56,6 +56,10 @@ function openid_connect_permission() {
     'manage own openid_connect accounts' => array(
       'title' => t('Manage own connected accounts'),
     ),
+    'openid_connect set own password' => array(
+      'title' => t('Set a password for local authentication'),
+      'description' => t('If the account is connected with an external provider, the user needs this permission in order to set their own password.'),
+    ),
   );
 }
 
@@ -392,10 +396,7 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
     $account_form = &$form;
   }
 
-  if (openid_connect_get_user_authname($form['#user']->uid)) {
-    // Do not let the user to set a password if they are authenticated by a
-    // remote service that this module supports.
-    // @todo Might need to reconsider this.
+  if (!empty($account_form['pass']['#access']) && !openid_connect_set_password_access($form['#user'])) {
     $account_form['current_pass']['#access'] = FALSE;
     $account_form['current_pass_required_values']['#value'] = array();
     $account_form['pass']['#access'] = FALSE;
@@ -403,25 +404,22 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Gets the remote authentication name of a user authenticated by this module.
+ * Find whether the user is allowed to change their own password.
+ *
+ * @param object $account
+ *   A user account object.
+ *
+ * @return bool
+ *   TRUE if access is granted, FALSE otherwise.
  */
-function openid_connect_get_user_authname($uid) {
-  $plugins = openid_connect_get_plugins(TRUE);
-  $modules = array();
-  foreach ($plugins as $plugin) {
-    $modules[] = 'openid_connect_' . $plugin['name'];
+function openid_connect_set_password_access($account) {
+  if (user_access('openid_connect set own password', $account)) {
+    return TRUE;
   }
-  if (!empty($modules)) {
-    $result = db_select('authmap', 'a')
-      ->fields('a', array('authname'))
-      ->condition('uid', $uid)
-      ->condition('module', $modules, 'IN')
-      ->execute()
-      ->fetchCol(0);
 
-    return $result;
-  }
-  return FALSE;
+  $connected_accounts = openid_connect_get_connected_accounts($account);
+
+  return empty($connected_accounts);
 }
 
 /**

@@ -326,15 +326,22 @@ function openid_connect_login_user($account, &$destination) {
 /**
  * Creates a user indicating sub-id and login provider.
  *
+ * @param string $sub
+ *   The subject identifier.
+ * @param array $userinfo
+ *   The user claims, containing at least 'email'.
+ * @param string $client_name
+ *   The machine name of the client.
+ *
  * @return object|FALSE
  *   The user object or FALSE on failure.
  */
-function openid_connect_create_user($sub, $mail, $client_name) {
+function openid_connect_create_user($sub, $userinfo, $client_name) {
   $edit = array(
-    'name' => 'oidc_' . $client_name . '_' . $sub,
+    'name' => openid_connect_generate_username($sub, $userinfo, $client_name),
     'pass' => user_password(),
-    'mail' => $mail,
-    'init' => $mail,
+    'mail' => $userinfo['email'],
+    'init' => $userinfo['email'],
     'status' => 1,
     'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
@@ -344,10 +351,54 @@ function openid_connect_create_user($sub, $mail, $client_name) {
 }
 
 /**
+ * Generate a username for a new account.
+ *
+ * @param array $userinfo
+ *   The user claims.
+ *
+ * @return string
+ *   A unique username.
+ */
+function openid_connect_generate_username($sub, $userinfo, $client_name) {
+  $name = 'oidc_' . $client_name . '_' . $sub;
+  $candidates = array('preferred_username', 'name');
+  foreach ($candidates as $candidate) {
+    if (!empty($userinfo[$candidate])) {
+      $name = trim($userinfo[$candidate]);
+      break;
+    }
+  }
+
+  // Ensure there are no duplicates.
+  for ($original = $name, $i = 1; openid_connect_username_exists($name); $i++) {
+    $name = $original . '_' . $i;
+  }
+
+  return $name;
+}
+
+/**
+ * Check if a user name already exists.
+ *
+ * @param string $name
+ *   A name to test.
+ *
+ * @return bool
+ *   TRUE if a user exists with the given name, FALSE otherwise.
+ */
+function openid_connect_username_exists($name) {
+  return db_query('SELECT COUNT(*) FROM {users} WHERE name = :name', array(
+    ':name' => $name
+  ))->fetchField() > 0;
+}
+
+/**
  * Implements hook_username_alter().
  */
 function openid_connect_username_alter(&$name, $account) {
-  if (strpos($name, 'oidc_') === 0 && !empty($account->data['oidc_name'])) {
+  // Ensure that usernames are not displayed if they are email addresses, or if
+  // they are generated names starting with 'oidc_'.
+  if (!empty($account->data['oidc_name']) && (strpos($name, 'oidc_') === 0 || strpos($name, '@'))) {
     $name = $account->data['oidc_name'];
   }
 }
@@ -745,7 +796,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     }
 
     // Create a new account.
-    $account = openid_connect_create_user($sub, $userinfo['email'], $client->getName());
+    $account = openid_connect_create_user($sub, $userinfo, $client->getName());
     openid_connect_save_userinfo($account, $userinfo);
   }
 

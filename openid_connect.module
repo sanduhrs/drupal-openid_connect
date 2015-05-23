@@ -209,6 +209,9 @@ function openid_connect_redirect_access() {
  */
 function openid_connect_connected_accounts_access($account) {
   global $user;
+  if (user_access('administer users')) {
+    return TRUE;
+  }
 
   return $user->uid && $user->uid === $account->uid && user_access('manage own openid_connect accounts');
 }

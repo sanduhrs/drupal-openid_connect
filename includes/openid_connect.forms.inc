@@ -49,18 +49,20 @@ function openid_connect_connect_form($form, &$form_state, $account) {
 
   $clients = openid_connect_get_plugins(TRUE);
 
+  $read_only = $GLOBALS['user']->uid != $account->uid;
+
   $form['help'] = array(
     '#prefix' => '<p class="description">',
     '#suffix' => '</p>',
   );
 
-  if ($clients) {
-    $form['help']['#markup'] = t('You can connect your account with these external providers.');
-  }
-  else {
+  if (empty($clients)) {
     $form['help']['#markup'] = t('No external account providers are available.');
 
     return $form;
+  }
+  elseif ($GLOBALS['user']->uid == $account->uid) {
+    $form['help']['#markup'] = t('You can connect your account with these external providers.');
   }
 
   $connected_accounts = openid_connect_get_connected_accounts($account);
@@ -85,6 +87,7 @@ function openid_connect_connect_form($form, &$form_state, $account) {
         '#type' => 'submit',
         '#value' => t('Disconnect from !client_title', array('!client_title' => $client['title'])),
         '#name' => 'disconnect__' . $client['name'],
+        '#access' => !$read_only,
       );
     }
     else {
@@ -93,6 +96,7 @@ function openid_connect_connect_form($form, &$form_state, $account) {
         '#type' => 'submit',
         '#value' => t('Connect with !client_title', array('!client_title' => $client['title'])),
         '#name' => 'connect__' . $client['name'],
+        '#access' => !$read_only,
       );
     }
   }

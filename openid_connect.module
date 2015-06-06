@@ -315,14 +315,14 @@ function openid_connect_login_user($account, &$destination) {
 
     tfa_login_submit($form, $form_state);
     tfa_login_form_redirect($form, $form_state);
+
+    // TFA may want to change the redirect destination.
+    if (isset($form_state['redirect']) && $form_state['redirect'] != 'user/' . $form_state['uid']) {
+      $destination = $form_state['redirect'];
+    }
   }
   else {
     user_login_submit($form, $form_state);
-  }
-
-  // TFA or other submit handlers may want to change the redirect destination.
-  if (isset($form_state['redirect'])) {
-    $destination = $form_state['redirect'];
   }
 }
 

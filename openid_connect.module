@@ -327,6 +327,21 @@ function openid_connect_login_user($account, &$destination) {
 }
 
 /**
+ * Save the current path in the session, for redirecting after authorization.
+ */
+function openid_connect_save_destination() {
+  $destination = drupal_get_destination();
+  $destination = $destination['destination'] == 'user/login' ? 'user' : $destination['destination'];
+
+  // The destination could contain query parameters. Ensure that they are
+  // preserved.
+  $parsed = drupal_parse_url($destination);
+  $_SESSION['openid_connect_destination'] = array(
+    $parsed['path'], array('query' => $parsed['query']),
+  );
+}
+
+/**
  * Creates a user indicating sub-id and login provider.
  *
  * @param string $sub

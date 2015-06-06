@@ -26,11 +26,7 @@ function openid_connect_login_form($form, &$form_state) {
  * Form submit handler: Log in with an OpenID Connect login provider.
  */
 function openid_connect_login_form_submit(&$form, &$form_state) {
-  // Save the current path in the session, so that we can redirect the user back
-  // there after the authorization.
-  $destination = drupal_get_destination();
-  $destination = $destination['destination'] == 'user/login' ? 'user' : $destination['destination'];
-  $_SESSION['openid_connect_destination'] = $destination;
+  openid_connect_save_destination();
 
   $client_name = $form_state['triggering_element']['#name'];
   $client = openid_connect_get_client($client_name);
@@ -128,9 +124,7 @@ function openid_connect_connect_form_submit(&$form, &$form_state) {
     return;
   }
 
-  $destination = drupal_get_destination();
-  $destination = $destination['destination'] == 'user/login' ? 'user' : $destination['destination'];
-  $_SESSION['openid_connect_destination'] = $destination;
+  openid_connect_save_destination();
 
   $client = openid_connect_get_client($client_name);
   $scopes = openid_connect_get_scopes();

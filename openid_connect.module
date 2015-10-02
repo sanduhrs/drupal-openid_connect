@@ -5,28 +5,10 @@
  * Contains openid_connect.module.
  */
 
-use Drupal\Core\Routing\RouteMatchInterface;
-
 /**
  * Base path where to login providers can redirect in the OAuth2 flow.
  */
 define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
-
-/**
- * Implements hook_help().
- */
-function openid_connect_help($route_name, RouteMatchInterface $route_match) {
-  switch ($route_name) {
-    // Main module help for the openid_connect module.
-    case 'help.page.openid_connect':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('A pluggable client implementation for the OpenID Connect protocol.') . '</p>';
-      return $output;
-
-    default:
-  }
-}
 
 /**
  * Implements hook_permission().

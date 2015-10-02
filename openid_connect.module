@@ -11,24 +11,6 @@
 define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
 
 /**
- * Implements hook_permission().
- */
-function openid_connect_permission() {
-  return array(
-    'configure openid connect clients' => array(
-      'title' => t('Configure OpenID Connect clients'),
-    ),
-    'manage own openid_connect accounts' => array(
-      'title' => t('Manage own connected accounts'),
-    ),
-    'openid_connect set own password' => array(
-      'title' => t('Set a password for local authentication'),
-      'description' => t('If the account is connected with an external provider, the user needs this permission in order to set their own password.'),
-    ),
-  );
-}
-
-/**
  * Implements hook_ctools_plugin_directory().
  */
 function openid_connect_ctools_plugin_directory($module, $plugin) {

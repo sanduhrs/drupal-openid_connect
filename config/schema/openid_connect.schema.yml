@@ -1,0 +1,12 @@
+# Schema for the configuration files of the OpenID Connect module.
+
+devel.settings:
+  type: config_object
+  label: 'OpenID Connect settings'
+  mapping:
+    always_save_userinfo:
+      type: boolean
+      label: 'Save user claims on every login'
+    user_pictures:
+      type: boolean
+      label: 'Fetch user profile picture from login provider'

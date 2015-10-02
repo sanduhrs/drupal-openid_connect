@@ -2,11 +2,22 @@
 
 /**
  * @file
- * OpenID Connect client for Google.
+ * Contains \Drupal\openid_connect\Plugin\OpenIDConnectClient\OpenIDConnectClientGoogle.
  */
 
+namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
+
+use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
+
 /**
+ * OpenID Connect client for Google.
+ *
  * Implements OpenID Connect Client plugin for Google.
+ *
+ * @OpenIDConnectClient(
+ *   id = "google",
+ *   label = @Translation("Google OpenID Connect client")
+ * )
  */
 class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {
 

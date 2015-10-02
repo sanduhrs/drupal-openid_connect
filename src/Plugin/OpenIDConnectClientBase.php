@@ -2,10 +2,17 @@
 
 /**
  * @file
- * Base class for OpenID Connect clients.
+ * Contains Drupal\openid_connect\Plugin\OpenIDConnectClientBase.
  */
 
-abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
+namespace Drupal\openid_connect\Plugin;
+
+use Drupal\Component\Plugin\PluginBase;
+
+/**
+ * Base class for OpenID Connect client plugins.
+ */
+abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface {
 
   /**
    * The machine name of the client plugin.
@@ -177,4 +184,5 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
       return FALSE;
     }
   }
+
 }

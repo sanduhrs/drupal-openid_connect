@@ -2,8 +2,10 @@
 
 /**
  * @file
- * A pluggable client implementation for the OpenID Connect protocol.
+ * Contains openid_connect.module.
  */
+
+use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Base path where to login providers can redirect in the OAuth2 flow.
@@ -11,38 +13,19 @@
 define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
 
 /**
- * Implements hook_menu().
+ * Implements hook_help().
  */
-function openid_connect_menu() {
-  $items = array();
-  $items['admin/config/services/openid-connect'] = array(
-    'title' => 'OpenID Connect',
-    'description' => 'Config OpenID Connect, choose active OpenID Connect clients etc.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('openid_connect_admin_form'),
-    'access arguments' => array('configure openid connect clients'),
-    'file' => 'includes/openid_connect.admin.inc',
-  );
-  $items[OPENID_CONNECT_REDIRECT_PATH_BASE . '/%'] = array(
-    'title' => 'OpenID Connect redirect page',
-    'page callback' => 'openid_connect_redirect_page',
-    'page arguments' => array(1),
-    'access callback' => 'openid_connect_redirect_access',
-    'type' => MENU_CALLBACK,
-    'file' => 'includes/openid_connect.pages.inc'
-  );
-  $items['user/%user/connected-accounts'] = array(
-    'title' => 'Connected accounts',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('openid_connect_connect_form', 1),
-    'access callback' => 'openid_connect_connected_accounts_access',
-    'access arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 5,
-    'file' => 'includes/openid_connect.forms.inc'
-  );
+function openid_connect_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the openid_connect module.
+    case 'help.page.openid_connect':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('A pluggable client implementation for the OpenID Connect protocol.') . '</p>';
+      return $output;
 
-  return $items;
+    default:
+  }
 }
 
 /**

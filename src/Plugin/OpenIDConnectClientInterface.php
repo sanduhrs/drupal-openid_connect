@@ -2,11 +2,17 @@
 
 /**
  * @file
- * Interface to implement OpenID Connect clients.
+ * Contains Drupal\openid_connect\Plugin\OpenIDConnectClientInterface.
  */
 
-interface OpenIDConnectClientInterface {
+namespace Drupal\openid_connect\Plugin;
 
+use Drupal\Component\Plugin\PluginInspectionInterface;
+
+/**
+ * Defines an interface for OpenID Connect client plugins.
+ */
+interface OpenIDConnectClientInterface extends PluginInspectionInterface {
   /**
    * Get the client's human-readable label.
    */

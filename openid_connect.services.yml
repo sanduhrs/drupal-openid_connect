@@ -1,0 +1,4 @@
+services:
+  plugin.manager.openid_connect_client.processor:
+    class: Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+    parent: default_plugin_manager

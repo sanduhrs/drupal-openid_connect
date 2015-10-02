@@ -2,12 +2,24 @@
 
 /**
  * @file
+ * Contains \Drupal\openid_connect\Plugin\OpenIDConnectClient\OpenIDConnectClientGeneric.
+ */
+
+namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
+
+use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
+
+/**
  * Generic OpenID Connect client.
  *
  * Used primarily to login to Drupal sites powered by oauth2_server or PHP
  * sites powered by oauth2-server-php.
+ *
+ * @OpenIDConnectClient(
+ *   id = "generic",
+ *   label = @Translation("Generic OpenID Connect client")
+ * )
  */
-
 class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
 
   /**

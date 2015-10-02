@@ -11,25 +11,6 @@
 define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
 
 /**
- * Implements hook_ctools_plugin_directory().
- */
-function openid_connect_ctools_plugin_directory($module, $plugin) {
-  if ($module == 'openid_connect') {
-    return 'plugins/' . $plugin;
-  }
-}
-
-/**
- * Implements hook_ctools_plugin_type().
- */
-function openid_connect_ctools_plugin_type() {
-  $plugins['openid_connect_client'] = array(
-    'classes' => array('class'),
-  );
-  return $plugins;
-}
-
-/**
  * Returns a client instance.
  *
  * @param string $client_name

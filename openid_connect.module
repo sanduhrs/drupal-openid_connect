@@ -11,66 +11,6 @@
 define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
 
 /**
- * Returns a client instance.
- *
- * @param string $client_name
- *   The name of the client to instantiate.
- *
- * @return OpenIDConnectClientInterface
- */
-function openid_connect_get_client($client_name) {
-  $clients = &drupal_static(__FUNCTION__);
-  if (!isset($clients[$client_name])) {
-    $plugin = openid_connect_get_plugin($client_name);
-    if ($plugin) {
-      $settings = variable_get('openid_connect_client_' . $client_name, array());
-      $clients[$client_name] = new $plugin['class']($client_name, $plugin['title'], $settings);
-    }
-    else {
-      $clients[$client_name] = FALSE;
-    }
-  }
-
-  return $clients[$client_name];
-}
-
-/**
- * Returns an OpenID Connect client plugin.
- *
- * @param string $client_name
- *   Name of the plugin.
- *
- * @return array
- *   An array with information about the requested operation type plugin.
- */
-function openid_connect_get_plugin($client_name) {
-  ctools_include('plugins');
-  return ctools_get_plugins('openid_connect', 'openid_connect_client', $client_name);
-}
-
-/**
- * Returns the available OpenID Connect client plugins.
- *
- * @param $enabled_only
- *   Whether to return only the plugins enabled by the administrator.
- */
-function openid_connect_get_plugins($enabled_only = FALSE) {
-  ctools_include('plugins');
-  $plugins = ctools_get_plugins('openid_connect', 'openid_connect_client');
-  $plugins_enabled = variable_get('openid_connect_clients_enabled', array());
-  foreach ($plugins as $key => $plugin) {
-    if (!class_exists($plugin['class']) || ($enabled_only && empty($plugins_enabled[$plugin['name']]))) {
-      // Invalid class specified or client is not enabled and we only suppose to
-      // return those that are active.
-      unset($plugins[$key]);
-      continue;
-    }
-  }
-  uasort($plugins, 'ctools_plugin_sort');
-  return $plugins;
-}
-
-/**
  * Implements hook_block_info().
  */
 function openid_connect_block_info() {

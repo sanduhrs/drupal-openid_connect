@@ -11,32 +11,6 @@
 define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
 
 /**
- * Implements hook_block_info().
- */
-function openid_connect_block_info() {
-  return array(
-    'openid_connect_login' => array(
-      'info' => t('OpenID Connect login'),
-      'cache' => DRUPAL_CACHE_PER_ROLE | DRUPAL_CACHE_PER_PAGE,
-    ),
-  );
-}
-
-/**
- * Implements hook_block_view().
- */
-function openid_connect_block_view($delta = '') {
-  if ($delta == 'openid_connect_login' && user_is_anonymous()) {
-    module_load_include('inc', 'openid_connect', 'includes/openid_connect.forms');
-
-    return array(
-      'subject' => t('Log in'),
-      'content' => drupal_get_form('openid_connect_login_form'),
-    );
-  }
-}
-
-/**
  * Creates a state token and stores it in the session for later validation.
  *
  * @return string
@@ -203,7 +177,7 @@ function openid_connect_save_destination() {
 
   // The destination could contain query parameters. Ensure that they are
   // preserved.
-  $parsed = drupal_parse_url($destination);
+  $parsed = parse_url($destination);
   $_SESSION['openid_connect_destination'] = array(
     $parsed['path'], array('query' => $parsed['query']),
   );

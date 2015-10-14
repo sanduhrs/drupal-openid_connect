@@ -11,7 +11,7 @@
 class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
 
   /**
-   * Overrides OpenIDConnectClientBase::settingsForm().
+   * {@inheritdoc}
    */
   public function settingsForm() {
     $form = parent::settingsForm();
@@ -37,7 +37,7 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
   }
 
   /**
-   * Overrides OpenIDConnectClientBase::getEndpoints().
+   * {@inheritdoc}
    */
   public function getEndpoints() {
     return array(

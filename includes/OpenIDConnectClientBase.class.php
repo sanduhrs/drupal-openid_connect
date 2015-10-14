@@ -34,26 +34,29 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
     $this->settings = $settings;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getLabel() {
     return $this->label;
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::getName().
+   * {@inheritdoc}
    */
   public function getName() {
     return $this->name;
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::getSetting().
+   * {@inheritdoc}
    */
   public function getSetting($key, $default = NULL) {
     return isset($this->settings[$key]) ? $this->settings[$key] : $default;
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::settingsForm().
+   * {@inheritdoc}
    */
   public function settingsForm() {
     $form['client_id'] = array(
@@ -71,7 +74,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::settingsFormValidate().
+   * {@inheritdoc}
    */
   public function settingsFormValidate($form, &$form_state, $error_element_base) {
     // No need to do anything, but make the function have a body anyway
@@ -79,7 +82,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::settingsFormSubmit().
+   * {@inheritdoc}
    */
   public function settingsFormSubmit($form, &$form_state) {
     // No need to do anything, but make the function have a body anyway
@@ -87,14 +90,14 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::getEndpoints().
+   * {@inheritdoc}
    */
   public function getEndpoints() {
     throw new Exception('Unimplemented method getEndpoints().');
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::authorize().
+   * {@inheritdoc}
    */
   public function authorize($scope = 'openid email') {
     $redirect_uri = OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $this->name;
@@ -149,7 +152,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::decodeIdToken().
+   * {@inheritdoc}
    */
   public function decodeIdToken($id_token) {
     list($headerb64, $claims64, $signatureb64) = explode('.', $id_token);
@@ -159,7 +162,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::retrieveUserInfo().
+   * {@inheritdoc}
    */
   public function retrieveUserInfo($access_token) {
     $request_options = array(
@@ -172,9 +175,9 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
     if (!isset($response->error) && $response->code == 200) {
       return drupal_json_decode($response->data);
     }
-    else {
-      openid_connect_log_request_error(__FUNCTION__, $this->name, $response);
-      return FALSE;
-    }
+
+    openid_connect_log_request_error(__FUNCTION__, $this->name, $response);
+
+    return array();
   }
 }

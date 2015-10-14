@@ -11,7 +11,7 @@
 class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {
 
   /**
-   * Overrides OpenIDConnectClientBase::getEndpoints().
+   * {@inheritdoc}
    */
   public function getEndpoints() {
     return array(
@@ -22,11 +22,11 @@ class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {
   }
 
   /**
-   * Overrides OpenIDConnectClientBase::retrieveUserInfo().
+   * {@inheritdoc}
    */
   public function retrieveUserInfo($access_token) {
     $userinfo = parent::retrieveUserInfo($access_token);
-    if ($userinfo) {
+    if (!empty($userinfo['picture'])) {
       // For some reason Google returns the URI of the profile picture in a
       // weird format: "https:" appears twice in the beginning of the URI.
       // Using a regular expression matching for fixing it guarantees that

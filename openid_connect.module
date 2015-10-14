@@ -815,6 +815,8 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
 
     // Create a new account.
     $account = openid_connect_create_user($sub, $userinfo, $client->getName());
+    // Reload $account in case it has been altered in a user hook elsewhere.
+    $account = user_load($account->uid);
     openid_connect_save_userinfo($account, $userinfo);
   }
 

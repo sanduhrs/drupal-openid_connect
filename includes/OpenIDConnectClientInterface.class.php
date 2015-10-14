@@ -98,8 +98,8 @@ interface OpenIDConnectClientInterface {
    * @param string $authorization_code
    *   Authorization code received as a result of the the authorization request.
    *
-   * @return array
-   *   An associative array containing:
+   * @return array|FALSE
+   *   FALSE on failure, or an associative array containing:
    *   - id_token: The ID token that holds user data.
    *   - access_token: Access token that can be used to obtain user profile
    *     information.

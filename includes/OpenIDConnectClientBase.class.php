@@ -117,7 +117,7 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::retrieveIDToken().
+   * {@inheritdoc}
    */
   public function retrieveTokens($authorization_code) {
     // Exchange `code` for access token and ID token.

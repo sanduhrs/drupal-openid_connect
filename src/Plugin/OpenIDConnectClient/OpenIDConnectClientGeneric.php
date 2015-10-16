@@ -26,10 +26,13 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
    * Overrides OpenIDConnectClientBase::getEndpoints().
    */
   public function getEndpoints() {
+    //FIXME: The config should be available in the object
+    $client_config = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
+
     return array(
-      'authorization' => $this->getSetting('authorization_endpoint'),
-      'token' => $this->getSetting('token_endpoint'),
-      'userinfo' => $this->getSetting('userinfo_endpoint'),
+      'authorization' => $client_config['authorization_endpoint'],
+      'token' => $client_config['token_endpoint'],
+      'userinfo' => $client_config['userinfo_endpoint'],
     );
   }
 

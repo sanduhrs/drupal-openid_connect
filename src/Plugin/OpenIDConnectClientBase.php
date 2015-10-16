@@ -10,63 +10,49 @@ namespace Drupal\openid_connect\Plugin;
 use Exception;
 use Drupal\Core\Url;
 use Drupal\Component\Plugin\PluginBase;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Base class for OpenID Connect client plugins.
  */
 abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface {
 
-  /**
-   * The machine name of the client plugin.
-   *
-   * @var string
-   */
-  protected $name;
-
-  /**
-   * The human-readable name of the client plugin.
-   *
-   * @var string
-   */
-  protected $label;
-
-  /**
-   * Admin-provided configuration.
-   *
-   * @var array
-   */
-  protected $settings;
-
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-
-    $this->name = $plugin_id;
-    $this->label = $plugin_id;
-    $this->settings = $configuration;
   }
 
+  /**
+   * Implements OpenIDConnectClientInterface::getLabel().
+   */
   public function getLabel() {
-    return $this->label;
+    return $this->pluginId;
   }
 
   /**
    * Implements OpenIDConnectClientInterface::getName().
    */
   public function getName() {
-    return $this->name;
+    return $this->pluginId;
   }
 
   /**
    * Implements OpenIDConnectClientInterface::getSetting().
    */
-  public function getSetting($key, $default = NULL) {
-    return isset($this->settings[$key]) ? $this->settings[$key] : $default;
+  public function getSetting($key) {
+    return $this->configuration[$key];
   }
 
   /**
    * Implements OpenIDConnectClientInterface::settingsForm().
    */
   public function settingsForm() {
+    //FIXME: Configuration shuold be available in $this->configuration
+    $this->configuration = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
+
     $form['client_id'] = array(
       '#title' => t('Client ID'),
       '#type' => 'textfield',
@@ -74,7 +60,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     );
     $form['client_secret'] = array(
       '#title' => t('Client secret'),
-      '#type' => 'textarea',
+      '#type' => 'textfield',
       '#default_value' => $this->getSetting('client_secret'),
     );
 
@@ -108,20 +94,30 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * Implements OpenIDConnectClientInterface::authorize().
    */
   public function authorize($scope = 'openid email') {
-    $redirect_uri = OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $this->name;
+    //FIXME: The config should be available in the object
+    $client_config = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
+
+    $redirect_uri = Url::fromRoute(
+      'openid_connect.redirect_controller_redirect',
+      array('client_name' => $this->pluginId), array('absolute' => TRUE)
+    )->toString();
     $url_options = array(
       'query' => array(
-        'client_id' => $this->getSetting('client_id'),
+        'client_id' => $client_config['client_id'],
         'response_type' => 'code',
         'scope' => $scope,
-        'redirect_uri' => url($redirect_uri, array('absolute' => TRUE)),
+        'redirect_uri' => $redirect_uri,
         'state' => openid_connect_create_state_token(),
       ),
     );
+
     $endpoints = $this->getEndpoints();
     // Clear $_GET['destination'] because we need to override it.
     unset($_GET['destination']);
-    drupal_goto($endpoints['authorization'], $url_options);
+    $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString();
+
+    $response = new RedirectResponse($authorization_endpoint);
+    return $response->send();
   }
 
   /**

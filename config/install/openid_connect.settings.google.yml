@@ -1,5 +1,4 @@
 enabled: 0
 settings:
-  authorization_endpoint: 'https://accounts.google.com/o/oauth2/auth'
-  token_endpoint: 'https://accounts.google.com/o/oauth2/token'
-  userinfo_endpoint: 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
+  client_id:
+  client_secret:

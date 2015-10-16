@@ -49,13 +49,11 @@ class SettingsForm extends ConfigFormBase {
 
     $clients_enabled = array();
     foreach ($client_plugins as $client_plugin) {
-      //dsm($client_plugin);
       $enabled = \Drupal::configFactory()
         ->getEditable('openid_connect.settings.' . $client_plugin['id'])
         ->get('enabled');
       $clients_enabled[$client_plugin['id']] = (bool) $enabled ? $client_plugin['id'] : 0;
     }
-    dsm($clients_enabled);
 
     $form['#tree'] = TRUE;
     $form['clients_enabled'] = array(
@@ -67,6 +65,7 @@ class SettingsForm extends ConfigFormBase {
     );
     foreach ($client_plugins as $client_plugin) {
       $client = $manager->createInstance($client_plugin['id']);
+      $client_config = $this->config('openid_connect.settings.' . $client_plugin['id']);
 
       $element = 'clients_enabled[' . $client_plugin['id'] . ']';
       $form['clients'][$client_plugin['id']] = array(
@@ -110,7 +109,6 @@ class SettingsForm extends ConfigFormBase {
         continue;
       }
       // Always map the timezone.
-      //TODO: This is not needed anymore, is it?
       $default_value = 0;
       if ($property_name == 'timezone') {
         $default_value = 'zoneinfo';

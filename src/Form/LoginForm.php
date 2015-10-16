@@ -24,12 +24,12 @@ class LoginForm extends FormBase {
    *
    * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
-  protected $plugin_manager_openid_connect_client_processor;
+  protected $plugin_manager;
 
   public function __construct(
-    OpenIDConnectClientManager $plugin_manager_openid_connect_client_processor
+    OpenIDConnectClientManager $plugin_manager
   ) {
-    $this->plugin_manager_openid_connect_client_processor = $plugin_manager_openid_connect_client_processor;
+    $this->plugin_manager = $plugin_manager;
   }
 
   public static function create(ContainerInterface $container) {
@@ -49,13 +49,20 @@ class LoginForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $plugin_manager = $this->plugin_manager_openid_connect_client_processor;
+    $plugin_manager = $this->plugin_manager;
     $definitions = $plugin_manager->getDefinitions();
-    foreach ($definitions as $client) {
-      $form['openid_connect_client_' . $client['id'] . '_login'] = array(
+    foreach ($definitions as $client_id => $client) {
+      if (!\Drupal::config('openid_connect.settings.' . $client_id)
+        ->get('enabled')) {
+        continue;
+      }
+
+      $form['openid_connect_client_' . $client_id . '_login'] = array(
         '#type' => 'submit',
-        '#value' => t('Log in with !client_title', array('!client_title' => $client['id'])),
-        '#name' => $client['id'],
+        '#value' => t('!client_title', array(
+          '!client_title' => $client['label'])
+        ),
+        '#name' => $client_id,
         '#prefix' => '<div>',
         '#suffix' => '</div>',
       );
@@ -68,10 +75,10 @@ class LoginForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     openid_connect_save_destination();
-    $client_name = $form_state->getTriggeringElement();
+    $client_name = $form_state->getTriggeringElement()['#name'];
 
-    $plugin_manager = $this->plugin_manager_openid_connect_client_processor;
-    $client = $plugin_manager->createInstance($client_name)['#name'];
+    $plugin_manager = $this->plugin_manager;
+    $client = $plugin_manager->createInstance($client_name);
     $scopes = openid_connect_get_scopes();
     $_SESSION['openid_connect_op'] = 'login';
     $client->authorize($scopes);

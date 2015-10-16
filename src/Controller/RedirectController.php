@@ -8,7 +8,10 @@
 namespace Drupal\openid_connect\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
@@ -116,10 +119,14 @@ class RedirectController extends ControllerBase {
 
     // It's possible to set 'options' in the redirect destination.
     if (is_array($destination)) {
-      drupal_goto($destination[0], $destination[1]);
+      $redirect = Url::fromUri($destination[0], $destination[1])->toString();
+      $response = new RedirectResponse($redirect);
+      return $response->send();
     }
     else {
-      drupal_goto($destination);
+      $redirect = Url::fromUri($destination)->toString();
+      $response = new RedirectResponse($redirect);
+      return $response->send();
     }
   }
 

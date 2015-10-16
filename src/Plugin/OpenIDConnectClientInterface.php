@@ -26,7 +26,7 @@ interface OpenIDConnectClientInterface extends PluginInspectionInterface {
   /**
    * Returns the value of a setting.
    */
-  public function getSetting($key, $default = NULL);
+  public function getSetting($key);
 
   /**
    * Returns the settings form.

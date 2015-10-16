@@ -38,7 +38,6 @@ class SettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('openid_connect.settings');
-    $clients_enabled = $config->get('clients_enabled');
 
     $manager = \Drupal::service('plugin.manager.openid_connect_client.processor');
     $client_plugins = $manager->getDefinitions();
@@ -48,13 +47,23 @@ class SettingsForm extends ConfigFormBase {
       $options[$client_plugin['id']] = $client_plugin['label'];
     }
 
+    $clients_enabled = array();
+    foreach ($client_plugins as $client_plugin) {
+      //dsm($client_plugin);
+      $enabled = \Drupal::configFactory()
+        ->getEditable('openid_connect.settings.' . $client_plugin['id'])
+        ->get('enabled');
+      $clients_enabled[$client_plugin['id']] = (bool) $enabled ? $client_plugin['id'] : 0;
+    }
+    dsm($clients_enabled);
+
     $form['#tree'] = TRUE;
     $form['clients_enabled'] = array(
       '#title' => t('Enabled OpenID Connect clients'),
       '#description' => t('Choose enabled OpenID Connect clients.'),
       '#type' => 'checkboxes',
       '#options' => $options,
-      '#default_value' => $config->get('clients_enabled'),
+      '#default_value' => $clients_enabled,
     );
     foreach ($client_plugins as $client_plugin) {
       $client = $manager->createInstance($client_plugin['id']);
@@ -70,7 +79,8 @@ class SettingsForm extends ConfigFormBase {
           ),
         ),
       );
-      $form['clients'][$client_plugin['id']] += $client->settingsForm();
+      $form['clients'][$client_plugin['id']]['settings'] = array();
+      $form['clients'][$client_plugin['id']]['settings'] += $client->settingsForm();
     }
 
     $form['always_save_userinfo'] = array(
@@ -138,7 +148,20 @@ class SettingsForm extends ConfigFormBase {
       ->set('user_pictures', $form_state->getValue('user_pictures'))
       ->set('userinfo_mappings', $form_state->getValue('userinfo_mappings'))
       ->save();
-    //$this->config('openid_connect.settings.generic')->set('enabled', $form_state->getValue('userinfo_mappings'));
+    $clients_enabled = $form_state->getValue('clients_enabled');
+    foreach ($clients_enabled as $client_name => $status) {
+      \Drupal::configFactory()
+        ->getEditable('openid_connect.settings.' . $client_name)
+        ->set('enabled', $status)
+        ->save();
+      if ((bool) $status) {
+        \Drupal::configFactory()
+          ->getEditable('openid_connect.settings.' . $client_name)
+          ->set('settings', $form_state->getValue(array('clients', $client_name, 'settings')))
+          ->save();
+      }
+    }
+
   }
 
 }

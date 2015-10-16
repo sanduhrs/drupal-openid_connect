@@ -23,6 +23,17 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
 
   /**
+   * Overrides OpenIDConnectClientBase::getEndpoints().
+   */
+  public function getEndpoints() {
+    return array(
+      'authorization' => $this->getSetting('authorization_endpoint'),
+      'token' => $this->getSetting('token_endpoint'),
+      'userinfo' => $this->getSetting('userinfo_endpoint'),
+    );
+  }
+
+  /**
    * Overrides OpenIDConnectClientBase::settingsForm().
    */
   public function settingsForm() {
@@ -46,16 +57,5 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
     );
 
     return $form;
-  }
-
-  /**
-   * Overrides OpenIDConnectClientBase::getEndpoints().
-   */
-  public function getEndpoints() {
-    return array(
-      'authorization' => $this->getSetting('authorization_endpoint'),
-      'token' => $this->getSetting('token_endpoint'),
-      'userinfo' => $this->getSetting('userinfo_endpoint'),
-    );
   }
 }

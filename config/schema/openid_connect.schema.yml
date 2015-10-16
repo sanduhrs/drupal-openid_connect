@@ -21,15 +21,17 @@ openid_connect.settings.generic:
     enabled:
       type: boolean
       label: 'Enable client'
-    authorization_endpoint:
-      type: string
-      label: 'Authorization endpoint'
-    token_endpoint:
-      type: string
-      label: 'Token endpoint'
-    userinfo_endpoint:
-      type: string
-      label: 'Userinfo endpoint'
+    settings:
+      type: mapping
+      authorization_endpoint:
+        type: string
+        label: 'Authorization endpoint'
+      token_endpoint:
+        type: string
+        label: 'Token endpoint'
+      userinfo_endpoint:
+        type: string
+        label: 'Userinfo endpoint'
 
 openid_connect.settings.google:
   type: config_object
@@ -38,12 +40,14 @@ openid_connect.settings.google:
     enabled:
       type: boolean
       label: 'Enable client'
-    authorization_endpoint:
-      type: string
-      label: 'Authorization endpoint'
-    token_endpoint:
-      type: string
-      label: 'Token endpoint'
-    userinfo_endpoint:
-      type: string
-      label: 'Userinfo endpoint'
+    settings:
+      type: mapping
+      authorization_endpoint:
+        type: string
+        label: 'Authorization endpoint'
+      token_endpoint:
+        type: string
+        label: 'Token endpoint'
+      userinfo_endpoint:
+        type: string
+        label: 'Userinfo endpoint'

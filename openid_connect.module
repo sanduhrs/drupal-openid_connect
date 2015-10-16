@@ -452,8 +452,7 @@ function openid_connect_claims_options() {
  *   Space delimited case sensitive list of ASCII scope values.
  */
 function openid_connect_get_scopes() {
-
-  $claims = variable_get('openid_connect_userinfo_mapping_claims', array());
+  $claims = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
   $scopes = array('openid', 'email');
   $claims_info = openid_connect_claims();
   foreach ($claims as $claim) {

@@ -50,26 +50,26 @@ function openid_connect_redirect_access() {
  * Access callback: Connected accounts page.
  */
 function openid_connect_connected_accounts_access($account) {
-  global $user;
-  if (user_access('administer users')) {
+  $user = \Drupal::currentUser();
+  if ($user->hasPermission('administer users')) {
     return TRUE;
   }
 
-  return $user->uid && $user->uid === $account->uid && user_access('manage own openid_connect accounts');
+  return $user->getAccount()->id() && $user->getAccount()->id() === $account->getAccount()->id() && $user->hasPermission('manage own openid_connect accounts');
 }
 
 /**
  * Saves user profile information into a user account.
  */
 function openid_connect_save_userinfo($account, $userinfo) {
-  $account_wrapper = entity_metadata_wrapper('user', $account);
-  $properties = $account_wrapper->getPropertyInfo();
+  $properties = \Drupal::entityManager()->getFieldDefinitions('user', 'user');
   $properties_skip = _openid_connect_user_properties_to_skip();
   foreach ($properties as $property_name => $property) {
     if (isset($properties_skip[$property_name])) {
       continue;
     }
-    $claim = variable_get('openid_connect_userinfo_mapping_property_' . $property_name, NULL);
+    $userinfo_mappings = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
+    $claim = $userinfo_mappings[$property_name];
     if ($claim && isset($userinfo[$claim])) {
       $account_wrapper->{$property_name} = $userinfo[$claim];
     }
@@ -81,11 +81,13 @@ function openid_connect_save_userinfo($account, $userinfo) {
     $account->data['oidc_name'] = $userinfo['name'];
   }
 
-  $account_wrapper->save();
+  $account->save();
 
   // Fetch and save user picture from the login provider.
-  if (variable_get('user_pictures') && variable_get('openid_connect_user_pictures', TRUE) && !empty($userinfo['picture'])) {
-    openid_connect_save_user_picture($account, $userinfo['picture']);
+  $user_pictures = \Drupal::config('openid_connect.settings')->get('user_pictures');
+  if (/*variable_get('user_pictures') && */$user_pictures && !empty($userinfo['picture'])) {
+    //TODO: Upgrade to D8
+    //openid_connect_save_user_picture($account, $userinfo['picture']);
   }
 }
 
@@ -105,7 +107,9 @@ function openid_connect_save_user_picture($account, $picture_url) {
 
   $response = drupal_http_request($picture_url);
   if ($response->code != 200) {
-    watchdog('openid_connect', 'The user picture could not be fetched from URL: @url', array('@url' => $picture_url));
+    $message = 'The user picture could not be fetched from URL: @url';
+    $variables = array('@url' => $picture_url);
+    \Drupal::logger('openid_connect')->error($message, $variables);
     return;
   }
 
@@ -324,7 +328,7 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
  *   TRUE if access is granted, FALSE otherwise.
  */
 function openid_connect_set_password_access($account) {
-  if (user_access('openid_connect set own password', $account)) {
+  if ($account->hasPermission('openid_connect set own password')) {
     return TRUE;
   }
 
@@ -423,7 +427,8 @@ function openid_connect_claims() {
       'scope' => 'phone',
     ),
   );
-  drupal_alter(__FUNCTION__, $claims);
+  //TODO: Find Drupal 8 replacement
+  //drupal_alter(__FUNCTION__, $claims);
   return $claims;
 }
 
@@ -447,6 +452,7 @@ function openid_connect_claims_options() {
  *   Space delimited case sensitive list of ASCII scope values.
  */
 function openid_connect_get_scopes() {
+
   $claims = variable_get('openid_connect_userinfo_mapping_claims', array());
   $scopes = array('openid', 'email');
   $claims_info = openid_connect_claims();
@@ -463,8 +469,8 @@ function openid_connect_get_scopes() {
  * Returns user properties that can be skipped when mapping user profile info.
  */
 function _openid_connect_user_properties_to_skip() {
-  $properties_to_skip = array('name', 'mail', 'uid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
-  return drupal_map_assoc($properties_to_skip);
+  $properties_to_skip = array('name', 'mail', 'uid', 'uuid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
+  return array_combine($properties_to_skip, $properties_to_skip);
 }
 
 /**
@@ -494,7 +500,7 @@ function openid_connect_log_request_error($method, $client_name, $response) {
     '@code' => $response->code,
     '@details' => $details,
   );
-  watchdog('openid_connect_' . $client_name, $message . ' (@code @error). Details: @details', $variables, WATCHDOG_ERROR);
+  \Drupal::logger('openid_connect_' . $client_name)->error($message . ' (@code @error). Details: @details', $variables);
 }
 
 /**
@@ -628,15 +634,17 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
   if ($userinfo && empty($userinfo['email'])) {
-    watchdog('openid_connect', 'No e-mail address provided by @provider', array('@provider' => $client->getLabel()), WATCHDOG_ERROR);
-
+    $message = 'No e-mail address provided by @provider';
+    $variables = array('@provider' => $client->getLabel());
+    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
   $sub = openid_connect_extract_sub($user_data, $userinfo);
   if (empty($sub)) {
-    watchdog('openid_connect', 'No "sub" found from @provider', array('@provider' => $client->getLabel()), WATCHDOG_ERROR);
-
+    $message = 'No "sub" found from @provider';
+    $variables = array('@provider' => $client->getLabel());
+    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
@@ -662,7 +670,8 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
 
   openid_connect_login_user($account, $destination);
 
-  module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
+  // TODO: Find D8 solution for this
+  //module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
 
   return TRUE;
 }
@@ -690,15 +699,17 @@ function openid_connect_connect_current_user($client, $tokens) {
   $provider_param = array('@provider' => $client->getLabel());
 
   if ($userinfo && empty($userinfo['email'])) {
-    watchdog('openid_connect', 'No e-mail address provided by @provider', $provider_param, WATCHDOG_ERROR);
-
+    $message = 'No e-mail address provided by @provider';
+    $variables = $provider_param;
+    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
   $sub = openid_connect_extract_sub($user_data, $userinfo);
   if (empty($sub)) {
-    watchdog('openid_connect', 'No "sub" found from @provider', $provider_param, WATCHDOG_ERROR);
-
+    $message = 'No "sub" found from @provider';
+    $variables = $provider_param;
+    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
@@ -714,11 +725,13 @@ function openid_connect_connect_current_user($client, $tokens) {
     openid_connect_connect_account($account, $client->getName(), $sub);
   }
 
-  if (variable_get('openid_connect_always_save_userinfo', TRUE)) {
+  $always_save_userinfo = \Drupal::config('openid_connect.settings')->get('always_save_userinfo');
+  if ($always_save_userinfo) {
     openid_connect_save_userinfo($account, $userinfo);
   }
 
-  module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
+  // TODO: Find D8 solution for this
+  //module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
 
   return TRUE;
 }

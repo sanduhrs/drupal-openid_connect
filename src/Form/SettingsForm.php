@@ -38,6 +38,7 @@ class SettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('openid_connect.settings');
+    $clients_enabled = $config->get('clients_enabled');
 
     $manager = \Drupal::service('plugin.manager.openid_connect_client.processor');
     $client_plugins = $manager->getDefinitions();
@@ -62,6 +63,7 @@ class SettingsForm extends ConfigFormBase {
       $form['clients'][$client_plugin['id']] = array(
         '#title' => $client_plugin['label'],
         '#type' => 'fieldset',
+        '#tree' => TRUE,
         '#states' => array(
           'visible' => array(
             ':input[name="' . $element . '"]' => array('checked' => TRUE),
@@ -84,33 +86,34 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('user_pictures'),
     );
 
-    $form['userinfo_mapping'] = array(
+    $form['userinfo_mappings'] = array(
       '#title' => t('User claims mapping'),
       '#type' => 'fieldset',
     );
 
-    //$claims = openid_connect_claims_options();
-    //$properties = $user_entity_wrapper->getPropertyInfo();
     $properties = \Drupal::entityManager()->getFieldDefinitions('user', 'user');
-    //$properties_skip = _openid_connect_user_properties_to_skip();
+    $properties_skip = _openid_connect_user_properties_to_skip();
+    $claims = openid_connect_claims_options();
+    $mappings = $always_save_userinfo = $config->get('userinfo_mappings');
     foreach ($properties as $property_name => $property) {
       if (isset($properties_skip[$property_name])) {
         continue;
       }
       // Always map the timezone.
+      //TODO: This is not needed anymore, is it?
       $default_value = 0;
       if ($property_name == 'timezone') {
         $default_value = 'zoneinfo';
       }
 
-      $form['userinfo_mapping']['openid_connect_userinfo_mapping_property_' . $property_name] = array(
+      $form['userinfo_mappings'][$property_name] = array(
         '#type' => 'select',
         '#title' => $property->getLabel(),
         '#description' => $property->getDescription(),
         '#options' => (array) $claims,
         '#empty_value' => 0,
         '#empty_option' => t('- No mapping -'),
-        //'#default_value' => variable_get('openid_connect_userinfo_mapping_property_' . $property_name, $default_value),
+        '#default_value' => $mappings[$property_name] ? $mappings[$property_name] : $default_value,
       );
     }
 
@@ -133,7 +136,9 @@ class SettingsForm extends ConfigFormBase {
     $this->config('openid_connect.settings')
       ->set('always_save_userinfo', $form_state->getValue('always_save_userinfo'))
       ->set('user_pictures', $form_state->getValue('user_pictures'))
+      ->set('userinfo_mappings', $form_state->getValue('userinfo_mappings'))
       ->save();
+    //$this->config('openid_connect.settings.generic')->set('enabled', $form_state->getValue('userinfo_mappings'));
   }
 
 }

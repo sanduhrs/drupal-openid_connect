@@ -5,3 +5,11 @@ openid_connect.admin_settings:
     _title: 'OpenID Connect'
   requirements:
     _permission: 'administer site configuration'
+
+openid_connect.redirect_controller_redirect:
+  path: '/openid-connect/{client_name}'
+  defaults:
+    _controller: '\Drupal\openid_connect\Controller\RedirectController::redirect'
+    _title: 'OpenID Connect redirect page'
+  requirements:
+    _permission: 'access content'

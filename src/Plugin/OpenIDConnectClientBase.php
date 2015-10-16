@@ -7,6 +7,8 @@
 
 namespace Drupal\openid_connect\Plugin;
 
+use Exception;
+use Drupal\Core\Url;
 use Drupal\Component\Plugin\PluginBase;
 
 /**
@@ -35,10 +37,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   protected $settings;
 
-  public function __construct($name, $label, array $settings) {
-    $this->name = $name;
-    $this->label = $label;
-    $this->settings = $settings;
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+
+    $this->name = $plugin_id;
+    $this->label = $plugin_id;
+    $this->settings = $configuration;
   }
 
   public function getLabel() {

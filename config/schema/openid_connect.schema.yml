@@ -1,6 +1,6 @@
 # Schema for the configuration files of the OpenID Connect module.
 
-devel.settings:
+openid_connect.settings:
   type: config_object
   label: 'OpenID Connect settings'
   mapping:
@@ -10,3 +10,40 @@ devel.settings:
     user_pictures:
       type: boolean
       label: 'Fetch user profile picture from login provider'
+    userinfo_mappings:
+      type: config_object
+      label: 'OpenID Connect settings'
+
+openid_connect.settings.generic:
+  type: config_object
+  label: 'OpenID Connect settings'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Enable client'
+    authorization_endpoint:
+      type: string
+      label: 'Authorization endpoint'
+    token_endpoint:
+      type: string
+      label: 'Token endpoint'
+    userinfo_endpoint:
+      type: string
+      label: 'Userinfo endpoint'
+
+openid_connect.settings.google:
+  type: config_object
+  label: 'OpenID Connect settings'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Enable client'
+    authorization_endpoint:
+      type: string
+      label: 'Authorization endpoint'
+    token_endpoint:
+      type: string
+      label: 'Token endpoint'
+    userinfo_endpoint:
+      type: string
+      label: 'Userinfo endpoint'

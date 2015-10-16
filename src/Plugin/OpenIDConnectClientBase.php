@@ -23,6 +23,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $plugin_id,
     $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
+
+    //FIXME: The config should be available in the object
+    if (empty($this->configuration)) {
+      $this->configuration = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
+      dsm('config loaded for ' . $this->pluginId, __METHOD__);
+    }
   }
 
   /**
@@ -50,9 +56,6 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * Implements OpenIDConnectClientInterface::settingsForm().
    */
   public function settingsForm() {
-    //FIXME: Configuration shuold be available in $this->configuration
-    $this->configuration = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
-
     $form['client_id'] = array(
       '#title' => t('Client ID'),
       '#type' => 'textfield',
@@ -94,16 +97,14 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * Implements OpenIDConnectClientInterface::authorize().
    */
   public function authorize($scope = 'openid email') {
-    //FIXME: The config should be available in the object
-    $client_config = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
-
     $redirect_uri = Url::fromRoute(
       'openid_connect.redirect_controller_redirect',
       array('client_name' => $this->pluginId), array('absolute' => TRUE)
     )->toString();
+
     $url_options = array(
       'query' => array(
-        'client_id' => $client_config['client_id'],
+        'client_id' => $this->getSetting('client_id'),
         'response_type' => 'code',
         'scope' => $scope,
         'redirect_uri' => $redirect_uri,

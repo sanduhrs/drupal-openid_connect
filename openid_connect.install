@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the openid_connect module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function openid_connect_schema() {
+  $schema['openid_connect_identities'] = array(
+    'description' => 'Stores OpenID Connect authentication mapping.',
+    'fields' => array(
+      'aid' => array(
+        'description' => 'Primary Key: Unique authmap ID.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => "User's {users}.uid.",
+      ),
+      'client_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The client name.',
+      ),
+      'subject' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Unique subject identifier.',
+      ),
+    ),
+    'primary key' => array('aid'),
+    'indexes' => array(
+      'identifier' => array('client_name', 'subject'),
+    ),
+    'foreign keys' => array(
+      'user' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}

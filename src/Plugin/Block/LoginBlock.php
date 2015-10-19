@@ -27,7 +27,7 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
    *
    * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
-  protected $plugin_manager_openid_connect_client_processor;
+  protected $plugin_manager;
 
   /**
    * Construct.
@@ -43,10 +43,10 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
         array $configuration,
         $plugin_id,
         $plugin_definition,
-        OpenIDConnectClientManager $plugin_manager_openid_connect_client_processor
+        OpenIDConnectClientManager $plugin_manager
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->plugin_manager_openid_connect_client_processor = $plugin_manager_openid_connect_client_processor;
+    $this->plugin_manager = $plugin_manager;
   }
 
   /**

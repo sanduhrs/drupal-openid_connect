@@ -26,12 +26,21 @@ class LoginForm extends FormBase {
    */
   protected $plugin_manager;
 
+  /**
+   * The constructor.
+   *
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   *   The plugin manager.
+   */
   public function __construct(
     OpenIDConnectClientManager $plugin_manager
   ) {
     $this->plugin_manager = $plugin_manager;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor')
@@ -60,8 +69,8 @@ class LoginForm extends FormBase {
       $form['openid_connect_client_' . $client_id . '_login'] = array(
         '#type' => 'submit',
         '#value' => t('!client_title', array(
-          '!client_title' => $client['label'])
-        ),
+          '!client_title' => $client['label'],
+        )),
         '#name' => $client_id,
         '#prefix' => '<div>',
         '#suffix' => '</div>',
@@ -80,7 +89,7 @@ class LoginForm extends FormBase {
     $plugin_manager = $this->plugin_manager;
     $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
       ->get('settings');
-    $client =$plugin_manager->createInstance(
+    $client = $plugin_manager->createInstance(
       $client_name,
       $configuration
     );

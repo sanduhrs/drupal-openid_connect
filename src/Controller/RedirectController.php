@@ -10,9 +10,7 @@ namespace Drupal\openid_connect\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 
@@ -28,7 +26,8 @@ class RedirectController extends ControllerBase {
    *
    * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
-  protected $plugin_manager_openid_connect_client_processor;
+  protected $plugin_manager;
+
   /**
    * {@inheritdoc}
    */
@@ -71,7 +70,7 @@ class RedirectController extends ControllerBase {
 
     $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
       ->get('settings');
-    $client =$this->plugin_manager->createInstance(
+    $client = $this->plugin_manager->createInstance(
       $client_name,
       $configuration
     );
@@ -86,8 +85,8 @@ class RedirectController extends ControllerBase {
 
     if (isset($_GET['error'])) {
       if ($_GET['error'] == 'access_denied') {
-        // If we have an "access denied" error, that means the user hasn't granted
-        // the authorization for the claims.
+        // If we have an "access denied" error, that means the user hasn't
+        // granted the authorization for the claims.
         drupal_set_message(t('Logging in with @provider has been canceled.', $provider_param), 'warning');
       }
       else {

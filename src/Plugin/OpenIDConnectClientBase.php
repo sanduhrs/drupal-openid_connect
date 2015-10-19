@@ -10,7 +10,6 @@ namespace Drupal\openid_connect\Plugin;
 use Exception;
 use Drupal\Core\Url;
 use Drupal\Component\Plugin\PluginBase;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -19,6 +18,14 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface {
 
   /**
+   * The constructor.
+   *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin identifier.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
    */
   public function __construct(
     array $configuration,
@@ -126,13 +133,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $endpoints = $this->getEndpoints();
 
     $request_options = array(
-      'form_params' =>  array(
+      'form_params' => array(
         'code' => $authorization_code,
         'client_id' => $this->getSetting('client_id'),
         'client_secret' => $this->getSetting('client_secret'),
         'redirect_uri' => $redirect_uri,
         'grant_type' => 'authorization_code',
-      )
+      ),
     );
 
     $client = \Drupal::httpClient();

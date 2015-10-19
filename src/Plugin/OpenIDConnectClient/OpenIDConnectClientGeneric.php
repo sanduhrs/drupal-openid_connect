@@ -60,4 +60,5 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
       'userinfo' => $this->getSetting('userinfo_endpoint'),
     );
   }
+
 }

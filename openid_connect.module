@@ -34,7 +34,8 @@ function openid_connect_create_state_token() {
  *   in the session.
  */
 function openid_connect_confirm_state_token($state_token) {
-  return isset($_SESSION['openid_connect_state']) && $state_token == $_SESSION['openid_connect_state'];
+  return isset($_SESSION['openid_connect_state']) &&
+    $state_token == $_SESSION['openid_connect_state'];
 }
 
 /**
@@ -71,7 +72,7 @@ function openid_connect_save_userinfo($account, $userinfo) {
     $userinfo_mappings = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
     $claim = $userinfo_mappings[$property_name];
     if ($claim && isset($userinfo[$claim])) {
-      //TODO: check functionality!
+      // TODO: check functionality!
       $account->fields->{$property_name} = $userinfo[$claim];
     }
   }
@@ -85,10 +86,11 @@ function openid_connect_save_userinfo($account, $userinfo) {
   $account->save();
 
   // Fetch and save user picture from the login provider.
-  //$user_pictures = \Drupal::config('openid_connect.settings')->get('user_pictures');
-  //if (/*variable_get('user_pictures') && */$user_pictures && !empty($userinfo['picture'])) {
-  //  openid_connect_save_user_picture($account, $userinfo['picture']);
-  //}
+  $user_pictures = \Drupal::config('openid_connect.settings')
+    ->get('user_pictures');
+  if ($user_pictures && !empty($userinfo['picture'])) {
+    openid_connect_save_user_picture($account, $userinfo['picture']);
+  }
 }
 
 /**
@@ -100,6 +102,8 @@ function openid_connect_save_userinfo($account, $userinfo) {
  *   The URL to a user picture.
  */
 function openid_connect_save_user_picture($account, $picture_url) {
+  // $entity_manager->getFieldDefinitions('user', 'user')['picture']
+  // ->getSettings();
   $picture_directory = file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
   if (!file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)) {
     return;
@@ -119,7 +123,7 @@ function openid_connect_save_user_picture($account, $picture_url) {
     return;
   }
 
-  $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->uid . '-' . REQUEST_TIME . '.jpg');
+  $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->id() . '-' . REQUEST_TIME . '.jpg');
   $picture_file = file_save_data($response->data, $picture_path, FILE_EXISTS_REPLACE);
 
   // Check to make sure the picture isn't too large for the site settings.
@@ -144,8 +148,6 @@ function openid_connect_save_user_picture($account, $picture_url) {
  *
  * @param object $account
  *   The user account.
- * @param string|array &$destination
- *   The path to redirect to after login.
  */
 function openid_connect_login_user($account) {
   user_login_finalize($account);
@@ -233,7 +235,7 @@ function openid_connect_generate_username($sub, $userinfo, $client_name) {
  */
 function openid_connect_username_exists($name) {
   return db_query('SELECT COUNT(*) FROM {users_field_data} WHERE name = :name', array(
-    ':name' => $name
+    ':name' => $name,
   ))->fetchField() > 0;
 }
 
@@ -251,9 +253,9 @@ function openid_connect_username_alter(&$name, $account) {
 /**
  * Implements hook_user_insert().
  */
-function openid_connect_user_insert(&$edit, $account, $category) {
+function openid_connect_user_insert(Drupal\Core\Entity\EntityInterface $entity) {
   if (isset($edit['openid_connect_client'])) {
-    openid_connect_connect_account($account, $edit['openid_connect_client'], $edit['openid_connect_sub']);
+    openid_connect_connect_account($entity, $edit['openid_connect_client'], $edit['openid_connect_sub']);
   }
 }
 
@@ -261,24 +263,23 @@ function openid_connect_user_insert(&$edit, $account, $category) {
  * Deletes a user's authmap entries.
  */
 function openid_connect_authmap_delete($uid) {
-  db_delete('authmap')
+  db_delete('openid_connect_identities')
     ->condition('uid', $uid)
-    ->condition('module', db_like('openid_connect_') . '%', 'LIKE')
     ->execute();
 }
 
 /**
- * Implements hook_user_delete().
+ * Implements hook_ENTITY_TYPE_delete().
  */
-function openid_connect_user_delete($account) {
-  openid_connect_authmap_delete($account->uid);
+function openid_connect_user_delete(Drupal\Core\Entity\EntityInterface $entity) {
+  openid_connect_authmap_delete($entity->id());
 }
 
 /**
  * Implements hook_user_cancel().
  */
 function openid_connect_user_cancel($edit, $account, $method) {
-  openid_connect_authmap_delete($account->uid);
+  openid_connect_authmap_delete($account->id());
 }
 
 /**
@@ -292,7 +293,29 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
     $account_form = &$form;
   }
 
-  if (!empty($account_form['pass']['#access']) && !openid_connect_set_password_access($form['#user'])) {
+  $account = \Drupal::currentUser();
+  if (!empty($account_form['pass']['#access']) && !openid_connect_set_password_access($account)) {
+    $account_form['current_pass']['#access'] = FALSE;
+    $account_form['current_pass_required_values']['#value'] = array();
+    $account_form['pass']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function openid_connect_form_user_form_alter(&$form, &$form_state) {
+  if (isset($form['account'])) {
+    $account_form = &$form['account'];
+  }
+  else {
+    $account_form = &$form;
+  }
+
+  $account = \Drupal::currentUser();
+  $access = openid_connect_set_password_access($account);
+  $account_form['pass']['#access'] = FALSE;
+  if (!empty($account_form['pass']['#access']) && !$access) {
     $account_form['current_pass']['#access'] = FALSE;
     $account_form['current_pass_required_values']['#value'] = array();
     $account_form['pass']['#access'] = FALSE;
@@ -310,7 +333,7 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
  */
 function openid_connect_set_password_access($account) {
   if ($account->hasPermission('openid_connect set own password')) {
-    return TRUE;
+    return FALSE;
   }
 
   $connected_accounts = openid_connect_get_connected_accounts($account);
@@ -347,6 +370,7 @@ function openid_connect_user_load_by_sub($subject, $client_name) {
  * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
  *
  * @return array
+ *   List of claims
  */
 function openid_connect_claims() {
   $claims = array(
@@ -448,7 +472,10 @@ function openid_connect_get_scopes() {
  * Returns user properties that can be skipped when mapping user profile info.
  */
 function _openid_connect_user_properties_to_skip() {
-  $properties_to_skip = array('name', 'mail', 'uid', 'uuid', 'url', 'edit_url', 'last_access', 'last_login', 'created', 'roles', 'status', 'theme');
+  $properties_to_skip = array(
+    'name', 'mail', 'uid', 'uuid', 'url', 'edit_url', 'last_access',
+    'last_login', 'created', 'roles', 'status', 'theme',
+  );
   return array_combine($properties_to_skip, $properties_to_skip);
 }
 
@@ -512,14 +539,13 @@ function openid_connect_entity_property_info_alter(&$info) {
  */
 function openid_connect_get_connected_accounts($account) {
   $auth_maps = db_query(
-    "SELECT module, authname FROM {authmap} WHERE uid = :uid AND module LIKE 'openid_connect_%'",
-    array(':uid' => $account->uid)
+    "SELECT client_name, subject FROM {openid_connect_identities} WHERE uid = :uid",
+    array(':uid' => $account->id())
   );
-  $module_offset = strlen('openid_connect_');
   $results = array();
   foreach ($auth_maps as $auth_map) {
-    $client = substr($auth_map->module, $module_offset);
-    $sub = $auth_map->authname;
+    $client = $auth_map->client_name;
+    $sub = $auth_map->subject;
     $results[$client] = $sub;
   }
 
@@ -604,7 +630,7 @@ function openid_connect_extract_sub($user_data, $userinfo) {
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function openid_connect_complete_authorization($client, $tokens, &$destination) {
+function openid_connect_complete_authorization(OpenIDConnectClientInterface $client, $tokens, &$destination) {
   if (\Drupal::currentUser()->isAuthenticated()) {
     throw new \RuntimeException('User already logged in');
   }
@@ -650,8 +676,9 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
 
   openid_connect_login_user($account);
 
-  // TODO: Find D8 solution for this
-  //module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
+  \Drupal::moduleHandler()->invokeAll('openid_connect_post_authorize', array(
+    $tokens, $account, $userinfo, $client->getName(),
+  ));
 
   return TRUE;
 }
@@ -659,13 +686,19 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
 /**
  * Create a local to remote account association.
  *
- * @param $account
- * @param $client_name
- * @param $subject
- * @throws \Exception
+ * @param object $account
+ *   A user account object.
+ * @param string $client_name
+ *   The client name.
+ * @param string $subject
+ *   The remote subject identifier.
  */
 function openid_connect_associate($account, $client_name, $subject) {
-  $fields = array('uid' => $account->id(), 'client_name' => $client_name, 'subject' => $subject);
+  $fields = array(
+    'uid' => $account->id(),
+    'client_name' => $client_name,
+    'subject' => $subject,
+  );
   db_insert('openid_connect_identities')
     ->fields($fields)
     ->execute();
@@ -682,10 +715,9 @@ function openid_connect_associate($account, $client_name, $subject) {
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function openid_connect_connect_current_user($client, $tokens) {
-  global $user;
-  if (!$user->uid) {
-    throw new \RuntimeException('User not logged in');
+function openid_connect_connect_current_user(OpenIDConnectClientInterface $client, $tokens) {
+  if (\Drupal::currentUser()->isAuthenticated()) {
+    throw new \RuntimeException('User already logged in');
   }
 
   $user_data = $client->decodeIdToken($tokens['id_token']);
@@ -709,7 +741,7 @@ function openid_connect_connect_current_user($client, $tokens) {
   }
 
   $account = openid_connect_user_load_by_sub($sub, $client->getName());
-  if ($account && $account->uid !== $user->uid) {
+  if ($account && $account->id() !== $user->id()) {
     drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
 
     return FALSE;
@@ -725,8 +757,9 @@ function openid_connect_connect_current_user($client, $tokens) {
     openid_connect_save_userinfo($account, $userinfo);
   }
 
-  // TODO: Find D8 solution for this
-  //module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
+  \Drupal::moduleHandler()->invokeAll('openid_connect_post_authorize', array(
+    $tokens, $account, $userinfo, $client->getName(),
+  ));
 
   return TRUE;
 }

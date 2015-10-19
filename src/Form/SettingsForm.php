@@ -21,9 +21,7 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   protected function getEditableConfigNames() {
-    return [
-      'openid_connect.settings'
-    ];
+    return ['openid_connect.settings'];
   }
 
   /**
@@ -159,7 +157,9 @@ class SettingsForm extends ConfigFormBase {
       if ((bool) $status) {
         \Drupal::configFactory()
           ->getEditable('openid_connect.settings.' . $client_name)
-          ->set('settings', $form_state->getValue(array('clients', $client_name, 'settings')))
+          ->set('settings', $form_state->getValue(array(
+            'clients', $client_name, 'settings',
+          )))
           ->save();
       }
     }

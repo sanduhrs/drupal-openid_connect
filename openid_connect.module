@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains openid_connect.module.
+ * A pluggable client implementation for the OpenID Connect protocol.
  */
 
 /**
@@ -85,10 +85,10 @@ function openid_connect_save_userinfo($account, $userinfo) {
   $account->save();
 
   // Fetch and save user picture from the login provider.
-  $user_pictures = \Drupal::config('openid_connect.settings')->get('user_pictures');
-  if (/*variable_get('user_pictures') && */$user_pictures && !empty($userinfo['picture'])) {
-    //openid_connect_save_user_picture($account, $userinfo['picture']);
-  }
+  //$user_pictures = \Drupal::config('openid_connect.settings')->get('user_pictures');
+  //if (/*variable_get('user_pictures') && */$user_pictures && !empty($userinfo['picture'])) {
+  //  openid_connect_save_user_picture($account, $userinfo['picture']);
+  //}
 }
 
 /**
@@ -147,29 +147,7 @@ function openid_connect_save_user_picture($account, $picture_url) {
  * @param string|array &$destination
  *   The path to redirect to after login.
  */
-function openid_connect_login_user($account, &$destination) {
-//  $form_state['uid'] = $account->uid;
-//  $form = array();
-//
-//  // TFA integration.
-//  if (module_exists('tfa')) {
-//    // The 'code' and 'state' parameters have now been used.
-//    unset($_GET['code'], $_GET['state']);
-//
-//    // TFA will preserve the initial redirect if it is set in the $form_state.
-//    $form_state['redirect'] = $destination;
-//
-//    tfa_login_submit($form, $form_state);
-//    tfa_login_form_redirect($form, $form_state);
-//
-//    // TFA may want to change the redirect destination.
-//    if (isset($form_state['redirect']) && $form_state['redirect'] != 'user/' . $form_state['uid']) {
-//      $destination = $form_state['redirect'];
-//    }
-//  }
-//  else {
-//    user_login_submit($form, $form_state);
-//  }
+function openid_connect_login_user($account) {
   user_login_finalize($account);
 }
 
@@ -211,6 +189,7 @@ function openid_connect_create_user($sub, $userinfo, $client_name) {
     'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
   );
+
   $account = \Drupal::entityManager()->getStorage('user')->create($edit);
   $account->save();
   return $account;
@@ -429,8 +408,7 @@ function openid_connect_claims() {
       'scope' => 'phone',
     ),
   );
-  //TODO: Find Drupal 8 replacement
-  //drupal_alter(__FUNCTION__, $claims);
+  \Drupal::moduleHandler()->alter(__FUNCTION__, $claims);
   return $claims;
 }
 
@@ -670,7 +648,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     openid_connect_associate($account, $client->getName(), $sub);
   }
 
-  openid_connect_login_user($account, $destination);
+  openid_connect_login_user($account);
 
   // TODO: Find D8 solution for this
   //module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());

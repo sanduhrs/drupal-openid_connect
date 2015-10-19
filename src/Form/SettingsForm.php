@@ -39,8 +39,8 @@ class SettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('openid_connect.settings');
 
-    $manager = \Drupal::service('plugin.manager.openid_connect_client.processor');
-    $client_plugins = $manager->getDefinitions();
+    $plugin_manager = \Drupal::service('plugin.manager.openid_connect_client.processor');
+    $client_plugins = $plugin_manager->getDefinitions();
 
     $options = array();
     foreach ($client_plugins as $client_plugin) {
@@ -63,9 +63,13 @@ class SettingsForm extends ConfigFormBase {
       '#options' => $options,
       '#default_value' => $clients_enabled,
     );
-    foreach ($client_plugins as $client_plugin) {
-      $client = $manager->createInstance($client_plugin['id']);
-      $client_config = $this->config('openid_connect.settings.' . $client_plugin['id']);
+    foreach ($client_plugins as $client_name => $client_plugin) {
+      $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
+        ->get('settings');
+      $client = $plugin_manager->createInstance(
+        $client_name,
+        $configuration
+      );
 
       $element = 'clients_enabled[' . $client_plugin['id'] . ']';
       $form['clients'][$client_plugin['id']] = array(

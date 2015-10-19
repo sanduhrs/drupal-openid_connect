@@ -69,7 +69,12 @@ class RedirectController extends ControllerBase {
     }
     $destination = $parameters['destination'];
 
-    $client =$this->plugin_manager->getInstance($client_name);
+    $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
+      ->get('settings');
+    $client =$this->plugin_manager->createInstance(
+      $client_name,
+      $configuration
+    );
     if (!isset($_GET['error']) && (!$client || !isset($_GET['code']))) {
       // In case we don't have an error, but the client could not be loaded or
       // there is no state token specified, the URI is probably being visited
@@ -119,12 +124,12 @@ class RedirectController extends ControllerBase {
 
     // It's possible to set 'options' in the redirect destination.
     if (is_array($destination)) {
-      $redirect = Url::fromUri($destination[0], $destination[1])->toString();
+      $redirect = Url::fromUri('internal:' . $destination[0], $destination[1])->toString();
       $response = new RedirectResponse($redirect);
       return $response->send();
     }
     else {
-      $redirect = Url::fromUri($destination)->toString();
+      $redirect = Url::fromUri('internal:/' . $destination)->toString();
       $response = new RedirectResponse($redirect);
       return $response->send();
     }

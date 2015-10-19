@@ -18,16 +18,17 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  */
 abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface {
 
+  /**
+   */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
-    //FIXME: The config should be available in the object
-    if (empty($this->configuration)) {
+    //FIXME: IMHO the settings should already be available in $configuration
+    if (empty($configuration)) {
       $this->configuration = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
-      dsm('config loaded for ' . $this->pluginId, __METHOD__);
     }
   }
 
@@ -126,32 +127,34 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function retrieveTokens($authorization_code) {
     // Exchange `code` for access token and ID token.
-    $redirect_uri = OPENID_CONNECT_REDIRECT_PATH_BASE . '/' . $this->name;
-    $post_data = array(
-      'code' => $authorization_code,
-      'client_id' => $this->getSetting('client_id'),
-      'client_secret' => $this->getSetting('client_secret'),
-      'redirect_uri' => url($redirect_uri, array('absolute' => TRUE)),
-      'grant_type' => 'authorization_code',
-    );
-    $request_options = array(
-      'method' => 'POST',
-      'data' => drupal_http_build_query($post_data),
-      'timeout' => 15,
-      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-    );
+    $redirect_uri = Url::fromRoute('openid_connect.redirect_controller_redirect', array('client_name' => $this->pluginId), array('absolute' => TRUE))->toString();
     $endpoints = $this->getEndpoints();
-    $response = drupal_http_request($endpoints['token'], $request_options);
-    if (!isset($response->error) && $response->code == 200) {
-      $response_data = drupal_json_decode($response->data);
-      return array(
+
+    $request_options = array(
+      'form_params' =>  array(
+        'code' => $authorization_code,
+        'client_id' => $this->getSetting('client_id'),
+        'client_secret' => $this->getSetting('client_secret'),
+        'redirect_uri' => $redirect_uri,
+        'grant_type' => 'authorization_code',
+      )
+    );
+
+    $client = \Drupal::httpClient();
+    try {
+      $response = $client->post($endpoints['token'], $request_options);
+      $response_data = json_decode((string) $response->getBody(), TRUE);
+
+      // Expected result.
+      $result = array(
         'id_token' => $response_data['id_token'],
         'access_token' => $response_data['access_token'],
         'expire' => REQUEST_TIME + $response_data['expires_in'],
       );
+      return $result;
     }
-    else {
-      openid_connect_log_request_error(__FUNCTION__, $this->name, $response);
+    catch (Exception $e) {
+      openid_connect_log_request_error(__FUNCTION__, $this->pluginId, $e->getMessage());
       return FALSE;
     }
   }
@@ -163,7 +166,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     list($headerb64, $claims64, $signatureb64) = explode('.', $id_token);
     $claims64 = str_replace(array('-', '_'), array('+', '/'), $claims64);
     $claims64 = base64_decode($claims64);
-    return drupal_json_decode($claims64);
+    return json_decode($claims64, TRUE);
   }
 
   /**
@@ -176,12 +179,16 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       ),
     );
     $endpoints = $this->getEndpoints();
-    $response = drupal_http_request($endpoints['userinfo'], $request_options);
-    if (!isset($response->error) && $response->code == 200) {
-      return drupal_json_decode($response->data);
+
+    $client = \Drupal::httpClient();
+    try {
+      $response = $client->post($endpoints['userinfo'], $request_options);
+      $response_data = (string) $response->getBody();
+
+      return json_decode($response_data, TRUE);
     }
-    else {
-      openid_connect_log_request_error(__FUNCTION__, $this->name, $response);
+    catch (Exception $e) {
+      openid_connect_log_request_error(__FUNCTION__, $this->name, $e->getMessage());
       return FALSE;
     }
   }

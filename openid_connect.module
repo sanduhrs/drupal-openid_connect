@@ -71,7 +71,8 @@ function openid_connect_save_userinfo($account, $userinfo) {
     $userinfo_mappings = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
     $claim = $userinfo_mappings[$property_name];
     if ($claim && isset($userinfo[$claim])) {
-      $account_wrapper->{$property_name} = $userinfo[$claim];
+      //TODO: check functionality!
+      $account->fields->{$property_name} = $userinfo[$claim];
     }
   }
 
@@ -86,7 +87,6 @@ function openid_connect_save_userinfo($account, $userinfo) {
   // Fetch and save user picture from the login provider.
   $user_pictures = \Drupal::config('openid_connect.settings')->get('user_pictures');
   if (/*variable_get('user_pictures') && */$user_pictures && !empty($userinfo['picture'])) {
-    //TODO: Upgrade to D8
     //openid_connect_save_user_picture($account, $userinfo['picture']);
   }
 }
@@ -148,28 +148,29 @@ function openid_connect_save_user_picture($account, $picture_url) {
  *   The path to redirect to after login.
  */
 function openid_connect_login_user($account, &$destination) {
-  $form_state['uid'] = $account->uid;
-  $form = array();
-
-  // TFA integration.
-  if (module_exists('tfa')) {
-    // The 'code' and 'state' parameters have now been used.
-    unset($_GET['code'], $_GET['state']);
-
-    // TFA will preserve the initial redirect if it is set in the $form_state.
-    $form_state['redirect'] = $destination;
-
-    tfa_login_submit($form, $form_state);
-    tfa_login_form_redirect($form, $form_state);
-
-    // TFA may want to change the redirect destination.
-    if (isset($form_state['redirect']) && $form_state['redirect'] != 'user/' . $form_state['uid']) {
-      $destination = $form_state['redirect'];
-    }
-  }
-  else {
-    user_login_submit($form, $form_state);
-  }
+//  $form_state['uid'] = $account->uid;
+//  $form = array();
+//
+//  // TFA integration.
+//  if (module_exists('tfa')) {
+//    // The 'code' and 'state' parameters have now been used.
+//    unset($_GET['code'], $_GET['state']);
+//
+//    // TFA will preserve the initial redirect if it is set in the $form_state.
+//    $form_state['redirect'] = $destination;
+//
+//    tfa_login_submit($form, $form_state);
+//    tfa_login_form_redirect($form, $form_state);
+//
+//    // TFA may want to change the redirect destination.
+//    if (isset($form_state['redirect']) && $form_state['redirect'] != 'user/' . $form_state['uid']) {
+//      $destination = $form_state['redirect'];
+//    }
+//  }
+//  else {
+//    user_login_submit($form, $form_state);
+//  }
+  user_login_finalize($account);
 }
 
 /**
@@ -210,8 +211,9 @@ function openid_connect_create_user($sub, $userinfo, $client_name) {
     'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
   );
-
-  return user_save(NULL, $edit);
+  $account = \Drupal::entityManager()->getStorage('user')->create($edit);
+  $account->save();
+  return $account;
 }
 
 /**
@@ -251,7 +253,7 @@ function openid_connect_generate_username($sub, $userinfo, $client_name) {
  *   TRUE if a user exists with the given name, FALSE otherwise.
  */
 function openid_connect_username_exists($name) {
-  return db_query('SELECT COUNT(*) FROM {users} WHERE name = :name', array(
+  return db_query('SELECT COUNT(*) FROM {users_field_data} WHERE name = :name', array(
     ':name' => $name
   ))->fetchField() > 0;
 }
@@ -340,11 +342,11 @@ function openid_connect_set_password_access($account) {
 /**
  * Loads a user based on a sub-id and a login provider.
  */
-function openid_connect_user_load_by_sub($sub, $client_name) {
-  $result = db_select('authmap', 'a')
-    ->fields('a', array('uid', 'module'))
-    ->condition('authname', $sub)
-    ->condition('module', 'openid_connect_' . $client_name)
+function openid_connect_user_load_by_sub($subject, $client_name) {
+  $result = db_select('openid_connect_identities', 'i')
+    ->fields('i', array('uid'))
+    ->condition('client_name', $client_name, '=')
+    ->condition('subject', $subject, '=')
     ->execute()
     ->fetchAssoc();
   if ($result) {
@@ -492,7 +494,7 @@ function openid_connect_log_request_error($method, $client_name, $response) {
   // Some error responses don't have a data key set.
   $details = '';
   if (!empty($response->data)) {
-    $details = print_r(drupal_json_decode($response->data), TRUE);
+    $details = print_r(json_decode($response->data), TRUE);
   }
   $variables = array(
     '@error' => $response->error,
@@ -625,7 +627,7 @@ function openid_connect_extract_sub($user_data, $userinfo) {
  *   TRUE on success, FALSE on failure.
  */
 function openid_connect_complete_authorization($client, $tokens, &$destination) {
-  if (user_is_logged_in()) {
+  if (\Drupal::currentUser()->isAuthenticated()) {
     throw new \RuntimeException('User already logged in');
   }
 
@@ -650,7 +652,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   $account = openid_connect_user_load_by_sub($sub, $client->getName());
   if ($account) {
     // An existing account was found. Save user claims.
-    if (variable_get('openid_connect_always_save_userinfo', TRUE)) {
+    if (\Drupal::config('openid_connect.settings')->get('always_save_userinfo')) {
       openid_connect_save_userinfo($account, $userinfo);
     }
   }
@@ -665,6 +667,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     // Create a new account.
     $account = openid_connect_create_user($sub, $userinfo, $client->getName());
     openid_connect_save_userinfo($account, $userinfo);
+    openid_connect_associate($account, $client->getName(), $sub);
   }
 
   openid_connect_login_user($account, $destination);
@@ -673,6 +676,21 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   //module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
 
   return TRUE;
+}
+
+/**
+ * Create a local to remote account association.
+ *
+ * @param $account
+ * @param $client_name
+ * @param $subject
+ * @throws \Exception
+ */
+function openid_connect_associate($account, $client_name, $subject) {
+  $fields = array('uid' => $account->id(), 'client_name' => $client_name, 'subject' => $subject);
+  db_insert('openid_connect_identities')
+    ->fields($fields)
+    ->execute();
 }
 
 /**

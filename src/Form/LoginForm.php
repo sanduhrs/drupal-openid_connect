@@ -78,7 +78,12 @@ class LoginForm extends FormBase {
     $client_name = $form_state->getTriggeringElement()['#name'];
 
     $plugin_manager = $this->plugin_manager;
-    $client = $plugin_manager->createInstance($client_name);
+    $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
+      ->get('settings');
+    $client =$plugin_manager->createInstance(
+      $client_name,
+      $configuration
+    );
     $scopes = openid_connect_get_scopes();
     $_SESSION['openid_connect_op'] = 'login';
     $client->authorize($scopes);

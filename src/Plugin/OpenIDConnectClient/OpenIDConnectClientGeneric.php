@@ -26,13 +26,10 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
    * Overrides OpenIDConnectClientBase::getEndpoints().
    */
   public function getEndpoints() {
-    //FIXME: The config should be available in the object
-    $client_config = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
-
     return array(
-      'authorization' => $client_config['authorization_endpoint'],
-      'token' => $client_config['token_endpoint'],
-      'userinfo' => $client_config['userinfo_endpoint'],
+      'authorization' => $this->getSetting('authorization_endpoint'),
+      'token' => $this->getSetting('token_endpoint'),
+      'userinfo' => $this->getSetting('userinfo_endpoint'),
     );
   }
 
@@ -42,21 +39,20 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
   public function settingsForm() {
     $form = parent::settingsForm();
 
-    $default_site = 'https://example.com/oauth2';
     $form['authorization_endpoint'] = array(
       '#title' => t('Authorization endpoint'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('authorization_endpoint', $default_site . '/authorize'),
+      '#default_value' => $this->getSetting('authorization_endpoint'),
     );
     $form['token_endpoint'] = array(
       '#title' => t('Token endpoint'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('token_endpoint', $default_site . '/token'),
+      '#default_value' => $this->getSetting('token_endpoint'),
     );
     $form['userinfo_endpoint'] = array(
       '#title' => t('UserInfo endpoint'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('userinfo_endpoint', $default_site . '/UserInfo'),
+      '#default_value' => $this->getSetting('userinfo_endpoint'),
     );
 
     return $form;

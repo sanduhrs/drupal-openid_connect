@@ -51,7 +51,7 @@ class RedirectController extends ControllerBase {
    * @return string
    *   Return Hello string.
    */
-  public function redirect($client_name) {
+  public function authenticate($client_name) {
     // Delete the state token, since it's already been confirmed.
     unset($_SESSION['openid_connect_state']);
 
@@ -124,7 +124,7 @@ class RedirectController extends ControllerBase {
 
     // It's possible to set 'options' in the redirect destination.
     if (is_array($destination)) {
-      $redirect = Url::fromUri('internal:' . $destination[0], $destination[1])->toString();
+      $redirect = Url::fromUri('internal:/' . $destination[0], $destination[1])->toString();
       $response = new RedirectResponse($redirect);
       return $response->send();
     }

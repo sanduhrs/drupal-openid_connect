@@ -25,11 +25,6 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $plugin_id,
     $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-
-    //FIXME: IMHO the settings should already be available in $configuration
-    if (empty($configuration)) {
-      $this->configuration = \Drupal::config('openid_connect.settings.' . $this->pluginId)->get('settings');
-    }
   }
 
   /**

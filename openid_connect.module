@@ -80,7 +80,7 @@ function openid_connect_save_userinfo($account, $userinfo) {
   // Save the display name additionally in the user account 'data', for use in
   // openid_connect_username_alter().
   if (isset($userinfo['name'])) {
-    $account->data['oidc_name'] = $userinfo['name'];
+    \Drupal::service('user.data')->set('openid_connect', $account->id(), 'oidc_name', $userinfo['name']);
   }
 
   $account->save();
@@ -124,7 +124,8 @@ function openid_connect_save_user_picture($account, $picture_url) {
 
   // Skip saving if the remote picture has not changed.
   $hash = md5($picture_path_tmp);
-  if (!empty($account->picture) && isset($account->data['oidc_picture_hash']) && $account->data['oidc_picture_hash'] === $hash) {
+  $oidc_picture_hash = \Drupal::service('user.data')->get('openid_connect', $account->id(), 'oidc_picture_hash');
+  if (!empty($account->picture) && isset($oidc_picture_hash) && $oidc_picture_hash === $hash) {
     return;
   }
 
@@ -254,8 +255,9 @@ function openid_connect_username_exists($name) {
 function openid_connect_username_alter(&$name, $account) {
   // Ensure that usernames are not displayed if they are email addresses, or if
   // they are generated names starting with 'oidc_'.
-  if (!empty($account->data['oidc_name']) && (strpos($name, 'oidc_') === 0 || strpos($name, '@'))) {
-    $name = $account->data['oidc_name'];
+  $oidc_name = \Drupal::service('user.data')->get('openid_connect', $account->id(), 'oidc_name');
+  if (!empty($oidc_name) && (strpos($name, 'oidc_') === 0 || strpos($name, '@'))) {
+    $name = $oidc_name;
   }
 }
 

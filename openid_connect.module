@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\File;
+use Drupal\Core\Entity\EntityInterface;
 
 /**
  * Base path where to login providers can redirect in the OAuth2 flow.
@@ -262,7 +263,7 @@ function openid_connect_username_alter(&$name, $account) {
 /**
  * Implements hook_user_insert().
  */
-function openid_connect_user_insert(Drupal\Core\Entity\EntityInterface $entity) {
+function openid_connect_user_insert(EntityInterface $entity) {
   if (isset($edit['openid_connect_client'])) {
     openid_connect_connect_account($entity, $edit['openid_connect_client'], $edit['openid_connect_sub']);
   }
@@ -280,7 +281,7 @@ function openid_connect_authmap_delete($uid) {
 /**
  * Implements hook_ENTITY_TYPE_delete().
  */
-function openid_connect_user_delete(Drupal\Core\Entity\EntityInterface $entity) {
+function openid_connect_user_delete(EntityInterface $entity) {
   openid_connect_authmap_delete($entity->id());
 }
 

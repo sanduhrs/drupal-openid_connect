@@ -7,10 +7,10 @@
 
 namespace Drupal\openid_connect\Plugin;
 
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Exception;
 use Drupal\Core\Url;
 use Drupal\Component\Plugin\PluginBase;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Base class for OpenID Connect client plugins.
@@ -120,8 +120,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     unset($_GET['destination']);
     $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString();
 
-    $response = new RedirectResponse($authorization_endpoint);
-    return $response->send();
+    $response = new TrustedRedirectResponse($authorization_endpoint);
+    return $response;
   }
 
   /**

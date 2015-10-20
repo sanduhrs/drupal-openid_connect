@@ -95,7 +95,8 @@ class LoginForm extends FormBase {
     );
     $scopes = openid_connect_get_scopes();
     $_SESSION['openid_connect_op'] = 'login';
-    $client->authorize($scopes);
+    $response = $client->authorize($scopes, $form_state);
+    $form_state->setResponse($response);
   }
 
 }

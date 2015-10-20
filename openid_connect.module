@@ -34,8 +34,7 @@ function openid_connect_create_state_token() {
  *   in the session.
  */
 function openid_connect_confirm_state_token($state_token) {
-  return isset($_SESSION['openid_connect_state']) &&
-    $state_token == $_SESSION['openid_connect_state'];
+  return isset($_SESSION['openid_connect_state']) && $state_token == $_SESSION['openid_connect_state'];
 }
 
 /**
@@ -344,11 +343,11 @@ function openid_connect_set_password_access($account) {
 /**
  * Loads a user based on a sub-id and a login provider.
  */
-function openid_connect_user_load_by_sub($subject, $client_name) {
+function openid_connect_user_load_by_sub($sub, $client_name) {
   $result = db_select('openid_connect_identities', 'i')
     ->fields('i', array('uid'))
     ->condition('client_name', $client_name, '=')
-    ->condition('subject', $subject, '=')
+    ->condition('subject', $sub, '=')
     ->execute()
     ->fetchAssoc();
   if ($result) {
@@ -620,7 +619,7 @@ function openid_connect_extract_sub($user_data, $userinfo) {
 /**
  * Complete the authorization after tokens have been retrieved.
  *
- * @param OpenIDConnectClientInterface $client
+ * @param object $client
  *   The client.
  * @param array $tokens
  *   The tokens as returned from OpenIDConnectClientInterface::retrieveTokens().
@@ -630,7 +629,7 @@ function openid_connect_extract_sub($user_data, $userinfo) {
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function openid_connect_complete_authorization(OpenIDConnectClientInterface $client, $tokens, &$destination) {
+function openid_connect_complete_authorization($client, $tokens, &$destination) {
   if (\Drupal::currentUser()->isAuthenticated()) {
     throw new \RuntimeException('User already logged in');
   }
@@ -690,14 +689,14 @@ function openid_connect_complete_authorization(OpenIDConnectClientInterface $cli
  *   A user account object.
  * @param string $client_name
  *   The client name.
- * @param string $subject
+ * @param string $sub
  *   The remote subject identifier.
  */
-function openid_connect_associate($account, $client_name, $subject) {
+function openid_connect_associate($account, $client_name, $sub) {
   $fields = array(
     'uid' => $account->id(),
     'client_name' => $client_name,
-    'subject' => $subject,
+    'subject' => $sub,
   );
   db_insert('openid_connect_identities')
     ->fields($fields)
@@ -707,7 +706,7 @@ function openid_connect_associate($account, $client_name, $subject) {
 /**
  * Connect the current user's account to an external provider.
  *
- * @param OpenIDConnectClientInterface $client
+ * @param object $client
  *   The client.
  * @param array $tokens
  *   The tokens as returned from OpenIDConnectClientInterface::retrieveTokens().
@@ -715,7 +714,7 @@ function openid_connect_associate($account, $client_name, $subject) {
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function openid_connect_connect_current_user(OpenIDConnectClientInterface $client, $tokens) {
+function openid_connect_connect_current_user($client, $tokens) {
   if (\Drupal::currentUser()->isAuthenticated()) {
     throw new \RuntimeException('User already logged in');
   }

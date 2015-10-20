@@ -13,13 +13,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\Core\Routing\Access\AccessInterface;
+use Drupal\Core\Access\AccessResult;
 
 /**
  * Class RedirectController.
  *
  * @package Drupal\openid_connect\Controller
  */
-class RedirectController extends ControllerBase {
+class RedirectController extends ControllerBase implements AccessInterface {
 
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
@@ -42,6 +44,18 @@ class RedirectController extends ControllerBase {
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor')
     );
+  }
+
+  /**
+   * Access callback: Redirect page.
+   */
+  public function access() {
+    // Confirm anti-forgery state token. This round-trip verification helps to
+    // ensure that the user, not a malicious script, is making the request.
+    if (openid_connect_redirect_access()) {
+      return AccessResult::allowed();
+    }
+    return AccessResult::forbidden();
   }
 
   /**

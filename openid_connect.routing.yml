@@ -12,4 +12,4 @@ openid_connect.redirect_controller_redirect:
     _controller: '\Drupal\openid_connect\Controller\RedirectController::authenticate'
     _title: 'OpenID Connect redirect page'
   requirements:
-    _permission: 'access content'
+    _custom_access: '\Drupal\openid_connect\Controller\RedirectController::access'

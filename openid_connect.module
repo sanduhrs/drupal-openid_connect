@@ -5,6 +5,8 @@
  * A pluggable client implementation for the OpenID Connect protocol.
  */
 
+use Drupal\Core\File;
+
 /**
  * Base path where to login providers can redirect in the OAuth2 flow.
  */
@@ -71,8 +73,7 @@ function openid_connect_save_userinfo($account, $userinfo) {
     $userinfo_mappings = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
     $claim = $userinfo_mappings[$property_name];
     if ($claim && isset($userinfo[$claim])) {
-      // TODO: check functionality!
-      $account->fields->{$property_name} = $userinfo[$claim];
+      $account->set($property_name, $userinfo[$claim]);
     }
   }
 
@@ -101,15 +102,20 @@ function openid_connect_save_userinfo($account, $userinfo) {
  *   The URL to a user picture.
  */
 function openid_connect_save_user_picture($account, $picture_url) {
-  // $entity_manager->getFieldDefinitions('user', 'user')['picture']
-  // ->getSettings();
-  $picture_directory = file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
-  if (!file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)) {
+  $picture_settings = \Drupal::entityManager()->getFieldDefinitions('user', 'user')['user_picture']->getSettings();
+
+  $picture_directory_tmp = file_directory_temp() . DIRECTORY_SEPARATOR . $picture_settings['file_directory'];
+  if (!file_prepare_directory($picture_directory_tmp, FILE_CREATE_DIRECTORY)) {
     return;
   }
 
-  $response = drupal_http_request($picture_url);
-  if ($response->code != 200) {
+  $picture_path_tmp = file_stream_wrapper_uri_normalize($picture_directory_tmp . '/picture-' . $account->id() . '-' . REQUEST_TIME . '.jpg');
+
+  $client = \Drupal::httpClient();
+  try {
+    $client->get($picture_url, ['save_to' => $picture_path_tmp]);
+  }
+  catch (Exception $e) {
     $message = 'The user picture could not be fetched from URL: @url';
     $variables = array('@url' => $picture_url);
     \Drupal::logger('openid_connect')->error($message, $variables);
@@ -117,18 +123,22 @@ function openid_connect_save_user_picture($account, $picture_url) {
   }
 
   // Skip saving if the remote picture has not changed.
-  $hash = md5($response->data);
+  $hash = md5($picture_path_tmp);
   if (!empty($account->picture) && isset($account->data['oidc_picture_hash']) && $account->data['oidc_picture_hash'] === $hash) {
     return;
   }
 
-  $picture_path = file_stream_wrapper_uri_normalize($picture_directory . '/picture-' . $account->id() . '-' . REQUEST_TIME . '.jpg');
-  $picture_file = file_save_data($response->data, $picture_path, FILE_EXISTS_REPLACE);
+  $picture_directory_public = file_default_scheme() . '://' . $picture_settings['file_directory'];
+  $picture_path_public = file_stream_wrapper_uri_normalize($picture_directory_public . '/picture-' . $account->id() . '-' . REQUEST_TIME . '.jpg');
+
+  $file = \Drupal::entityManager()->getStorage('file')->create(array('uri' => $picture_path_tmp));
+  $file->save();
+  $picture_file = file_copy($file, $picture_path_public, FILE_EXISTS_REPLACE);
 
   // Check to make sure the picture isn't too large for the site settings.
   // Suppress the status message that Drupal sets after a successful resizing.
   $status_messages = isset($_SESSION['messages']['status']) ? $_SESSION['messages']['status'] : NULL;
-  file_validate_image_resolution($picture_file, variable_get('user_picture_dimensions', '1024x1024'));
+  //file_validate_image_resolution($picture_file, $picture_settings['max_resolution']);
   if (isset($status_messages)) {
     $_SESSION['messages']['status'] = $status_messages;
   }
@@ -137,9 +147,9 @@ function openid_connect_save_user_picture($account, $picture_url) {
   }
 
   // Update the user account object.
-  $account->picture = $picture_file;
-  $account->data['oidc_picture_hash'] = $hash;
-  user_save($account);
+  $account->set('user_picture', array('target_id' => $picture_file->id()));
+  \Drupal::service('user.data')->set('openid_connect', $account->id(), 'oidc_picture_hash', $hash);
+  $account->save();
 }
 
 /**

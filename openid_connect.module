@@ -163,7 +163,7 @@ function openid_connect_save_destination() {
   // preserved.
   $parsed = parse_url($destination);
   $_SESSION['openid_connect_destination'] = array(
-    $parsed['path'], array('query' => $parsed['query']),
+    $parsed['path'], array('query' => isset($parsed['query']) ? $parsed['query'] : ''),
   );
 }
 

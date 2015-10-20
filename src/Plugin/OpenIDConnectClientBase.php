@@ -129,7 +129,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function retrieveTokens($authorization_code) {
     // Exchange `code` for access token and ID token.
-    $redirect_uri = Url::fromRoute('openid_connect.redirect_controller_redirect', array('client_name' => $this->pluginId), array('absolute' => TRUE))->toString();
+    $redirect_uri = Url::fromRoute(
+      'openid_connect.redirect_controller_redirect',
+      array('client_name' => $this->pluginId), array('absolute' => TRUE)
+    )->toString();
     $endpoints = $this->getEndpoints();
 
     $request_options = array(

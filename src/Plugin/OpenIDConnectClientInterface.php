@@ -89,6 +89,7 @@ interface OpenIDConnectClientInterface extends PluginInspectionInterface {
    *   restricted user data. Defaults to "openid email".
    *
    * @return \Symfony\Component\HttpFoundation\Response
+   *   A response object.
    */
   public function authorize($scope = 'openid email');
 

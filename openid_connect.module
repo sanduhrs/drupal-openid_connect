@@ -5,7 +5,6 @@
  * A pluggable client implementation for the OpenID Connect protocol.
  */
 
-use Drupal\Core\File;
 use Drupal\Core\Entity\EntityInterface;
 
 /**
@@ -139,7 +138,7 @@ function openid_connect_save_user_picture($account, $picture_url) {
   // Check to make sure the picture isn't too large for the site settings.
   // Suppress the status message that Drupal sets after a successful resizing.
   $status_messages = isset($_SESSION['messages']['status']) ? $_SESSION['messages']['status'] : NULL;
-  //file_validate_image_resolution($picture_file, $picture_settings['max_resolution']);
+  file_validate_image_resolution($picture_file, $picture_settings['max_resolution']);
   if (isset($status_messages)) {
     $_SESSION['messages']['status'] = $status_messages;
   }
@@ -272,10 +271,13 @@ function openid_connect_user_insert(EntityInterface $entity) {
 /**
  * Deletes a user's authmap entries.
  */
-function openid_connect_authmap_delete($uid) {
-  db_delete('openid_connect_identities')
-    ->condition('uid', $uid)
-    ->execute();
+function openid_connect_authmap_delete($uid, $client_name = '') {
+  $query = db_delete('openid_connect_identities')
+    ->condition('uid', $uid, '=');
+  if (!empty($client_name)) {
+    $query->condition('client_name', $client_name, '=');
+  }
+  $query->execute();
 }
 
 /**
@@ -573,7 +575,7 @@ function openid_connect_get_connected_accounts($account) {
  *   The 'sub' property identifying the external account.
  */
 function openid_connect_connect_account($account, $client_name, $sub) {
-  user_set_authmaps($account, array('authname_openid_connect_' . $client_name => $sub));
+  openid_connect_authmap_create($account, $client_name, $sub);
 }
 
 /**
@@ -587,13 +589,7 @@ function openid_connect_connect_account($account, $client_name, $sub) {
  *   The 'sub' property identifying the external account (optional).
  */
 function openid_connect_disconnect_account($account, $client_name, $sub = NULL) {
-  $query = db_delete('authmap');
-  $query->condition('uid', $account->uid)
-    ->condition('module', 'openid_connect_' . $client_name);
-  if ($sub !== NULL) {
-    $query->condition('authname', $sub);
-  }
-  $query->execute();
+  openid_connect_authmap_delete($account->id(), $client_name);
 }
 
 /**
@@ -681,7 +677,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     // Create a new account.
     $account = openid_connect_create_user($sub, $userinfo, $client->getName());
     openid_connect_save_userinfo($account, $userinfo);
-    openid_connect_associate($account, $client->getName(), $sub);
+    openid_connect_authmap_create($account, $client->getName(), $sub);
   }
 
   openid_connect_login_user($account);
@@ -703,7 +699,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
  * @param string $sub
  *   The remote subject identifier.
  */
-function openid_connect_associate($account, $client_name, $sub) {
+function openid_connect_authmap_create($account, $client_name, $sub) {
   $fields = array(
     'uid' => $account->id(),
     'client_name' => $client_name,

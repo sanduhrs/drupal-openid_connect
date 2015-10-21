@@ -505,7 +505,7 @@ function _openid_connect_user_properties_to_skip() {
 /**
  * Logs an error occured during a request towards a login provider.
  */
-function openid_connect_log_request_error($method, $client_name, $response) {
+function openid_connect_log_request_error($method, $client_name, $error_message) {
   switch ($method) {
     case 'retrieveTokens':
       $message = 'Could not retrieve tokens';
@@ -519,17 +519,11 @@ function openid_connect_log_request_error($method, $client_name, $response) {
       return;
   }
 
-  // Some error responses don't have a data key set.
-  $details = '';
-  if (!empty($response->data)) {
-    $details = print_r(json_decode($response->data), TRUE);
-  }
   $variables = array(
-    '@error' => $response->error,
-    '@code' => $response->code,
-    '@details' => $details,
+    '@message' => $message,
+    '@error_message' => $error_message,
   );
-  \Drupal::logger('openid_connect_' . $client_name)->error($message . ' (@code @error). Details: @details', $variables);
+  \Drupal::logger('openid_connect_' . $client_name)->error('@message. Details: @error_message', $variables);
 }
 
 /**

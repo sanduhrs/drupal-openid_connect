@@ -129,11 +129,21 @@ function openid_connect_save_user_picture($account, $picture_url) {
   }
 
   $picture_directory_public = file_default_scheme() . '://' . $picture_settings['file_directory'];
+  if (!file_prepare_directory($picture_directory_public, FILE_CREATE_DIRECTORY)) {
+    return;
+  }
   $picture_path_public = file_stream_wrapper_uri_normalize($picture_directory_public . '/picture-' . $account->id() . '-' . REQUEST_TIME . '.jpg');
 
   $file = \Drupal::entityManager()->getStorage('file')->create(array('uri' => $picture_path_tmp));
   $file->save();
+  if (!$file) {
+    return;
+  }
+
   $picture_file = file_copy($file, $picture_path_public, FILE_EXISTS_REPLACE);
+  if (!$picture_file) {
+    return;
+  }
 
   // Check to make sure the picture isn't too large for the site settings.
   // Suppress the status message that Drupal sets after a successful resizing.

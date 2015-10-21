@@ -70,10 +70,14 @@ function openid_connect_save_userinfo($account, $userinfo) {
     if (isset($properties_skip[$property_name])) {
       continue;
     }
-    $userinfo_mappings = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
-    $claim = $userinfo_mappings[$property_name];
-    if ($claim && isset($userinfo[$claim])) {
-      $account->set($property_name, $userinfo[$claim]);
+
+    $userinfo_mappings = \Drupal::config('openid_connect.settings')
+      ->get('userinfo_mappings');
+    if (isset($userinfo_mappings[$property_name])) {
+      $claim = $userinfo_mappings[$property_name];
+      if ($claim && isset($userinfo[$claim])) {
+        $account->set($property_name, $userinfo[$claim]);
+      }
     }
   }
 

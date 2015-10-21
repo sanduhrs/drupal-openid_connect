@@ -500,9 +500,11 @@ function openid_connect_get_scopes() {
  */
 function _openid_connect_user_properties_to_skip() {
   $properties_to_skip = array(
-    'name', 'mail', 'uid', 'uuid', 'url', 'edit_url', 'last_access',
-    'last_login', 'created', 'roles', 'status', 'theme',
+    'uid', 'uuid', 'langcode', 'preferred_langcode', 'preferred_admin_langcode',
+    'name', 'pass', 'mail', 'status', 'created', 'changed', 'access', 'login',
+    'init', 'roles', 'default_langcode',
   );
+  \Drupal::moduleHandler()->alter(__FUNCTION__, $properties_to_skip);
   return array_combine($properties_to_skip, $properties_to_skip);
 }
 

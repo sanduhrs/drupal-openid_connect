@@ -123,7 +123,7 @@ class SettingsForm extends ConfigFormBase {
         '#options' => (array) $claims,
         '#empty_value' => 0,
         '#empty_option' => t('- No mapping -'),
-        '#default_value' => $mappings[$property_name] ? $mappings[$property_name] : $default_value,
+        '#default_value' => isset($mappings[$property_name]) ? $mappings[$property_name] : $default_value,
       );
     }
 

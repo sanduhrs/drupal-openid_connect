@@ -10,6 +10,7 @@
 
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 
 /**
@@ -28,8 +29,8 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
   /**
    * Overrides OpenIDConnectClientBase::settingsForm().
    */
-  public function settingsForm() {
-    $form = parent::settingsForm();
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
 
     $form['authorization_endpoint'] = array(
       '#title' => t('Authorization endpoint'),

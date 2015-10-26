@@ -40,7 +40,10 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The plugin manager.
    */
-  public function __construct(OpenIDConnectClientManager $plugin_manager, EntityManagerInterface $entity_manager) {
+  public function __construct(
+    OpenIDConnectClientManager $plugin_manager,
+    EntityManagerInterface $entity_manager) {
+
     $this->pluginManager = $plugin_manager;
     $this->entityManager = $entity_manager;
   }
@@ -116,7 +119,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
         ),
       );
       $form['clients'][$client_plugin['id']]['settings'] = array();
-      $form['clients'][$client_plugin['id']]['settings'] += $client->settingsForm();
+      $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm();
     }
 
     $form['always_save_userinfo'] = array(

@@ -9,6 +9,7 @@ namespace Drupal\openid_connect\Plugin;
 
 use Exception;
 use Drupal\Component\Plugin\PluginBase;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
@@ -65,9 +66,9 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::settingsForm().
+   * {inherit}
    */
-  public function settingsForm() {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form['client_id'] = array(
       '#title' => t('Client ID'),
       '#type' => 'textfield',
@@ -78,22 +79,21 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       '#type' => 'textfield',
       '#default_value' => $this->configuration['client_secret'],
     );
-
     return $form;
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::settingsFormValidate().
+   * {inherit}
    */
-  public function settingsFormValidate($form, &$form_state, $error_element_base) {
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     // No need to do anything, but make the function have a body anyway
     // so that it's callable by overriding methods.
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::settingsFormSubmit().
+   * {inherit}
    */
-  public function settingsFormSubmit($form, &$form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     // No need to do anything, but make the function have a body anyway
     // so that it's callable by overriding methods.
   }

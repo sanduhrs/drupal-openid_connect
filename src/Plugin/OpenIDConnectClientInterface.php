@@ -8,49 +8,12 @@
 namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\Core\Plugin\PluginFormInterface;
 
 /**
  * Defines an interface for OpenID Connect client plugins.
  */
-interface OpenIDConnectClientInterface extends PluginInspectionInterface {
-
-  /**
-   * Returns the settings form.
-   *
-   * The client settings form is embedded into the module's main settings form,
-   * and the configured values are injected into the client class through the
-   * constructor.
-   */
-  public function settingsForm();
-
-  /**
-   * Validates the settings form.
-   *
-   * @param object $form
-   *   The settings form.
-   * @param array $form_state
-   *   An array containing the current state of the form. Contains only
-   *   the 'values' key, since it is actually constructed on the fly by the
-   *   parent form.
-   * @param string $error_element_base
-   *   The base to prepend to field names when using form_set_error().
-   */
-  public function settingsFormValidate($form, &$form_state, $error_element_base);
-
-  /**
-   * Handles the submitted settings form.
-   *
-   * Note that there is no need to handle saving the options, that is done
-   * by the parent form.
-   *
-   * @param object $form
-   *   The settings form.
-   * @param array $form_state
-   *   An array containing the current state of the form. Contains only
-   *   the 'values' key, since it is actually constructed on the fly by the
-   *   parent form.
-   */
-  public function settingsFormSubmit($form, &$form_state);
+interface OpenIDConnectClientInterface extends PluginFormInterface, PluginInspectionInterface {
 
   /**
    * Returns an array of endpoints.

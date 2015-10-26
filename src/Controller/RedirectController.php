@@ -11,6 +11,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Drupal\Core\Routing\Access\AccessInterface;
@@ -28,13 +29,21 @@ class RedirectController extends ControllerBase implements AccessInterface {
    *
    * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
-  protected $plugin_manager;
+  protected $pluginManager;
+
+  /**
+   * The request stack used to determin current time.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
 
   /**
    * {@inheritdoc}
    */
-  public function __construct(OpenIDConnectClientManager $plugin_manager) {
-    $this->plugin_manager = $plugin_manager;
+  public function __construct(OpenIDConnectClientManager $plugin_manager, RequestStack $request_stack) {
+    $this->pluginManager = $plugin_manager;
+    $this->requestStack = $request_stack;
   }
 
   /**
@@ -42,20 +51,41 @@ class RedirectController extends ControllerBase implements AccessInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('plugin.manager.openid_connect_client.processor')
+      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('request_stack')
     );
   }
 
   /**
    * Access callback: Redirect page.
+   *
+   * @return bool
+   *   Whether the state token matches the previously created one that is stored
+   *   in the session.
    */
   public function access() {
     // Confirm anti-forgery state token. This round-trip verification helps to
     // ensure that the user, not a malicious script, is making the request.
-    if (openid_connect_redirect_access()) {
+    $query = $this->requestStack->getCurrentRequest()->query;
+    $state_token = $query->get('state');
+    if ($state_token && self::confirmStateToken($state_token)) {
       return AccessResult::allowed();
     }
     return AccessResult::forbidden();
+  }
+
+  /**
+   * Confirms anti-forgery state token.
+   *
+   * @param string $state_token
+   *   The state token that is used for validation.
+   *
+   * @return bool
+   *   Whether the state token matches the previously created one that is stored
+   *   in the session.
+   */
+  private function confirmStateToken($state_token) {
+    return isset($_SESSION['openid_connect_state']) && $state_token == $_SESSION['openid_connect_state'];
   }
 
   /**
@@ -65,6 +95,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
    *   Return Hello string.
    */
   public function authenticate($client_name) {
+    $query = $this->requestStack->getCurrentRequest()->query;
+
     // Delete the state token, since it's already been confirmed.
     unset($_SESSION['openid_connect_state']);
 
@@ -84,11 +116,11 @@ class RedirectController extends ControllerBase implements AccessInterface {
 
     $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
       ->get('settings');
-    $client = $this->plugin_manager->createInstance(
+    $client = $this->pluginManager->createInstance(
       $client_name,
       $configuration
     );
-    if (!isset($_GET['error']) && (!$client || !isset($_GET['code']))) {
+    if (!$query->get('error') && (!$client || !$query->get('code'))) {
       // In case we don't have an error, but the client could not be loaded or
       // there is no state token specified, the URI is probably being visited
       // outside of the login flow.
@@ -97,8 +129,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
 
     $provider_param = array('@provider' => $client->getLabel());
 
-    if (isset($_GET['error'])) {
-      if ($_GET['error'] == 'access_denied') {
+    if ($query->get('error')) {
+      if ($query->get('error') == 'access_denied') {
         // If we have an "access denied" error, that means the user hasn't
         // granted the authorization for the claims.
         drupal_set_message(t('Logging in with @provider has been canceled.', $provider_param), 'warning');
@@ -106,8 +138,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
       else {
         // Any other error should be logged. E.g. invalid scope.
         $variables = array(
-          '@error' => $_GET['error'],
-          '@details' => $_GET['error_description'],
+          '@error' => $query->get('error'),
+          '@details' => $query->get('error_description'),
         );
         $message = 'Authorization failed: @error. Details: @details';
         \Drupal::logger('openid_connect_' . $client_name)->error($message, $variables);
@@ -115,7 +147,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
     }
     else {
       // Process the login or connect operations.
-      $tokens = $client->retrieveTokens($_GET['code']);
+      $tokens = $client->retrieveTokens($query->get('code'));
       if ($tokens) {
         if ($parameters['op'] === 'login') {
           $success = openid_connect_complete_authorization($client, $tokens, $destination);

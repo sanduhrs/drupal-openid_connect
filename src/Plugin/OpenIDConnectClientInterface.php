@@ -13,20 +13,6 @@ use Drupal\Component\Plugin\PluginInspectionInterface;
  * Defines an interface for OpenID Connect client plugins.
  */
 interface OpenIDConnectClientInterface extends PluginInspectionInterface {
-  /**
-   * Get the client's human-readable label.
-   */
-  public function getLabel();
-
-  /**
-   * Get the client's machine name.
-   */
-  public function getName();
-
-  /**
-   * Returns the value of a setting.
-   */
-  public function getSetting($key);
 
   /**
    * Returns the settings form.

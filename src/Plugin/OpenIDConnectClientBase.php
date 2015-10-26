@@ -40,6 +40,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $plugin_id,
     $plugin_definition,
     RequestStack $request_stack) {
+
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->requestStack = $request_stack;
   }
@@ -57,39 +58,18 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   }
 
   /**
-   * Implements OpenIDConnectClientInterface::getLabel().
-   */
-  public function getLabel() {
-    return $this->pluginId;
-  }
-
-  /**
-   * Implements OpenIDConnectClientInterface::getName().
-   */
-  public function getName() {
-    return $this->pluginId;
-  }
-
-  /**
-   * Implements OpenIDConnectClientInterface::getSetting().
-   */
-  public function getSetting($key) {
-    return $this->configuration[$key];
-  }
-
-  /**
    * Implements OpenIDConnectClientInterface::settingsForm().
    */
   public function settingsForm() {
     $form['client_id'] = array(
       '#title' => t('Client ID'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('client_id'),
+      '#default_value' => $this->configuration['client_id'],
     );
     $form['client_secret'] = array(
       '#title' => t('Client secret'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('client_secret'),
+      '#default_value' => $this->configuration['client_secret'],
     );
 
     return $form;
@@ -129,7 +109,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
     $url_options = array(
       'query' => array(
-        'client_id' => $this->getSetting('client_id'),
+        'client_id' => $this->configuration['client_id'],
         'response_type' => 'code',
         'scope' => $scope,
         'redirect_uri' => $redirect_uri,
@@ -160,8 +140,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $request_options = array(
       'form_params' => array(
         'code' => $authorization_code,
-        'client_id' => $this->getSetting('client_id'),
-        'client_secret' => $this->getSetting('client_secret'),
+        'client_id' => $this->configuration['client_id'],
+        'client_secret' => $this->configuration['client_secret'],
         'redirect_uri' => $redirect_uri,
         'grant_type' => 'authorization_code',
       ),

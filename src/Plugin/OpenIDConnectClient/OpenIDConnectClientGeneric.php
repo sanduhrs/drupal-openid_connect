@@ -55,9 +55,9 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
    */
   public function getEndpoints() {
     return array(
-      'authorization' => $this->getSetting('authorization_endpoint'),
-      'token' => $this->getSetting('token_endpoint'),
-      'userinfo' => $this->getSetting('userinfo_endpoint'),
+      'authorization' => $this->configuration['authorization_endpoint'],
+      'token' => $this->configuration['token_endpoint'],
+      'userinfo' => $this->configuration['userinfo_endpoint'],
     );
   }
 

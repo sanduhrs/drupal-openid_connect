@@ -657,7 +657,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
 
   if ($userinfo && empty($userinfo['email'])) {
     $message = 'No e-mail address provided by @provider';
-    $variables = array('@provider' => $client->getLabel());
+    $variables = array('@provider' => $client->getPluginId());
     \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
@@ -665,12 +665,12 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   $sub = openid_connect_extract_sub($user_data, $userinfo);
   if (empty($sub)) {
     $message = 'No "sub" found from @provider';
-    $variables = array('@provider' => $client->getLabel());
+    $variables = array('@provider' => $client->getPluginId());
     \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
-  $account = openid_connect_user_load_by_sub($sub, $client->getName());
+  $account = openid_connect_user_load_by_sub($sub, $client->getPluginId());
   if ($account) {
     // An existing account was found. Save user claims.
     if (\Drupal::config('openid_connect.settings')->get('always_save_userinfo')) {
@@ -686,15 +686,15 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     }
 
     // Create a new account.
-    $account = openid_connect_create_user($sub, $userinfo, $client->getName());
+    $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId());
     openid_connect_save_userinfo($account, $userinfo);
-    openid_connect_authmap_create($account, $client->getName(), $sub);
+    openid_connect_authmap_create($account, $client->getPluginId(), $sub);
   }
 
   openid_connect_login_user($account);
 
   \Drupal::moduleHandler()->invokeAll('openid_connect_post_authorize', array(
-    $tokens, $account, $userinfo, $client->getName(),
+    $tokens, $account, $userinfo, $client->getPluginId(),
   ));
 
   return TRUE;
@@ -740,7 +740,7 @@ function openid_connect_connect_current_user($client, $tokens) {
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
-  $provider_param = array('@provider' => $client->getLabel());
+  $provider_param = array('@provider' => $client->getPluginId());
 
   if ($userinfo && empty($userinfo['email'])) {
     $message = 'No e-mail address provided by @provider';
@@ -757,7 +757,7 @@ function openid_connect_connect_current_user($client, $tokens) {
     return FALSE;
   }
 
-  $account = openid_connect_user_load_by_sub($sub, $client->getName());
+  $account = openid_connect_user_load_by_sub($sub, $client->getPluginId());
   if ($account && $account->id() !== $user->id()) {
     drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
 
@@ -766,7 +766,7 @@ function openid_connect_connect_current_user($client, $tokens) {
 
   if (!$account) {
     $account = $user;
-    openid_connect_connect_account($account, $client->getName(), $sub);
+    openid_connect_connect_account($account, $client->getPluginId(), $sub);
   }
 
   $always_save_userinfo = \Drupal::config('openid_connect.settings')->get('always_save_userinfo');
@@ -775,7 +775,7 @@ function openid_connect_connect_current_user($client, $tokens) {
   }
 
   \Drupal::moduleHandler()->invokeAll('openid_connect_post_authorize', array(
-    $tokens, $account, $userinfo, $client->getName(),
+    $tokens, $account, $userinfo, $client->getPluginId(),
   ));
 
   return TRUE;

@@ -7,15 +7,15 @@
 
 namespace Drupal\openid_connect\Controller;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Url;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
-use Drupal\Core\Routing\Access\AccessInterface;
-use Drupal\Core\Access\AccessResult;
 
 /**
  * Class RedirectController.
@@ -32,7 +32,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
   protected $pluginManager;
 
   /**
-   * The request stack used to determin current time.
+   * The request stack used to access request globals.
    *
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
@@ -41,7 +41,9 @@ class RedirectController extends ControllerBase implements AccessInterface {
   /**
    * {@inheritdoc}
    */
-  public function __construct(OpenIDConnectClientManager $plugin_manager, RequestStack $request_stack) {
+  public function __construct(
+    OpenIDConnectClientManager $plugin_manager,
+    RequestStack $request_stack) {
     $this->pluginManager = $plugin_manager;
     $this->requestStack = $request_stack;
   }

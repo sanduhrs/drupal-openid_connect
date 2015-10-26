@@ -7,15 +7,23 @@
 
 namespace Drupal\openid_connect\Plugin;
 
-use Drupal\Core\Routing\TrustedRedirectResponse;
 use Exception;
-use Drupal\Core\Url;
 use Drupal\Component\Plugin\PluginBase;
+use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\Core\Url;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Base class for OpenID Connect client plugins.
  */
 abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface {
+
+  /**
+   * The request stack used to access request globals.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
 
   /**
    * The constructor.
@@ -30,8 +38,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   public function __construct(
     array $configuration,
     $plugin_id,
-    $plugin_definition) {
+    $plugin_definition,
+    RequestStack $request_stack) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->requestStack = $request_stack;
   }
 
   /**
@@ -116,8 +126,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     );
 
     $endpoints = $this->getEndpoints();
-    // Clear $_GET['destination'] because we need to override it.
-    unset($_GET['destination']);
+    // Clear _GET['destination'] because we need to override it.
+    $this->requestStack->getCurrentRequest()->query->remove('destination');
     $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString();
 
     $response = new TrustedRedirectResponse($authorization_endpoint);

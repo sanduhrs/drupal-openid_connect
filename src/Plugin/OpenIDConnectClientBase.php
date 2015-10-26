@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
+use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -29,6 +30,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $requestStack;
 
   /**
+   * The HTTP client to fetch the feed data with.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected $httpClient;
+
+  /**
    * The constructor.
    *
    * @param array $configuration
@@ -42,10 +50,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    RequestStack $request_stack) {
+    RequestStack $request_stack,
+    ClientInterface $http_client
+  ) {
 
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->requestStack = $request_stack;
+    $this->httpClient = $http_client;
   }
 
   /**
@@ -61,7 +72,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('request_stack')
+      $container->get('request_stack'),
+      $container->get('http_client')
     );
   }
 
@@ -154,7 +166,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       ),
     );
 
-    $client = \Drupal::httpClient();
+    $client = $this->httpClient;
     try {
       $response = $client->post($endpoints['token'], $request_options);
       $response_data = json_decode((string) $response->getBody(), TRUE);
@@ -194,7 +206,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     );
     $endpoints = $this->getEndpoints();
 
-    $client = \Drupal::httpClient();
+    $client = $this->httpClient;
     try {
       $response = $client->post($endpoints['userinfo'], $request_options);
       $response_data = (string) $response->getBody();

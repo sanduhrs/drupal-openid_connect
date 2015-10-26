@@ -9,6 +9,7 @@ namespace Drupal\openid_connect\Controller;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Url;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
@@ -39,13 +40,24 @@ class RedirectController extends ControllerBase implements AccessInterface {
   protected $requestStack;
 
   /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
     OpenIDConnectClientManager $plugin_manager,
-    RequestStack $request_stack) {
+    RequestStack $request_stack,
+    LoggerChannelFactory $logger_factory
+  ) {
+
     $this->pluginManager = $plugin_manager;
     $this->requestStack = $request_stack;
+    $this->loggerFactory = $logger_factory;
   }
 
   /**
@@ -54,7 +66,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor'),
-      $container->get('request_stack')
+      $container->get('request_stack'),
+      $container->get('logger.factory')
     );
   }
 
@@ -144,7 +157,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
           '@details' => $query->get('error_description'),
         );
         $message = 'Authorization failed: @error. Details: @details';
-        \Drupal::logger('openid_connect_' . $client_name)->error($message, $variables);
+        $this->loggerFactory('openid_connect_' . $client_name)->error($message, $variables);
       }
     }
     else {

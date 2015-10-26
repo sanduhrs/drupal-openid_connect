@@ -116,7 +116,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
     }
     $destination = $parameters['destination'];
 
-    $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
+    $configuration = $this->config('openid_connect.settings.' . $client_name)
       ->get('settings');
     $client = $this->pluginManager->createInstance(
       $client_name,

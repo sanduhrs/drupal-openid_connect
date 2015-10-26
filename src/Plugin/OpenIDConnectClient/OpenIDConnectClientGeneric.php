@@ -34,17 +34,17 @@ class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
     $form['authorization_endpoint'] = array(
       '#title' => t('Authorization endpoint'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('authorization_endpoint'),
+      '#default_value' => $this->configuration['authorization_endpoint'],
     );
     $form['token_endpoint'] = array(
       '#title' => t('Token endpoint'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('token_endpoint'),
+      '#default_value' => $this->configuration['token_endpoint'],
     );
     $form['userinfo_endpoint'] = array(
       '#title' => t('UserInfo endpoint'),
       '#type' => 'textfield',
-      '#default_value' => $this->getSetting('userinfo_endpoint'),
+      '#default_value' => $this->configuration['userinfo_endpoint'],
     );
 
     return $form;

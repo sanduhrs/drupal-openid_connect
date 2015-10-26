@@ -9,22 +9,23 @@ namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class LoginForm.
  *
  * @package Drupal\openid_connect\Form
  */
-class LoginForm extends FormBase {
+class LoginForm extends FormBase implements ContainerInjectionInterface {
 
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
    * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
-  protected $plugin_manager;
+  protected $pluginManager;
 
   /**
    * The constructor.
@@ -32,10 +33,8 @@ class LoginForm extends FormBase {
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The plugin manager.
    */
-  public function __construct(
-    OpenIDConnectClientManager $plugin_manager
-  ) {
-    $this->plugin_manager = $plugin_manager;
+  public function __construct(OpenIDConnectClientManager $plugin_manager) {
+    $this->pluginManager = $plugin_manager;
   }
 
   /**
@@ -58,10 +57,10 @@ class LoginForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $plugin_manager = $this->plugin_manager;
+    $plugin_manager = $this->pluginManager;
     $definitions = $plugin_manager->getDefinitions();
     foreach ($definitions as $client_id => $client) {
-      if (!\Drupal::config('openid_connect.settings.' . $client_id)
+      if (!$this->config('openid_connect.settings.' . $client_id)
         ->get('enabled')) {
         continue;
       }
@@ -86,8 +85,8 @@ class LoginForm extends FormBase {
     openid_connect_save_destination();
     $client_name = $form_state->getTriggeringElement()['#name'];
 
-    $plugin_manager = $this->plugin_manager;
-    $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
+    $plugin_manager = $this->pluginManager;
+    $configuration = $this->config('openid_connect.settings.' . $client_name)
       ->get('settings');
     $client = $plugin_manager->createInstance(
       $client_name,

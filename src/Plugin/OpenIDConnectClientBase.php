@@ -10,13 +10,15 @@ namespace Drupal\openid_connect\Plugin;
 use Exception;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Base class for OpenID Connect client plugins.
  */
-abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface {
+abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface, ContainerFactoryPluginInterface {
 
   /**
    * The request stack used to access request globals.
@@ -48,7 +50,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(
+    ContainerInterface $container,
+    array $configuration,
+    $plugin_id,
+    $plugin_definition) {
+
     return new static(
       $configuration,
       $plugin_id,

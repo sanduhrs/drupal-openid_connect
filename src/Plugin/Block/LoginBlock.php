@@ -8,6 +8,7 @@
 namespace Drupal\openid_connect\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
+use Drupal\Core\Form\FormBuilder;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
@@ -27,7 +28,14 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
    *
    * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
-  protected $plugin_manager;
+  protected $pluginManager;
+
+  /**
+   * The form builder.
+   *
+   * @var Drupal\Core\Form\FormBuilder
+   */
+  protected $formBuilder;
 
   /**
    * Construct.
@@ -43,10 +51,13 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
         array $configuration,
         $plugin_id,
         $plugin_definition,
-        OpenIDConnectClientManager $plugin_manager
+        OpenIDConnectClientManager $plugin_manager,
+        FormBuilder $form_builder
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->plugin_manager = $plugin_manager;
+
+    $this->pluginManager = $plugin_manager;
+    $this->formBuilder = $form_builder;
   }
 
   /**
@@ -57,7 +68,8 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('plugin.manager.openid_connect_client.processor')
+      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('form_builder')
     );
   }
 
@@ -65,7 +77,7 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
    * {@inheritdoc}
    */
   public function build() {
-    return \Drupal::formBuilder()->getForm('Drupal\openid_connect\Form\LoginForm');
+    return $this->formBuilder->getForm('Drupal\openid_connect\Form\LoginForm');
   }
 
 }

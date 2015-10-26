@@ -7,15 +7,53 @@
 
 namespace Drupal\openid_connect\Form;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class SettingsForm.
  *
  * @package Drupal\openid_connect\Form
  */
-class SettingsForm extends ConfigFormBase {
+class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface {
+
+  /**
+   * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
+   *
+   * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   */
+  protected $pluginManager;
+
+  /**
+   * The entity manager.
+   *
+   * @var \Drupal\Core\Entity\EntityManager
+   */
+  protected $entityManager;
+
+  /**
+   * The constructor.
+   *
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   *   The plugin manager.
+   */
+  public function __construct(OpenIDConnectClientManager $plugin_manager, EntityManagerInterface $entity_manager) {
+    $this->pluginManager = $plugin_manager;
+    $this->entityManager = $entity_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('entity.manager')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -37,17 +75,14 @@ class SettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('openid_connect.settings');
 
-    $plugin_manager = \Drupal::service('plugin.manager.openid_connect_client.processor');
-    $client_plugins = $plugin_manager->getDefinitions();
-
     $options = array();
-    foreach ($client_plugins as $client_plugin) {
+    foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
       $options[$client_plugin['id']] = $client_plugin['label'];
     }
 
     $clients_enabled = array();
-    foreach ($client_plugins as $client_plugin) {
-      $enabled = \Drupal::configFactory()
+    foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
+      $enabled = $this->configFactory()
         ->getEditable('openid_connect.settings.' . $client_plugin['id'])
         ->get('enabled');
       $clients_enabled[$client_plugin['id']] = (bool) $enabled ? $client_plugin['id'] : 0;
@@ -61,10 +96,10 @@ class SettingsForm extends ConfigFormBase {
       '#options' => $options,
       '#default_value' => $clients_enabled,
     );
-    foreach ($client_plugins as $client_name => $client_plugin) {
-      $configuration = \Drupal::config('openid_connect.settings.' . $client_name)
+    foreach ($this->pluginManager->getDefinitions() as $client_name => $client_plugin) {
+      $configuration = $this->config('openid_connect.settings.' . $client_name)
         ->get('settings');
-      $client = $plugin_manager->createInstance(
+      $client = $this->pluginManager->createInstance(
         $client_name,
         $configuration
       );
@@ -102,7 +137,7 @@ class SettingsForm extends ConfigFormBase {
       '#type' => 'fieldset',
     );
 
-    $properties = \Drupal::entityManager()->getFieldDefinitions('user', 'user');
+    $properties = $this->entityManager->getFieldDefinitions('user', 'user');
     $properties_skip = _openid_connect_user_properties_to_skip();
     $claims = openid_connect_claims_options();
     $mappings = $always_save_userinfo = $config->get('userinfo_mappings');
@@ -150,12 +185,12 @@ class SettingsForm extends ConfigFormBase {
       ->save();
     $clients_enabled = $form_state->getValue('clients_enabled');
     foreach ($clients_enabled as $client_name => $status) {
-      \Drupal::configFactory()
+      $this->configFactory()
         ->getEditable('openid_connect.settings.' . $client_name)
         ->set('enabled', $status)
         ->save();
       if ((bool) $status) {
-        \Drupal::configFactory()
+        $this->configFactory()
           ->getEditable('openid_connect.settings.' . $client_name)
           ->set('settings', $form_state->getValue(array(
             'clients', $client_name, 'settings',

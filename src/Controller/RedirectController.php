@@ -11,6 +11,7 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Routing\Access\AccessInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -47,17 +48,26 @@ class RedirectController extends ControllerBase implements AccessInterface {
   protected $loggerFactory;
 
   /**
+   * The Drupal account to use for checking for access to advanced search.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $account;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
     OpenIDConnectClientManager $plugin_manager,
     RequestStack $request_stack,
-    LoggerChannelFactory $logger_factory
+    LoggerChannelFactory $logger_factory,
+    AccountInterface $account = NULL
   ) {
 
     $this->pluginManager = $plugin_manager;
     $this->requestStack = $request_stack;
     $this->loggerFactory = $logger_factory;
+    $this->account = $account;
   }
 
   /**
@@ -67,7 +77,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor'),
       $container->get('request_stack'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('current_user')
     );
   }
 
@@ -170,7 +181,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
             drupal_set_message(t('Logging in with @provider could not be completed due to an error.', $provider_param), 'error');
           }
         }
-        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $GLOBALS['user']->uid) {
+        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->account->uid) {
           $success = openid_connect_connect_current_user($client, $tokens);
           if ($success) {
             drupal_set_message(t('Account successfully connected with @provider.', $provider_param));

@@ -6,47 +6,8 @@
  */
 
 use Drupal\Core\Entity\EntityInterface;
-
-/**
- * Base path where to login providers can redirect in the OAuth2 flow.
- */
-define('OPENID_CONNECT_REDIRECT_PATH_BASE', 'openid-connect');
-
-/**
- * Creates a state token and stores it in the session for later validation.
- *
- * @return string
- *   A state token that later can be validated to prevent request forgery.
- */
-function openid_connect_create_state_token() {
-  $state = md5(rand());
-  $_SESSION['openid_connect_state'] = $state;
-
-  return $state;
-}
-
-/**
- * Confirms anti-forgery state token.
- *
- * @param string $state_token
- *   The state token that is used for validation.
- *
- * @return bool
- *   Whether the state token matches the previously created one that is stored
- *   in the session.
- */
-function openid_connect_confirm_state_token($state_token) {
-  return isset($_SESSION['openid_connect_state']) && $state_token == $_SESSION['openid_connect_state'];
-}
-
-/**
- * Access callback: Redirect page.
- */
-function openid_connect_redirect_access() {
-  // Confirm anti-forgery state token. This round-trip verification helps to
-  // ensure that the user, not a malicious script, is making the request.
-  return !empty($_GET['state']) && openid_connect_confirm_state_token($_GET['state']);
-}
+use Drupal\openid_connect\Authmap;
+use Drupal\openid_connect\Claims;
 
 /**
  * Access callback: Connected accounts page.
@@ -284,29 +245,19 @@ function openid_connect_user_insert(EntityInterface $entity) {
 }
 
 /**
- * Deletes a user's authmap entries.
- */
-function openid_connect_authmap_delete($uid, $client_name = '') {
-  $query = db_delete('openid_connect_identities')
-    ->condition('uid', $uid, '=');
-  if (!empty($client_name)) {
-    $query->condition('client_name', $client_name, '=');
-  }
-  $query->execute();
-}
-
-/**
  * Implements hook_ENTITY_TYPE_delete().
  */
 function openid_connect_user_delete(EntityInterface $entity) {
-  openid_connect_authmap_delete($entity->id());
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $authmap->deleteAssociation($entity->id());
 }
 
 /**
  * Implements hook_user_cancel().
  */
 function openid_connect_user_cancel($edit, $account, $method) {
-  openid_connect_authmap_delete($account->id());
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $authmap->deleteAssociation($account->id());
 }
 
 /**
@@ -363,136 +314,10 @@ function openid_connect_set_password_access($account) {
     return FALSE;
   }
 
-  $connected_accounts = openid_connect_get_connected_accounts($account);
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $connected_accounts = $authmap->getConnectedAccounts($account);
 
   return empty($connected_accounts);
-}
-
-/**
- * Loads a user based on a sub-id and a login provider.
- */
-function openid_connect_user_load_by_sub($sub, $client_name) {
-  $result = db_select('openid_connect_identities', 'i')
-    ->fields('i', array('uid'))
-    ->condition('client_name', $client_name, '=')
-    ->condition('subject', $sub, '=')
-    ->execute()
-    ->fetchAssoc();
-  if ($result) {
-    $account = user_load($result['uid']);
-    if (is_object($account)) {
-      return $account;
-    }
-  }
-  return FALSE;
-}
-
-/**
- * Returns OpenID Connect claims.
- *
- * This defines the standard claims, and allows them to be extended via an
- * alter hook.
- *
- * @see http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
- * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
- *
- * @return array
- *   List of claims
- */
-function openid_connect_claims() {
-  $claims = array(
-    'name' => array(
-      'scope' => 'profile',
-    ),
-    'family_name' => array(
-      'scope' => 'profile',
-    ),
-    'given_name' => array(
-      'scope' => 'profile',
-    ),
-    'middle_name' => array(
-      'scope' => 'profile',
-    ),
-    'nickname' => array(
-      'scope' => 'profile',
-    ),
-    'preferred_username' => array(
-      'scope' => 'profile',
-    ),
-    'profile' => array(
-      'scope' => 'profile',
-    ),
-    'picture' => array(
-      'scope' => 'profile',
-    ),
-    'website' => array(
-      'scope' => 'profile',
-    ),
-    'gender' => array(
-      'scope' => 'profile',
-    ),
-    'birthdate' => array(
-      'scope' => 'profile',
-    ),
-    'zoneinfo' => array(
-      'scope' => 'profile',
-    ),
-    'locale' => array(
-      'scope' => 'profile',
-    ),
-    'updated_at' => array(
-      'scope' => 'profile',
-    ),
-    'email' => array(
-      'scope' => 'email',
-    ),
-    'email_verified' => array(
-      'scope' => 'email',
-    ),
-    'address' => array(
-      'scope' => 'address',
-    ),
-    'phone_number' => array(
-      'scope' => 'phone',
-    ),
-    'phone_number_verified' => array(
-      'scope' => 'phone',
-    ),
-  );
-  \Drupal::moduleHandler()->alter(__FUNCTION__, $claims);
-  return $claims;
-}
-
-/**
- * Returns OpenID Connect standard Claims as a Form API options array.
- */
-function openid_connect_claims_options() {
-  $options = array();
-  foreach (openid_connect_claims() as $claim_name => $claim) {
-    $options[$claim['scope']][$claim_name] = $claim_name;
-  }
-  return $options;
-}
-
-/**
- * Returns scopes that have to be requested based on the configured claims.
- *
- * @see http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
- *
- * @return string
- *   Space delimited case sensitive list of ASCII scope values.
- */
-function openid_connect_get_scopes() {
-  $claims = \Drupal::config('openid_connect.settings')->get('userinfo_mappings');
-  $scopes = array('openid', 'email');
-  $claims_info = openid_connect_claims();
-  foreach ($claims as $claim) {
-    if (isset($claims_info[$claim]) && !isset($scopes[$claims_info[$claim]['scope']]) && $claim != 'email') {
-      $scopes[$claims_info[$claim]['scope']] = $claims_info[$claim]['scope'];
-    }
-  }
-
-  return implode(' ', $scopes);
 }
 
 /**
@@ -552,30 +377,6 @@ function openid_connect_entity_property_info_alter(&$info) {
 }
 
 /**
- * Get a list of external OIDC accounts connected to this Drupal account.
- *
- * @param object $account
- *   A Drupal user entity.
- *
- * @return array
- *   An array of 'sub' properties keyed by the client name.
- */
-function openid_connect_get_connected_accounts($account) {
-  $auth_maps = db_query(
-    "SELECT client_name, subject FROM {openid_connect_identities} WHERE uid = :uid",
-    array(':uid' => $account->id())
-  );
-  $results = array();
-  foreach ($auth_maps as $auth_map) {
-    $client = $auth_map->client_name;
-    $sub = $auth_map->subject;
-    $results[$client] = $sub;
-  }
-
-  return $results;
-}
-
-/**
  * Connect an external OpenID Connect account to a Drupal user account.
  *
  * @param object $account
@@ -586,7 +387,8 @@ function openid_connect_get_connected_accounts($account) {
  *   The 'sub' property identifying the external account.
  */
 function openid_connect_connect_account($account, $client_name, $sub) {
-  openid_connect_authmap_create($account, $client_name, $sub);
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $authmap->createAssociation($account, $client_name, $sub);
 }
 
 /**
@@ -600,7 +402,8 @@ function openid_connect_connect_account($account, $client_name, $sub) {
  *   The 'sub' property identifying the external account (optional).
  */
 function openid_connect_disconnect_account($account, $client_name, $sub = NULL) {
-  openid_connect_authmap_delete($account->id(), $client_name);
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $authmap->deleteAssociation($account->id(), $client_name);
 }
 
 /**
@@ -652,6 +455,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     throw new \RuntimeException('User already logged in');
   }
 
+  $authmap = \Drupal::service('openid_connect.authmap');
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
@@ -670,7 +474,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     return FALSE;
   }
 
-  $account = openid_connect_user_load_by_sub($sub, $client->getPluginId());
+  $account = $authmap->userLoadBySub($sub, $client->getPluginId());
   if ($account) {
     // An existing account was found. Save user claims.
     if (\Drupal::config('openid_connect.settings')->get('always_save_userinfo')) {
@@ -688,7 +492,8 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     // Create a new account.
     $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId());
     openid_connect_save_userinfo($account, $userinfo);
-    openid_connect_authmap_create($account, $client->getPluginId(), $sub);
+
+    $authmap->create($account, $client->getPluginId(), $sub);
   }
 
   openid_connect_login_user($account);
@@ -698,27 +503,6 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   ));
 
   return TRUE;
-}
-
-/**
- * Create a local to remote account association.
- *
- * @param object $account
- *   A user account object.
- * @param string $client_name
- *   The client name.
- * @param string $sub
- *   The remote subject identifier.
- */
-function openid_connect_authmap_create($account, $client_name, $sub) {
-  $fields = array(
-    'uid' => $account->id(),
-    'client_name' => $client_name,
-    'subject' => $sub,
-  );
-  db_insert('openid_connect_identities')
-    ->fields($fields)
-    ->execute();
 }
 
 /**
@@ -737,6 +521,7 @@ function openid_connect_connect_current_user($client, $tokens) {
     throw new \RuntimeException('User already logged in');
   }
 
+  $authmap = \Drupal::service('openid_connect.authmap');
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
@@ -757,7 +542,7 @@ function openid_connect_connect_current_user($client, $tokens) {
     return FALSE;
   }
 
-  $account = openid_connect_user_load_by_sub($sub, $client->getPluginId());
+  $authmap->userLoadBySub($sub, $client->getPluginId());
   if ($account && $account->id() !== $user->id()) {
     drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
 

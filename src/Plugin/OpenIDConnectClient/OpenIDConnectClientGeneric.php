@@ -21,7 +21,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
  *
  * @OpenIDConnectClient(
  *   id = "generic",
- *   label = @Translation("Generic OpenID Connect client")
+ *   label = @Translation("Generic")
  * )
  */
 class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {

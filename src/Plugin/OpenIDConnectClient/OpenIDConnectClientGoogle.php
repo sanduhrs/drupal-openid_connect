@@ -16,7 +16,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
  *
  * @OpenIDConnectClient(
  *   id = "google",
- *   label = @Translation("Google OpenID Connect client")
+ *   label = @Translation("Google")
  * )
  */
 class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {

@@ -14,6 +14,7 @@ use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Drupal\openid_connect\StateToken;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -48,11 +49,11 @@ class RedirectController extends ControllerBase implements AccessInterface {
   protected $loggerFactory;
 
   /**
-   * The Drupal account to use for checking for access to advanced search.
+   * Drupal\Core\Session\AccountProxy definition.
    *
-   * @var \Drupal\Core\Session\AccountInterface
+   * @var Drupal\Core\Session\AccountProxy
    */
-  protected $account;
+  protected $currentUser;
 
   /**
    * {@inheritdoc}
@@ -61,13 +62,13 @@ class RedirectController extends ControllerBase implements AccessInterface {
     OpenIDConnectClientManager $plugin_manager,
     RequestStack $request_stack,
     LoggerChannelFactory $logger_factory,
-    AccountInterface $account = NULL
+    AccountInterface $current_user
   ) {
 
     $this->pluginManager = $plugin_manager;
     $this->requestStack = $request_stack;
     $this->loggerFactory = $logger_factory;
-    $this->account = $account;
+    $this->currentUser = $current_user;
   }
 
   /**
@@ -94,24 +95,10 @@ class RedirectController extends ControllerBase implements AccessInterface {
     // ensure that the user, not a malicious script, is making the request.
     $query = $this->requestStack->getCurrentRequest()->query;
     $state_token = $query->get('state');
-    if ($state_token && self::confirmStateToken($state_token)) {
+    if ($state_token && StateToken::confirm($state_token)) {
       return AccessResult::allowed();
     }
     return AccessResult::forbidden();
-  }
-
-  /**
-   * Confirms anti-forgery state token.
-   *
-   * @param string $state_token
-   *   The state token that is used for validation.
-   *
-   * @return bool
-   *   Whether the state token matches the previously created one that is stored
-   *   in the session.
-   */
-  private function confirmStateToken($state_token) {
-    return isset($_SESSION['openid_connect_state']) && $state_token == $_SESSION['openid_connect_state'];
   }
 
   /**
@@ -181,7 +168,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
             drupal_set_message(t('Logging in with @provider could not be completed due to an error.', $provider_param), 'error');
           }
         }
-        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->account->uid) {
+        elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->currentUser->id()) {
           $success = openid_connect_connect_current_user($client, $tokens);
           if ($success) {
             drupal_set_message(t('Account successfully connected with @provider.', $provider_param));

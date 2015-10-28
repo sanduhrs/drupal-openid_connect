@@ -505,8 +505,9 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
  *   TRUE on success, FALSE on failure.
  */
 function openid_connect_connect_current_user($client, $tokens) {
-  if (\Drupal::currentUser()->isAuthenticated()) {
-    throw new \RuntimeException('User already logged in');
+  $user = \Drupal::currentUser();
+  if (!$user->isAuthenticated()) {
+    throw new \RuntimeException('User not logged in');
   }
 
   $authmap = \Drupal::service('openid_connect.authmap');

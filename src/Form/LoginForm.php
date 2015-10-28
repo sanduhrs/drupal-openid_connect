@@ -10,6 +10,7 @@ namespace Drupal\openid_connect\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\openid_connect\Claims;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -28,13 +29,25 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
   protected $pluginManager;
 
   /**
+   * The OpenID Connect claims.
+   *
+   * @var \Drupal\openid_connect\Claims
+   */
+  protected $claims;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The plugin manager.
    */
-  public function __construct(OpenIDConnectClientManager $plugin_manager) {
+  public function __construct(
+    OpenIDConnectClientManager $plugin_manager,
+    Claims $claims
+  ) {
+
     $this->pluginManager = $plugin_manager;
+    $this->claims = $claims;
   }
 
   /**
@@ -42,7 +55,8 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('plugin.manager.openid_connect_client.processor')
+      $container->get('plugin.manager.openid_connect_client.processor'),
+      $container->get('openid_connect.claims')
     );
   }
 
@@ -57,8 +71,7 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $plugin_manager = $this->pluginManager;
-    $definitions = $plugin_manager->getDefinitions();
+    $definitions = $this->pluginManager->getDefinitions();
     foreach ($definitions as $client_id => $client) {
       if (!$this->config('openid_connect.settings.' . $client_id)
         ->get('enabled')) {
@@ -67,7 +80,7 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
 
       $form['openid_connect_client_' . $client_id . '_login'] = array(
         '#type' => 'submit',
-        '#value' => t('!client_title', array(
+        '#value' => t('Log in with !client_title', array(
           '!client_title' => $client['label'],
         )),
         '#name' => $client_id,
@@ -85,14 +98,13 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
     openid_connect_save_destination();
     $client_name = $form_state->getTriggeringElement()['#name'];
 
-    $plugin_manager = $this->pluginManager;
     $configuration = $this->config('openid_connect.settings.' . $client_name)
       ->get('settings');
-    $client = $plugin_manager->createInstance(
+    $client = $this->pluginManager->createInstance(
       $client_name,
       $configuration
     );
-    $scopes = openid_connect_get_scopes();
+    $scopes = $this->claims->getScopes();
     $_SESSION['openid_connect_op'] = 'login';
     $response = $client->authorize($scopes, $form_state);
     $form_state->setResponse($response);

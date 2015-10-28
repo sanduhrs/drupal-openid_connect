@@ -7,16 +7,16 @@
 
 namespace Drupal\openid_connect\Plugin;
 
-use Exception;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
+use Drupal\openid_connect\StateToken;
+use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-
 /**
  * Base class for OpenID Connect client plugins.
  */
@@ -132,7 +132,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         'response_type' => 'code',
         'scope' => $scope,
         'redirect_uri' => $redirect_uri,
-        'state' => openid_connect_create_state_token(),
+        'state' => StateToken::create(),
       ),
     );
 

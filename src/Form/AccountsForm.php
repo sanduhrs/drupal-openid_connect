@@ -7,19 +7,45 @@
 
 namespace Drupal\openid_connect\Form;
 
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Session\AccountProxy;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\openid_connect\Authmap;
 use Drupal\openid_connect\Claims;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class LoginForm.
+ * Class AccountsForm.
  *
  * @package Drupal\openid_connect\Form
  */
-class LoginForm extends FormBase implements ContainerInjectionInterface {
+class AccountsForm extends FormBase implements ContainerInjectionInterface {
+
+  /**
+   * Drupal\Core\Session\AccountProxy definition.
+   *
+   * @var Drupal\Core\Session\AccountProxy
+   */
+  protected $currentUser;
+
+  /**
+   * Drupal\openid_connect\Authmap definition.
+   *
+   * @var Drupal\openid_connect\Authmap
+   */
+  protected $authmap;
+
+  /**
+   * Drupal\openid_connect\Claims definition.
+   *
+   * @var Drupal\openid_connect\Claims
+   */
+  protected $claims;
 
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
@@ -29,25 +55,28 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
   protected $pluginManager;
 
   /**
-   * The OpenID Connect claims.
+   * Drupal\Core\Config\ConfigFactory definition.
    *
-   * @var \Drupal\openid_connect\Claims
+   * @var Drupal\Core\Config\ConfigFactory
    */
-  protected $claims;
+  protected $configFactory;
 
   /**
    * The constructor.
-   *
-   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
-   *   The plugin manager.
    */
   public function __construct(
+    AccountProxy $current_user,
+    Authmap $authmap,
+    Claims $claims,
     OpenIDConnectClientManager $plugin_manager,
-    Claims $claims
+    ConfigFactory $config_factory
   ) {
 
-    $this->pluginManager = $plugin_manager;
+    $this->currentUser = $current_user;
+    $this->authmap = $authmap;
     $this->claims = $claims;
+    $this->pluginManager = $plugin_manager;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -55,8 +84,11 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('current_user'),
+      $container->get('openid_connect.authmap'),
+      $container->get('openid_connect.claims'),
       $container->get('plugin.manager.openid_connect_client.processor'),
-      $container->get('openid_connect.claims')
+      $container->get('config.factory')
     );
   }
 
@@ -64,30 +96,73 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'openid_connect_login_form';
+    return 'openid_connect_accounts_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    $plugin_manager = $this->pluginManager;
-    $definitions = $plugin_manager->getDefinitions();
-    foreach ($definitions as $client_id => $client) {
-      if (!$this->config('openid_connect.settings.' . $client_id)
-        ->get('enabled')) {
+  public function buildForm(array $form, FormStateInterface $form_state, AccountInterface $user = NULL) {
+    $form_state->set('account', $user);
+
+    $clients = $this->pluginManager->getDefinitions();
+
+    $read_only = $this->currentUser->id() != $user->id();
+
+    $form['help'] = array(
+      '#prefix' => '<p class="description">',
+      '#suffix' => '</p>',
+    );
+
+    if (empty($clients)) {
+      $form['help']['#markup'] = t('No external account providers are available.');
+      return $form;
+    }
+    elseif ($this->currentUser->id() == $user->id()) {
+      $form['help']['#markup'] = t('You can connect your account with these external providers.');
+    }
+
+    $connected_accounts = $this->authmap->getConnectedAccounts($user);
+
+    foreach ($clients as $client) {
+      $enabled = $this->configFactory
+        ->getEditable('openid_connect.settings.' . $client['id'])
+        ->get('enabled');
+      if (!$enabled) {
         continue;
       }
 
-      $form['openid_connect_client_' . $client_id . '_login'] = array(
-        '#type' => 'submit',
-        '#value' => t('!client_title', array(
-          '!client_title' => $client['label'],
-        )),
-        '#name' => $client_id,
-        '#prefix' => '<div>',
-        '#suffix' => '</div>',
+      $form[$client['id']] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Provider: @title', array('@title' => $client['title'])),
       );
+      $fieldset = &$form[$client['id']];
+      $connected = isset($connected_accounts[$client['id']]);
+      $fieldset['status'] = array(
+        '#type' => 'item',
+        '#title' => t('Status'),
+        '#markup' => t('Not connected'),
+      );
+      if ($connected) {
+        $fieldset['status']['#markup'] = t('Connected as %sub', array(
+          '%sub' => $connected_accounts[$client['id']],
+        ));
+        $fieldset['openid_connect_client_' . $client['id'] . '_disconnect'] = array(
+          '#type' => 'submit',
+          '#value' => t('Disconnect from !client_title', array('!client_title' => $client['title'])),
+          '#name' => 'disconnect__' . $client['id'],
+          '#access' => !$read_only,
+        );
+      }
+      else {
+        $fieldset['status']['#markup'] = t('Not connected');
+        $fieldset['openid_connect_client_' . $client['id'] . '_connect'] = array(
+          '#type' => 'submit',
+          '#value' => t('Connect with !client_title', array('!client_title' => $client['label'])),
+          '#name' => 'connect__' . $client['id'],
+          '#access' => !$read_only,
+        );
+      }
     }
     return $form;
   }
@@ -96,20 +171,54 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    openid_connect_save_destination();
-    $client_name = $form_state->getTriggeringElement()['#name'];
+    list($op, $client_name) = explode('__', $form_state->getTriggeringElement()['#name'], 2);
 
-    $plugin_manager = $this->pluginManager;
+    if ($op === 'disconnect') {
+      $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);
+      $client = $this->pluginManager->getDefinition($client_name);
+      drupal_set_message(t('Account successfully disconnected from @client.', array('@client' => $client['label'])));
+      return;
+    }
+
+    if ($this->currentUser->id() !== $form_state->get('account')->id()) {
+      drupal_set_message(t("You cannot connect another user's account."), 'error');
+      return;
+    }
+
+    openid_connect_save_destination();
+
     $configuration = $this->config('openid_connect.settings.' . $client_name)
       ->get('settings');
-    $client = $plugin_manager->createInstance(
+    $client = $this->pluginManager->createInstance(
       $client_name,
       $configuration
     );
     $scopes = $this->claims->getScopes();
-    $_SESSION['openid_connect_op'] = 'login';
-    $response = $client->authorize($scopes, $form_state);
+    $_SESSION['openid_connect_op'] = $op;
+    $_SESSION['openid_connect_connect_uid'] = $this->currentUser->id();
+    $response = $client->authorize($scopes);
     $form_state->setResponse($response);
+  }
+
+  /**
+   * Checks access for the OpenID-Connect accounts form.
+   *
+   * @param \Drupal\Core\Session $user
+   *   The user having accounts.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function access(AccountInterface $user) {
+    if ($this->currentUser->hasPermission('administer users')) {
+      return AccessResult::allowed();
+    }
+
+    if ($this->currentUser->id() && $this->currentUser->id() === $user->id() &&
+      $this->currentUser->hasPermission('manage own openid_connect accounts')) {
+      return AccessResult::allowed();
+    }
+    return AccessResult::forbidden();
   }
 
 }

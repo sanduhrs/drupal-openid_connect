@@ -196,14 +196,14 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
     $scopes = $this->claims->getScopes();
     $_SESSION['openid_connect_op'] = $op;
     $_SESSION['openid_connect_connect_uid'] = $this->currentUser->id();
-    $response = $client->authorize($scopes);
+    $response = $client->authorize($scopes, $form_state);
     $form_state->setResponse($response);
   }
 
   /**
    * Checks access for the OpenID-Connect accounts form.
    *
-   * @param \Drupal\Core\Session $user
+   * @param \Drupal\Core\Session\AccountInterface $user
    *   The user having accounts.
    *
    * @return \Drupal\Core\Access\AccessResultInterface

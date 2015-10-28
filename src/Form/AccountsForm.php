@@ -149,7 +149,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
         ));
         $fieldset['openid_connect_client_' . $client['id'] . '_disconnect'] = array(
           '#type' => 'submit',
-          '#value' => t('Disconnect from !client_title', array('!client_title' => $client['title'])),
+          '#value' => t('Disconnect from !client_title', array('!client_title' => $client['label'])),
           '#name' => 'disconnect__' . $client['id'],
           '#access' => !$read_only,
         );

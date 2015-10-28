@@ -140,7 +140,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
       throw new NotFoundHttpException();
     }
 
-    $provider_param = array('@provider' => $client->getPluginId());
+    $provider_param = array('@provider' => $client->getPluginDefinition()['label']);
 
     if ($query->get('error')) {
       if ($query->get('error') == 'access_denied') {

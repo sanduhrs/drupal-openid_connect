@@ -20,13 +20,13 @@ function openid_connect_save_userinfo($account, $userinfo) {
       continue;
     }
 
+    $account = \Drupal::entityManager()->getStorage('user')->load($account->id());
     $userinfo_mappings = \Drupal::config('openid_connect.settings')
       ->get('userinfo_mappings');
     if (isset($userinfo_mappings[$property_name])) {
       $claim = $userinfo_mappings[$property_name];
       if ($claim && isset($userinfo[$claim])) {
-        // TODO: Fix me!
-        //$account->set($property_name, $userinfo[$claim]);
+        $account->set($property_name, $userinfo[$claim]);
       }
     }
   }
@@ -37,8 +37,7 @@ function openid_connect_save_userinfo($account, $userinfo) {
     \Drupal::service('user.data')->set('openid_connect', $account->id(), 'oidc_name', $userinfo['name']);
   }
 
-  // TODO: Fix me!
-  //$account->save();
+  $account->save();
 
   // Fetch and save user picture from the login provider.
   $user_pictures = \Drupal::config('openid_connect.settings')

@@ -25,7 +25,7 @@ function openid_connect_save_userinfo($account, $userinfo) {
     if (isset($userinfo_mappings[$property_name])) {
       $claim = $userinfo_mappings[$property_name];
       if ($claim && isset($userinfo[$claim])) {
-        $account->set($property_name, $userinfo[$claim]);
+        //$account->set($property_name, $userinfo[$claim]);
       }
     }
   }

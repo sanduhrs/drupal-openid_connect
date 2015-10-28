@@ -10,6 +10,7 @@ namespace Drupal\openid_connect\Form;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\openid_connect\Claims;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,6 +36,13 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
   protected $entityManager;
 
   /**
+   * The OpenID Connect claims.
+   *
+   * @var \Drupal\openid_connect\Claims
+   */
+  protected $claims;
+
+  /**
    * The constructor.
    *
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
@@ -42,10 +50,13 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
    */
   public function __construct(
     OpenIDConnectClientManager $plugin_manager,
-    EntityManagerInterface $entity_manager) {
+    EntityManagerInterface $entity_manager,
+    Claims $claims
+  ) {
 
     $this->pluginManager = $plugin_manager;
     $this->entityManager = $entity_manager;
+    $this->claims = $claims;
   }
 
   /**
@@ -54,7 +65,8 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.manager.openid_connect_client.processor'),
-      $container->get('entity.manager')
+      $container->get('entity.manager'),
+      $container->get('openid_connect.claims')
     );
   }
 
@@ -142,7 +154,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
 
     $properties = $this->entityManager->getFieldDefinitions('user', 'user');
     $properties_skip = _openid_connect_user_properties_to_skip();
-    $claims = openid_connect_claims_options();
+    $claims = $this->claims->getOptions();
     $mappings = $always_save_userinfo = $config->get('userinfo_mappings');
     foreach ($properties as $property_name => $property) {
       if (isset($properties_skip[$property_name])) {

@@ -10,18 +10,6 @@ use Drupal\openid_connect\Authmap;
 use Drupal\openid_connect\Claims;
 
 /**
- * Access callback: Connected accounts page.
- */
-function openid_connect_connected_accounts_access($account) {
-  $user = \Drupal::currentUser();
-  if ($user->hasPermission('administer users')) {
-    return TRUE;
-  }
-
-  return $user->getAccount()->id() && $user->getAccount()->id() === $account->getAccount()->id() && $user->hasPermission('manage own openid_connect accounts');
-}
-
-/**
  * Saves user profile information into a user account.
  */
 function openid_connect_save_userinfo($account, $userinfo) {

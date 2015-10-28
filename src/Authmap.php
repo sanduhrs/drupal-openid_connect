@@ -107,7 +107,6 @@ class Authmap {
       $sub = $auth_map->subject;
       $results[$client] = $sub;
     }
-    dd($results);
     return $results;
   }
 

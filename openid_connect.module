@@ -37,7 +37,8 @@ function openid_connect_save_userinfo($account, $userinfo) {
     \Drupal::service('user.data')->set('openid_connect', $account->id(), 'oidc_name', $userinfo['name']);
   }
 
-  $account->save();
+  // TODO: Fix me!
+  //$account->save();
 
   // Fetch and save user picture from the login provider.
   $user_pictures = \Drupal::config('openid_connect.settings')

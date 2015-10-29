@@ -508,7 +508,7 @@ function openid_connect_connect_current_user($client, $tokens) {
     return FALSE;
   }
 
-  $authmap->userLoadBySub($sub, $client->getPluginId());
+  $account = $authmap->userLoadBySub($sub, $client->getPluginId());
   if ($account && $account->id() !== $user->id()) {
     drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
 

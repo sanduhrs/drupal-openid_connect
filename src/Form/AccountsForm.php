@@ -134,7 +134,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
 
       $form[$client['id']] = array(
         '#type' => 'fieldset',
-        '#title' => t('Provider: @title', array('@title' => $client['title'])),
+        '#title' => t('Provider: @title', array('@title' => $client['label'])),
       );
       $fieldset = &$form[$client['id']];
       $connected = isset($connected_accounts[$client['id']]);

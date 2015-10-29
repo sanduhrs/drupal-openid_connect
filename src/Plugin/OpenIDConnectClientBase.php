@@ -9,6 +9,7 @@ namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
@@ -17,6 +18,7 @@ use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+
 /**
  * Base class for OpenID Connect client plugins.
  */
@@ -45,18 +47,26 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The plugin identifier.
    * @param mixed $plugin_definition
    *   The plugin definition.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
+   * @param \GuzzleHttp\ClientInterface $http_client
+   *   The http client.
+   * @param \Drupal\Core\Logger\LoggerChannelFactory $logger_factory
+   *   The logger factory.
    */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
     RequestStack $request_stack,
-    ClientInterface $http_client
+    ClientInterface $http_client,
+    LoggerChannelFactory $logger_factory
   ) {
 
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->requestStack = $request_stack;
     $this->httpClient = $http_client;
+    $this->loggerFactory = $logger_factory;
   }
 
   /**
@@ -73,7 +83,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $plugin_id,
       $plugin_definition,
       $container->get('request_stack'),
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('logger.factory')
     );
   }
 
@@ -180,7 +191,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       return $result;
     }
     catch (Exception $e) {
-      openid_connect_log_request_error(__FUNCTION__, $this->pluginId, $e->getMessage());
+      $variables = array(
+        '@message' => 'Could not retrieve tokens',
+        '@error_message' => $e->getMessage(),
+      );
+      $this->loggerFactory->get('openid_connect_' . $this->pluginId)
+        ->error('@message. Details: @error_message', $variables);
       return FALSE;
     }
   }
@@ -214,7 +230,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       return json_decode($response_data, TRUE);
     }
     catch (Exception $e) {
-      openid_connect_log_request_error(__FUNCTION__, $this->name, $e->getMessage());
+      $variables = array(
+        '@message' => 'Could not retrieve user profile information',
+        '@error_message' => $e->getMessage(),
+      );
+      $this->loggerFactory->get('openid_connect_' . $this->pluginId)
+        ->error('@message. Details: @error_message', $variables);
       return FALSE;
     }
   }

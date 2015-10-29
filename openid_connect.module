@@ -323,30 +323,6 @@ function _openid_connect_user_properties_to_skip() {
 }
 
 /**
- * Logs an error occured during a request towards a login provider.
- */
-function openid_connect_log_request_error($method, $client_name, $error_message) {
-  switch ($method) {
-    case 'retrieveTokens':
-      $message = 'Could not retrieve tokens';
-      break;
-
-    case 'retrieveUserInfo':
-      $message = 'Could not retrieve user profile information';
-      break;
-
-    default:
-      return;
-  }
-
-  $variables = array(
-    '@message' => $message,
-    '@error_message' => $error_message,
-  );
-  \Drupal::logger('openid_connect_' . $client_name)->error('@message. Details: @error_message', $variables);
-}
-
-/**
  * Implements hook_entity_property_info_alter().
  *
  * Adds the missing timezone property.

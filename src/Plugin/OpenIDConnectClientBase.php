@@ -39,6 +39,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $httpClient;
 
   /**
+   * The logger factory used for logging.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   */
+  protected $loggerFactory;
+
+  /**
    * The constructor.
    *
    * @param array $configuration

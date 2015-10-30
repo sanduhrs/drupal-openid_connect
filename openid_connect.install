@@ -41,6 +41,7 @@ function openid_connect_schema() {
     ),
     'primary key' => array('aid'),
     'indexes' => array(
+      'uid' => array('uid'),
       'identifier' => array('client_name', 'subject'),
     ),
     'foreign keys' => array(

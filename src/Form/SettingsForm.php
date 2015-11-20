@@ -7,7 +7,9 @@
 
 namespace Drupal\openid_connect\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Claims;
@@ -24,7 +26,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
@@ -33,7 +35,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
    *
    * @var \Drupal\Core\Entity\EntityManager
    */
-  protected $entityManager;
+  protected $entityFieldManager;
 
   /**
    * The OpenID Connect claims.
@@ -45,17 +47,24 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
   /**
    * The constructor.
    *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The plugin manager.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
+   *   The entity field manager.
+   * @param \Drupal\openid_connect\Claims $claims
+   *   The claims.
    */
   public function __construct(
+    ConfigFactoryInterface $config_factory,
     OpenIDConnectClientManager $plugin_manager,
-    EntityManagerInterface $entity_manager,
+    EntityFieldManagerInterface $entity_field_manager,
     Claims $claims
   ) {
-
+    parent::__construct($config_factory);
     $this->pluginManager = $plugin_manager;
-    $this->entityManager = $entity_manager;
+    $this->entityFieldManager = $entity_field_manager;
     $this->claims = $claims;
   }
 
@@ -64,8 +73,9 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('config.factory'),
       $container->get('plugin.manager.openid_connect_client.processor'),
-      $container->get('entity.manager'),
+      $container->get('entity_field.manager'),
       $container->get('openid_connect.claims')
     );
   }
@@ -114,6 +124,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     foreach ($this->pluginManager->getDefinitions() as $client_name => $client_plugin) {
       $configuration = $this->config('openid_connect.settings.' . $client_name)
         ->get('settings');
+      /* @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
       $client = $this->pluginManager->createInstance(
         $client_name,
         $configuration
@@ -131,7 +142,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
         ),
       );
       $form['clients'][$client_plugin['id']]['settings'] = array();
-      $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm();
+      $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm($form, $form_state);
     }
 
     $form['always_save_userinfo'] = array(
@@ -152,7 +163,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       '#type' => 'fieldset',
     );
 
-    $properties = $this->entityManager->getFieldDefinitions('user', 'user');
+    $properties = $this->entityFieldManager->getFieldDefinitions('user', 'user');
     $properties_skip = _openid_connect_user_properties_to_skip();
     $claims = $this->claims->getOptions();
     $mappings = $always_save_userinfo = $config->get('userinfo_mappings');
@@ -208,7 +219,9 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
         $this->configFactory()
           ->getEditable('openid_connect.settings.' . $client_name)
           ->set('settings', $form_state->getValue(array(
-            'clients', $client_name, 'settings',
+            'clients',
+            $client_name,
+            'settings',
           )))
           ->save();
       }

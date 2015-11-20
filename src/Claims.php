@@ -22,14 +22,14 @@ class Claims implements ContainerInjectionInterface {
   /**
    * Drupal\Core\Config\ConfigFactory definition.
    *
-   * @var Drupal\Core\Config\ConfigFactory
+   * @var \Drupal\Core\Config\ConfigFactory
    */
   protected $configFactory;
 
   /**
    * Drupal\Core\Extension\ModuleHandler definition.
    *
-   * @var Drupal\Core\Extension\ModuleHandler
+   * @var \Drupal\Core\Extension\ModuleHandler
    */
   protected $moduleHandler;
 

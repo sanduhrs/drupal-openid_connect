@@ -1,4 +1,4 @@
-enabled: 0
+enabled: false
 settings:
   client_id:
   client_secret:

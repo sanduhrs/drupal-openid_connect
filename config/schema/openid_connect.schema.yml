@@ -11,8 +11,15 @@ openid_connect.settings:
       type: boolean
       label: 'Fetch user profile picture from login provider'
     userinfo_mappings:
-      type: config_object
+      type: mapping
       label: 'OpenID Connect settings'
+      mapping:
+        timezone:
+          type: string
+          label: 'Timezone'
+        picture:
+          type: string
+          label: 'Picture'
 
 openid_connect.settings.generic:
   type: config_object
@@ -21,23 +28,24 @@ openid_connect.settings.generic:
     enabled:
       type: boolean
       label: 'Enable client'
-  settings:
+    settings:
       type: mapping
-      client_id:
-        type: string
-        label: 'Client ID'
-      client_secret:
-        type: string
-        label: 'Client secret'
-      authorization_endpoint:
-        type: string
-        label: 'Authorization endpoint'
-      token_endpoint:
-        type: string
-        label: 'Token endpoint'
-      userinfo_endpoint:
-        type: string
-        label: 'Userinfo endpoint'
+      mapping:
+        client_id:
+          type: string
+          label: 'Client ID'
+        client_secret:
+          type: string
+          label: 'Client secret'
+        authorization_endpoint:
+          type: string
+          label: 'Authorization endpoint'
+        token_endpoint:
+          type: string
+          label: 'Token endpoint'
+        userinfo_endpoint:
+          type: string
+          label: 'Userinfo endpoint'
 
 openid_connect.settings.google:
   type: config_object
@@ -48,9 +56,10 @@ openid_connect.settings.google:
       label: 'Enable client'
     settings:
       type: mapping
-      client_id:
-        type: string
-        label: 'Client ID'
-      client_secret:
-        type: string
-        label: 'Client secret'
+      mapping:
+        client_id:
+          type: string
+          label: 'Client ID'
+        client_secret:
+          type: string
+          label: 'Client secret'

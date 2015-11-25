@@ -166,7 +166,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     $properties = $this->entityFieldManager->getFieldDefinitions('user', 'user');
     $properties_skip = _openid_connect_user_properties_to_skip();
     $claims = $this->claims->getOptions();
-    $mappings = $always_save_userinfo = $config->get('userinfo_mappings');
+    $mappings = $config->get('userinfo_mappings');
     foreach ($properties as $property_name => $property) {
       if (isset($properties_skip[$property_name])) {
         continue;

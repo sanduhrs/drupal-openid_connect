@@ -32,16 +32,6 @@ class SettingsFormTest extends WebTestBase {
   protected $webUser;
 
   /**
-   * Exempt from strict schema checking.
-   *
-   * @see \Drupal\Core\Config\Testing\ConfigSchemaChecker
-   *
-   * @var bool
-   * @todo remove once schema issues fixed.
-   */
-  protected $strictConfigSchema = FALSE;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp() {

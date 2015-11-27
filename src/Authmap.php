@@ -45,7 +45,7 @@ class Authmap {
    * @param string $sub
    *   The remote subject identifier.
    */
-  function createAssociation($account, $client_name, $sub) {
+  public function createAssociation($account, $client_name, $sub) {
     $fields = array(
       'uid' => $account->id(),
       'client_name' => $client_name,
@@ -71,7 +71,7 @@ class Authmap {
   /**
    * Loads a user based on a sub-id and a login provider.
    */
-  function userLoadBySub($sub, $client_name) {
+  public function userLoadBySub($sub, $client_name) {
     $result = db_select('openid_connect_authmap', 'i')
       ->fields('i', array('uid'))
       ->condition('client_name', $client_name, '=')
@@ -96,7 +96,7 @@ class Authmap {
    * @return array
    *   An array of 'sub' properties keyed by the client name.
    */
-  function getConnectedAccounts($account) {
+  public function getConnectedAccounts($account) {
     $auth_maps = $this->connection->query(
       "SELECT client_name, subject FROM {openid_connect_authmap} WHERE uid = :uid",
       array(':uid' => $account->id())

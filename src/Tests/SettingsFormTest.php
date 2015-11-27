@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains Drupal\openid_connect\Tests\SettingsFormTest
+ * Contains Drupal\openid_connect\Tests\SettingsFormTest.
  */
 
 namespace Drupal\openid_connect\Tests;
@@ -13,7 +13,6 @@ use Drupal\simpletest\WebTestBase;
  * Provides tests for the settings form.
  *
  * @group openid_connect
- *
  */
 class SettingsFormTest extends WebTestBase {
 

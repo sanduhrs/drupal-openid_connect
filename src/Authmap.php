@@ -49,19 +49,24 @@ class Authmap {
     $fields = array(
       'uid' => $account->id(),
       'client_name' => $client_name,
-      'subject' => $sub,
+      'sub' => $sub,
     );
-    db_insert('openid_connect_authmap')
+    $this->connection->insert('openid_connect_authmap')
       ->fields($fields)
       ->execute();
   }
 
   /**
    * Deletes a user's authmap entries.
+   *
+   * @param int $uid
+   *   A user id.
+   * @param string $client_name
+   *   A client name.
    */
   public function deleteAssociation($uid, $client_name = '') {
-    $query = db_delete('openid_connect_authmap')
-      ->condition('uid', $uid, '=');
+    $query = $this->connection->delete('openid_connect_authmap')
+      ->condition('uid', $uid);
     if (!empty($client_name)) {
       $query->condition('client_name', $client_name, '=');
     }
@@ -70,12 +75,20 @@ class Authmap {
 
   /**
    * Loads a user based on a sub-id and a login provider.
+   *
+   * @param string $sub
+   *   The remote subject identifier.
+   * @param string $client_name
+   *   The client name.
+   *
+   * @return object|bool
+   *   A user account object or FALSE
    */
   public function userLoadBySub($sub, $client_name) {
-    $result = db_select('openid_connect_authmap', 'i')
-      ->fields('i', array('uid'))
+    $result = $this->connection->select('openid_connect_authmap', 'a')
+      ->fields('a', array('uid'))
       ->condition('client_name', $client_name, '=')
-      ->condition('subject', $sub, '=')
+      ->condition('sub', $sub, '=')
       ->execute()
       ->fetchAssoc();
     if ($result) {
@@ -97,14 +110,15 @@ class Authmap {
    *   An array of 'sub' properties keyed by the client name.
    */
   public function getConnectedAccounts($account) {
-    $auth_maps = $this->connection->query(
-      "SELECT client_name, subject FROM {openid_connect_authmap} WHERE uid = :uid",
-      array(':uid' => $account->id())
-    );
+    $auth_maps = $this->connection->select('openid_connect_authmap', 'a')
+      ->fields('a', array('client_name', 'sub'))
+      ->condition('uid', $account->id())
+      ->execute()
+      ->fetchAssoc();
     $results = array();
     foreach ($auth_maps as $auth_map) {
       $client = $auth_map->client_name;
-      $sub = $auth_map->subject;
+      $sub = $auth_map->sub;
       $results[$client] = $sub;
     }
     return $results;

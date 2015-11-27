@@ -7,7 +7,6 @@
 
 namespace Drupal\openid_connect;
 
-
 /**
  * Class StateToken.
  *

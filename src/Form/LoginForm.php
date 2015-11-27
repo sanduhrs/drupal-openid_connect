@@ -80,8 +80,8 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
 
       $form['openid_connect_client_' . $client_id . '_login'] = array(
         '#type' => 'submit',
-        '#value' => t('Log in with !client_title', array(
-          '!client_title' => $client['label'],
+        '#value' => t('Log in with @client_title', array(
+          '@client_title' => $client['label'],
         )),
         '#name' => $client_id,
         '#prefix' => '<div>',

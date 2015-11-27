@@ -8,6 +8,102 @@
 use Drupal\Core\Entity\EntityInterface;
 
 /**
+ * Implements hook_entity_property_info_alter().
+ *
+ * Adds the missing timezone property.
+ */
+function openid_connect_entity_property_info_alter(&$info) {
+  $properties = &$info['user']['properties'];
+  if (!isset($properties['timezone'])) {
+    $properties['timezone'] = array(
+      'label' => t('Time zone'),
+      'description' => t("The user's time zone."),
+      'options list' => 'system_time_zones',
+      'getter callback' => 'entity_property_verbatim_get',
+      'setter callback' => 'entity_property_verbatim_set',
+      'schema field' => 'timezone',
+    );
+  }
+}
+
+/**
+ * Implements hook_user_insert().
+ */
+function openid_connect_user_insert(EntityInterface $entity) {
+  if (isset($edit['openid_connect_client'])) {
+    openid_connect_connect_account($entity, $edit['openid_connect_client'], $edit['openid_connect_sub']);
+  }
+}
+
+/**
+ * Implements hook_user_cancel().
+ */
+function openid_connect_user_cancel($edit, $account, $method) {
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $authmap->deleteAssociation($account->id());
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function openid_connect_user_delete(EntityInterface $entity) {
+  $authmap = \Drupal::service('openid_connect.authmap');
+  $authmap->deleteAssociation($entity->id());
+}
+
+/**
+ * Implements hook_username_alter().
+ */
+function openid_connect_username_alter(&$name, $account) {
+  // Ensure that usernames are not displayed if they are email addresses, or if
+  // they are generated names starting with 'oidc_'.
+  $oidc_name = \Drupal::service('user.data')->get('openid_connect', $account->id(), 'oidc_name');
+  if (!empty($oidc_name) && (strpos($name, 'oidc_') === 0 || strpos($name, '@'))) {
+    $name = $oidc_name;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function openid_connect_form_user_form_alter(&$form, &$form_state) {
+  if (isset($form['account'])) {
+    $account_form = &$form['account'];
+  }
+  else {
+    $account_form = &$form;
+  }
+
+  $account = \Drupal::currentUser();
+  $access = openid_connect_set_password_access($account);
+  $account_form['pass']['#access'] = FALSE;
+  if (!empty($account_form['pass']['#access']) && !$access) {
+    $account_form['current_pass']['#access'] = FALSE;
+    $account_form['current_pass_required_values']['#value'] = array();
+    $account_form['pass']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
+  if (isset($form['account'])) {
+    $account_form = &$form['account'];
+  }
+  else {
+    $account_form = &$form;
+  }
+
+  $account = \Drupal::currentUser();
+  if (!empty($account_form['pass']['#access']) && !openid_connect_set_password_access($account)) {
+    $account_form['current_pass']['#access'] = FALSE;
+    $account_form['current_pass_required_values']['#value'] = array();
+    $account_form['pass']['#access'] = FALSE;
+  }
+}
+
+/**
  * Saves user profile information into a user account.
  */
 function openid_connect_save_userinfo($account, $userinfo) {
@@ -211,83 +307,6 @@ function openid_connect_username_exists($name) {
 }
 
 /**
- * Implements hook_username_alter().
- */
-function openid_connect_username_alter(&$name, $account) {
-  // Ensure that usernames are not displayed if they are email addresses, or if
-  // they are generated names starting with 'oidc_'.
-  $oidc_name = \Drupal::service('user.data')->get('openid_connect', $account->id(), 'oidc_name');
-  if (!empty($oidc_name) && (strpos($name, 'oidc_') === 0 || strpos($name, '@'))) {
-    $name = $oidc_name;
-  }
-}
-
-/**
- * Implements hook_user_insert().
- */
-function openid_connect_user_insert(EntityInterface $entity) {
-  if (isset($edit['openid_connect_client'])) {
-    openid_connect_connect_account($entity, $edit['openid_connect_client'], $edit['openid_connect_sub']);
-  }
-}
-
-/**
- * Implements hook_ENTITY_TYPE_delete().
- */
-function openid_connect_user_delete(EntityInterface $entity) {
-  $authmap = \Drupal::service('openid_connect.authmap');
-  $authmap->deleteAssociation($entity->id());
-}
-
-/**
- * Implements hook_user_cancel().
- */
-function openid_connect_user_cancel($edit, $account, $method) {
-  $authmap = \Drupal::service('openid_connect.authmap');
-  $authmap->deleteAssociation($account->id());
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
-  if (isset($form['account'])) {
-    $account_form = &$form['account'];
-  }
-  else {
-    $account_form = &$form;
-  }
-
-  $account = \Drupal::currentUser();
-  if (!empty($account_form['pass']['#access']) && !openid_connect_set_password_access($account)) {
-    $account_form['current_pass']['#access'] = FALSE;
-    $account_form['current_pass_required_values']['#value'] = array();
-    $account_form['pass']['#access'] = FALSE;
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function openid_connect_form_user_form_alter(&$form, &$form_state) {
-  if (isset($form['account'])) {
-    $account_form = &$form['account'];
-  }
-  else {
-    $account_form = &$form;
-  }
-
-  $account = \Drupal::currentUser();
-  $access = openid_connect_set_password_access($account);
-  $account_form['pass']['#access'] = FALSE;
-  if (!empty($account_form['pass']['#access']) && !$access) {
-    $account_form['current_pass']['#access'] = FALSE;
-    $account_form['current_pass_required_values']['#value'] = array();
-    $account_form['pass']['#access'] = FALSE;
-  }
-}
-
-/**
  * Find whether the user is allowed to change their own password.
  *
  * @param object $account
@@ -318,25 +337,6 @@ function _openid_connect_user_properties_to_skip() {
   );
   \Drupal::moduleHandler()->alter(__FUNCTION__, $properties_to_skip);
   return array_combine($properties_to_skip, $properties_to_skip);
-}
-
-/**
- * Implements hook_entity_property_info_alter().
- *
- * Adds the missing timezone property.
- */
-function openid_connect_entity_property_info_alter(&$info) {
-  $properties = &$info['user']['properties'];
-  if (!isset($properties['timezone'])) {
-    $properties['timezone'] = array(
-      'label' => t('Time zone'),
-      'description' => t("The user's time zone."),
-      'options list' => 'system_time_zones',
-      'getter callback' => 'entity_property_verbatim_get',
-      'setter callback' => 'entity_property_verbatim_set',
-      'schema field' => 'timezone',
-    );
-  }
 }
 
 /**

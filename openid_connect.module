@@ -9,12 +9,12 @@ use Drupal\Core\Entity\EntityInterface;
 
 /**
  * Implements hook_entity_property_info_alter().
- *
- * Adds the missing timezone property.
  */
 function openid_connect_entity_property_info_alter(&$info) {
   $properties = &$info['user']['properties'];
   if (!isset($properties['timezone'])) {
+
+    // Adds the missing timezone property.
     $properties['timezone'] = array(
       'label' => t('Time zone'),
       'description' => t("The user's time zone."),
@@ -23,6 +23,7 @@ function openid_connect_entity_property_info_alter(&$info) {
       'setter callback' => 'entity_property_verbatim_set',
       'schema field' => 'timezone',
     );
+
   }
 }
 
@@ -182,6 +183,7 @@ function openid_connect_save_user_picture($account, $picture_url) {
   }
   $picture_path_public = file_stream_wrapper_uri_normalize($picture_directory_public . '/picture-' . $account->id() . '-' . REQUEST_TIME . '.jpg');
 
+  /* @var \Drupal\File\FileInterface $file */
   $file = \Drupal::entityManager()->getStorage('file')->create(array('uri' => $picture_path_tmp));
   $file->save();
   if (!$file) {
@@ -213,7 +215,7 @@ function openid_connect_save_user_picture($account, $picture_url) {
 /**
  * Logs in a user.
  *
- * @param object $account
+ * @param \Drupal\user\UserInterface $account
  *   The user account.
  */
 function openid_connect_login_user($account) {
@@ -224,7 +226,7 @@ function openid_connect_login_user($account) {
  * Save the current path in the session, for redirecting after authorization.
  */
 function openid_connect_save_destination() {
-  $destination = drupal_get_destination();
+  $destination = \Drupal::destination()->getAsArray();
   $destination = $destination['destination'] == 'user/login' ? 'user' : $destination['destination'];
 
   // The destination could contain query parameters. Ensure that they are
@@ -259,6 +261,7 @@ function openid_connect_create_user($sub, $userinfo, $client_name) {
     'openid_connect_sub' => $sub,
   );
 
+  /* @var \Drupal\user\UserInterface $account */
   $account = \Drupal::entityManager()->getStorage('user')->create($edit);
   $account->save();
   return $account;
@@ -320,6 +323,7 @@ function openid_connect_set_password_access($account) {
     return FALSE;
   }
 
+  /* @var \Drupal\openid_connect\Authmap $authmap */
   $authmap = \Drupal::service('openid_connect.authmap');
   $connected_accounts = $authmap->getConnectedAccounts($account);
 
@@ -350,6 +354,7 @@ function _openid_connect_user_properties_to_skip() {
  *   The 'sub' property identifying the external account.
  */
 function openid_connect_connect_account($account, $client_name, $sub) {
+  /* @var \Drupal\openid_connect\Authmap $authmap */
   $authmap = \Drupal::service('openid_connect.authmap');
   $authmap->createAssociation($account, $client_name, $sub);
 }
@@ -365,6 +370,7 @@ function openid_connect_connect_account($account, $client_name, $sub) {
  *   The 'sub' property identifying the external account (optional).
  */
 function openid_connect_disconnect_account($account, $client_name, $sub = NULL) {
+  /* @var \Drupal\openid_connect\Authmap $authmap */
   $authmap = \Drupal::service('openid_connect.authmap');
   $authmap->deleteAssociation($account->id(), $client_name);
 }
@@ -418,14 +424,16 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     throw new \RuntimeException('User already logged in');
   }
 
+  /* @var \Drupal\openid_connect\Authmap $authmap */
   $authmap = \Drupal::service('openid_connect.authmap');
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
+  $logger = \Drupal::logger('openid_connect');
 
   if ($userinfo && empty($userinfo['email'])) {
     $message = 'No e-mail address provided by @provider';
     $variables = array('@provider' => $client->getPluginId());
-    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
+    $logger->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
@@ -433,7 +441,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   if (empty($sub)) {
     $message = 'No "sub" found from @provider';
     $variables = array('@provider' => $client->getPluginId());
-    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
+    $logger->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
@@ -456,7 +464,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId());
     openid_connect_save_userinfo($account, $userinfo);
 
-    $authmap->create($account, $client->getPluginId(), $sub);
+    $authmap->createAssociation($account, $client->getPluginId(), $sub);
   }
 
   openid_connect_login_user($account);
@@ -485,16 +493,18 @@ function openid_connect_connect_current_user($client, $tokens) {
     throw new \RuntimeException('User not logged in');
   }
 
+  /* @var \Drupal\openid_connect\Authmap $authmap */
   $authmap = \Drupal::service('openid_connect.authmap');
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
+  $logger = \Drupal::logger('openid_connect');
 
   $provider_param = array('@provider' => $client->getPluginId());
 
   if ($userinfo && empty($userinfo['email'])) {
     $message = 'No e-mail address provided by @provider';
     $variables = $provider_param;
-    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
+    $logger->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 
@@ -502,7 +512,7 @@ function openid_connect_connect_current_user($client, $tokens) {
   if (empty($sub)) {
     $message = 'No "sub" found from @provider';
     $variables = $provider_param;
-    \Drupal::logger('openid_connect')->error($message . ' (@code @error). Details: @details', $variables);
+    $logger->error($message . ' (@code @error). Details: @details', $variables);
     return FALSE;
   }
 

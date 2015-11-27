@@ -124,6 +124,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     foreach ($this->pluginManager->getDefinitions() as $client_name => $client_plugin) {
       $configuration = $this->config('openid_connect.settings.' . $client_name)
         ->get('settings');
+
       /* @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
       $client = $this->pluginManager->createInstance(
         $client_name,
@@ -142,7 +143,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
         ),
       );
       $form['clients'][$client_plugin['id']]['settings'] = array();
-      $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm($form, $form_state);
+      $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm([], $form_state);
     }
 
     $form['always_save_userinfo'] = array(

@@ -31,7 +31,7 @@ function openid_connect_schema() {
         'default' => '',
         'description' => 'The client name.',
       ),
-      'subject' => array(
+      'sub' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,

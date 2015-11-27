@@ -1,4 +1,4 @@
-always_save_userinfo: TRUE
-user_pictures: TRUE
+always_save_userinfo: true
+user_pictures: true
 userinfo_mappings:
   timezone: zoneinfo

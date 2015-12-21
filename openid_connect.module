@@ -106,6 +106,11 @@ function openid_connect_form_user_profile_form_alter(&$form, &$form_state) {
 
 /**
  * Saves user profile information into a user account.
+ *
+ * @param \Drupal\user\UserInterface $account
+ *   An user account object.
+ * @param array $userinfo
+ *   An array with information about the user.
  */
 function openid_connect_save_userinfo($account, $userinfo) {
   $properties = \Drupal::entityManager()->getFieldDefinitions('user', 'user');
@@ -145,7 +150,7 @@ function openid_connect_save_userinfo($account, $userinfo) {
 /**
  * Save an image as the user picture.
  *
- * @param object $account
+ * @param \Drupal\user\UserInterface $account
  *   The user account.
  * @param string $picture_url
  *   The URL to a user picture.
@@ -270,8 +275,12 @@ function openid_connect_create_user($sub, $userinfo, $client_name) {
 /**
  * Generate a username for a new account.
  *
+ * @param string $sub
+ *    The subject identifier.
  * @param array $userinfo
  *   The user claims.
+ * @param string $client_name
+ *   The client identifier.
  *
  * @return string
  *   A unique username.
@@ -445,6 +454,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     return FALSE;
   }
 
+  /* @var \Drupal\user\UserInterface $account */
   $account = $authmap->userLoadBySub($sub, $client->getPluginId());
   if ($account) {
     // An existing account was found. Save user claims.
@@ -461,6 +471,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     }
 
     // Create a new account.
+    /* @var \Drupal\user\UserInterface $account */
     $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId());
     openid_connect_save_userinfo($account, $userinfo);
 
@@ -488,6 +499,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
  *   TRUE on success, FALSE on failure.
  */
 function openid_connect_connect_current_user($client, $tokens) {
+  /* @var \Drupal\Core\Session\AccountProxyInterface $user */
   $user = \Drupal::currentUser();
   if (!$user->isAuthenticated()) {
     throw new \RuntimeException('User not logged in');
@@ -497,8 +509,9 @@ function openid_connect_connect_current_user($client, $tokens) {
   $authmap = \Drupal::service('openid_connect.authmap');
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
-  $logger = \Drupal::logger('openid_connect');
 
+  /* @var \Psr\Log\LoggerInterface $logger */
+  $logger = \Drupal::logger('openid_connect');
   $provider_param = array('@provider' => $client->getPluginId());
 
   if ($userinfo && empty($userinfo['email'])) {
@@ -516,10 +529,10 @@ function openid_connect_connect_current_user($client, $tokens) {
     return FALSE;
   }
 
+  /* @var \Drupal\user\UserInterface $account */
   $account = $authmap->userLoadBySub($sub, $client->getPluginId());
   if ($account && $account->id() !== $user->id()) {
     drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
-
     return FALSE;
   }
 

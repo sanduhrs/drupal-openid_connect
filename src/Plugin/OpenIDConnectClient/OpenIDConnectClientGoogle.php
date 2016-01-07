@@ -7,7 +7,11 @@
 
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
+use Drupal\Core\Routing\TrustedRedirectResponse;
+use Drupal\Core\Url;
+use Drupal\openid_connect\StateToken;
 
 /**
  * OpenID Connect client for Google.
@@ -20,6 +24,22 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
  * )
  */
 class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {
+
+  /**
+   * Overrides OpenIDConnectClientBase::settingsForm().
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
+
+    $form['client_hd'] = array(
+      '#title' => t('Hosted domain'),
+      '#type' => 'textfield',
+      '#description' => t('Limit sign-ins to the hosted domain name for the user\'s Google Apps account. For instance, example.com.'),
+      '#default_value' => $this->configuration['client_hd'],
+    );
+
+    return $form;
+  }
 
   /**
    * Overrides OpenIDConnectClientBase::getEndpoints().
@@ -47,6 +67,35 @@ class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {
     }
 
     return $userinfo;
+  }
+
+  /**
+   * Overrides OpenIDConnectClientBase::authorize().
+   */
+  public function authorize($scope = 'openid email') {
+    $redirect_uri = Url::fromRoute(
+      'openid_connect.redirect_controller_redirect',
+      array('client_name' => $this->pluginId), array('absolute' => TRUE)
+    )->toString();
+
+    $url_options = array(
+      'query' => array(
+        'client_id' => $this->configuration['client_id'],
+        'response_type' => 'code',
+        'scope' => $scope,
+        'redirect_uri' => $redirect_uri,
+        'state' => StateToken::create(),
+        'hd' => $this->configuration['client_hd'],
+      ),
+    );
+
+    $endpoints = $this->getEndpoints();
+    // Clear _GET['destination'] because we need to override it.
+    $this->requestStack->getCurrentRequest()->query->remove('destination');
+    $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString();
+
+    $response = new TrustedRedirectResponse($authorization_endpoint);
+    return $response;
   }
 
 }

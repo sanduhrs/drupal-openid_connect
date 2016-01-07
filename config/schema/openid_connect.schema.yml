@@ -63,3 +63,6 @@ openid_connect.settings.google:
         client_secret:
           type: string
           label: 'Client secret'
+        client_hd:
+          type: string
+          label: 'Client hosted domain'

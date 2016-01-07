@@ -434,6 +434,16 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
   $logger = \Drupal::logger('openid_connect');
 
+  $configuration = \Drupal::config('openid_connect.settings.' . $client->getPluginId())
+    ->get('settings');
+  if (!empty($configuration['client_hd']) && (empty($user_data['hd']) || $user_data['hd'] != $configuration['client_hd'])) {
+    $message = 'Login with @provider not permitted for this account.';
+    drupal_set_message(t($message, array('@provider' => $client->getPluginDefinition()['label'])), 'warning');
+    $variables = array('@provider' => $client->getPluginId());
+    $logger->error($message . ' (@code @error). Details: @details', $variables);
+    return FALSE;
+  }
+
   if ($userinfo && empty($userinfo['email'])) {
     $message = 'No e-mail address provided by @provider';
     $variables = array('@provider' => $client->getPluginId());

@@ -113,8 +113,7 @@ class Authmap {
     $auth_maps = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', array('client_name', 'sub'))
       ->condition('uid', $account->id())
-      ->execute()
-      ->fetchAssoc();
+      ->execute();
     $results = array();
     foreach ($auth_maps as $auth_map) {
       $client = $auth_map->client_name;

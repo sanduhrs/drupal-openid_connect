@@ -519,6 +519,16 @@ function openid_connect_connect_current_user($client, $tokens) {
   $logger = \Drupal::logger('openid_connect');
   $provider_param = array('@provider' => $client->getPluginId());
 
+  $configuration = \Drupal::config('openid_connect.settings.' . $client->getPluginId())
+    ->get('settings');
+  if (!empty($configuration['client_hd']) && (empty($user_data['hd']) || $user_data['hd'] != $configuration['client_hd'])) {
+    $message = 'Login with @provider not permitted for this account.';
+    drupal_set_message(t($message, array('@provider' => $client->getPluginDefinition()['label'])), 'warning');
+    $variables = $provider_param;
+    $logger->error($message . ' (@code @error). Details: @details', $variables);
+    return FALSE;
+  }
+
   if ($userinfo && empty($userinfo['email'])) {
     $message = 'No e-mail address provided by @provider';
     $variables = $provider_param;
@@ -542,7 +552,8 @@ function openid_connect_connect_current_user($client, $tokens) {
   }
 
   if (!$account) {
-    $account = $user;
+    // Need to load the full user entity object, coz AccountProxy has no save() method.
+    $account = \Drupal\user\Entity\User::load($user->getAccount()->id());
     openid_connect_connect_account($account, $client->getPluginId(), $sub);
   }
 

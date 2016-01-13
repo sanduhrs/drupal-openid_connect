@@ -29,40 +29,51 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
   /**
    * Drupal\Core\Session\AccountProxy definition.
    *
-   * @var Drupal\Core\Session\AccountProxy
+   * @var \Drupal\Core\Session\AccountProxy
    */
   protected $currentUser;
 
   /**
    * Drupal\openid_connect\Authmap definition.
    *
-   * @var Drupal\openid_connect\Authmap
+   * @var \Drupal\openid_connect\Authmap
    */
   protected $authmap;
 
   /**
    * Drupal\openid_connect\Claims definition.
    *
-   * @var Drupal\openid_connect\Claims
+   * @var \Drupal\openid_connect\Claims
    */
   protected $claims;
 
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
   /**
    * Drupal\Core\Config\ConfigFactory definition.
    *
-   * @var Drupal\Core\Config\ConfigFactory
+   * @var \Drupal\Core\Config\ConfigFactory
    */
   protected $configFactory;
 
   /**
    * The constructor.
+   *
+   * @param \Drupal\Core\Session\AccountProxy $current_user
+   *   The current user account.
+   * @param \Drupal\openid_connect\Authmap $authmap
+   *   The authmap storage.
+   * @param \Drupal\openid_connect\Claims $claims
+   *   The OpenID Connect claims.
+   * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
+   *   The OpenID Connect client manager.
+   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   *   The config factory.
    */
   public function __construct(
     AccountProxy $current_user,

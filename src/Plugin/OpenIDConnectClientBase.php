@@ -137,6 +137,11 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
   /**
    * Implements OpenIDConnectClientInterface::authorize().
+   *
+   * @param string $scope
+   *   A string of scopes.
+   *
+   * @return \Drupal\Core\Routing\TrustedRedirectResponse
    */
   public function authorize($scope = 'openid email') {
     $redirect_uri = Url::fromRoute(
@@ -165,6 +170,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
   /**
    * Implements OpenIDConnectClientInterface::retrieveIDToken().
+   *
+   * @param string $authorization_code
+   *   A authorization code string.
+   *
+   * @return array|bool
+   *   A result array or false.
    */
   public function retrieveTokens($authorization_code) {
     // Exchange `code` for access token and ID token.
@@ -184,6 +195,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       ),
     );
 
+    /* @var \GuzzleHttp\ClientInterface $client */
     $client = $this->httpClient;
     try {
       $response = $client->post($endpoints['token'], $request_options);
@@ -220,6 +232,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
   /**
    * Implements OpenIDConnectClientInterface::retrieveUserInfo().
+   *
+   * @param string $access_token
+   *   An access token string.
+   *
+   * @return array|bool
+   *   A result array or false.
    */
   public function retrieveUserInfo($access_token) {
     $request_options = array(

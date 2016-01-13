@@ -8,6 +8,7 @@
 namespace Drupal\openid_connect;
 
 use Drupal\Core\Database\Connection;
+use Drupal\user\Entity\User;
 
 /**
  * Class Authmap.
@@ -92,7 +93,7 @@ class Authmap {
       ->execute()
       ->fetchAssoc();
     if ($result) {
-      $account = user_load($result['uid']);
+      $account = User::load($result['uid']);
       if (is_object($account)) {
         return $account;
       }

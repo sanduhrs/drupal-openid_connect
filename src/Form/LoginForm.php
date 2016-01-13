@@ -24,7 +24,7 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
@@ -40,6 +40,8 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    *
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The plugin manager.
+   * @param \Drupal\openid_connect\Claims $claims
+   *   The OpenID Connect claims.
    */
   public function __construct(
     OpenIDConnectClientManager $plugin_manager,

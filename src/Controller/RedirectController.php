@@ -30,7 +30,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
   /**
    * Drupal\openid_connect\Plugin\OpenIDConnectClientManager definition.
    *
-   * @var Drupal\openid_connect\Plugin\OpenIDConnectClientManager
+   * @var \Drupal\openid_connect\Plugin\OpenIDConnectClientManager
    */
   protected $pluginManager;
 
@@ -51,7 +51,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
   /**
    * Drupal\Core\Session\AccountProxy definition.
    *
-   * @var Drupal\Core\Session\AccountProxy
+   * @var \Drupal\Core\Session\AccountProxy
    */
   protected $currentUser;
 
@@ -104,8 +104,11 @@ class RedirectController extends ControllerBase implements AccessInterface {
   /**
    * Redirect.
    *
-   * @return string
-   *   Return Hello string.
+   * @param string $client_name
+   *   The client name.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   The redirect response starting the authentication request.
    */
   public function authenticate($client_name) {
     $query = $this->requestStack->getCurrentRequest()->query;

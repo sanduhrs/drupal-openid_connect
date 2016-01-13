@@ -202,12 +202,14 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $response_data = json_decode((string) $response->getBody(), TRUE);
 
       // Expected result.
-      $result = array(
+      $tokens = array(
         'id_token' => $response_data['id_token'],
         'access_token' => $response_data['access_token'],
-        'expire' => REQUEST_TIME + $response_data['expires_in'],
       );
-      return $result;
+      if (array_key_exists('expires_in', $response_data)) {
+        $tokens['expire'] = REQUEST_TIME + $response_data['expires_in'];
+      }
+      return $tokens;
     }
     catch (Exception $e) {
       $variables = array(

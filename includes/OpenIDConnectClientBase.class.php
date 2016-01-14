@@ -139,11 +139,14 @@ abstract class OpenIDConnectClientBase implements OpenIDConnectClientInterface {
     $response = drupal_http_request($endpoints['token'], $request_options);
     if (!isset($response->error) && $response->code == 200) {
       $response_data = drupal_json_decode($response->data);
-      return array(
+      $tokens = array(
         'id_token' => $response_data['id_token'],
         'access_token' => $response_data['access_token'],
-        'expire' => REQUEST_TIME + $response_data['expires_in'],
       );
+      if (array_key_exists('expires_in', $response_data)) {
+        $tokens['expire'] = REQUEST_TIME + $response_data['expires_in'];
+      }
+      return $tokens;
     }
     else {
       openid_connect_log_request_error(__FUNCTION__, $this->name, $response);

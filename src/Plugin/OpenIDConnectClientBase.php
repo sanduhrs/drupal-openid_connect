@@ -142,6 +142,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   A string of scopes.
    *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
+   *   A trusted redirect response object.
    */
   public function authorize($scope = 'openid email') {
     $redirect_uri = Url::fromRoute(

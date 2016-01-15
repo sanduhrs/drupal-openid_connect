@@ -102,7 +102,9 @@ class Claims implements ContainerInjectionInterface {
    * The constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   *   The configuration factory.
    * @param \Drupal\Core\Extension\ModuleHandler $module_handler
+   *   The module handler.
    */
   public function __construct(
     ConfigFactory $config_factory,

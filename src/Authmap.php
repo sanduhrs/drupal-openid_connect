@@ -91,7 +91,7 @@ class Authmap {
       ->condition('client_name', $client_name, '=')
       ->condition('sub', $sub, '=')
       ->execute()
-      ->fetchAssoc();
+      ->fetchAll();
     if ($result) {
       $account = User::load($result['uid']);
       if (is_object($account)) {
@@ -115,7 +115,7 @@ class Authmap {
       ->fields('a', array('client_name', 'sub'))
       ->condition('uid', $account->id())
       ->execute()
-      ->fetchAssoc();
+      ->fetchAll();
     $results = array();
     foreach ($auth_maps as $auth_map) {
       $client = $auth_map->client_name;

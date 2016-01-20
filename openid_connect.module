@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\user\Entity\User;
 
 /**
  * Implements hook_entity_property_info_alter().
@@ -255,7 +256,8 @@ function openid_connect_save_destination() {
  *   The user object or FALSE on failure.
  */
 function openid_connect_create_user($sub, $userinfo, $client_name) {
-  $edit = array(
+  /** @var \Drupal\user\Entity\User $account */
+  $account = User::create([
     'name' => openid_connect_generate_username($sub, $userinfo, $client_name),
     'pass' => user_password(),
     'mail' => $userinfo['email'],
@@ -263,10 +265,7 @@ function openid_connect_create_user($sub, $userinfo, $client_name) {
     'status' => 1,
     'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
-  );
-
-  /* @var \Drupal\user\UserInterface $account */
-  $account = \Drupal::entityManager()->getStorage('user')->create($edit);
+  ]);
   $account->save();
   return $account;
 }
@@ -466,7 +465,6 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     }
 
     // Create a new account.
-    /* @var \Drupal\user\UserInterface $account */
     $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId());
     openid_connect_save_userinfo($account, $userinfo);
 
@@ -532,7 +530,7 @@ function openid_connect_connect_current_user($client, $tokens) {
   }
 
   if (!$account) {
-    $account = $user;
+    $account = User::load($user->id());
     openid_connect_connect_account($account, $client->getPluginId(), $sub);
   }
 

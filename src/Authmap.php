@@ -93,7 +93,8 @@ class Authmap {
       ->execute()
       ->fetchAll();
     if ($result) {
-      $account = User::load($result['uid']);
+      $item = array_pop($result);
+      $account = User::load($item->uid);
       if (is_object($account)) {
         return $account;
       }

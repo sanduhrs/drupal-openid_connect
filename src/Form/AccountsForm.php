@@ -182,16 +182,8 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Form API doesn't detect the right triggering element, see #1342066
-    // list($op, $client_name) = explode('__', $form_state->getTriggeringElement()['#name'], 2);
-    // This is a workaround to get the correct triggering element.
-    $input = $form_state->getUserInput();
-    foreach ($input as $key => $element) {
-      if (strpos($key, '__')) {
-        break;
-      }
-    }
-    list($op, $client_name) = explode('__', $key, 2);
+    $trigger = $form_state->getTriggeringElement();
+    list($op, $client_name) = explode('__', $form_state->getTriggeringElement()['#name'], 2);
 
     if ($op === 'disconnect') {
       $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);

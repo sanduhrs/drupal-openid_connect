@@ -90,11 +90,9 @@ class Authmap {
       ->fields('a', array('uid'))
       ->condition('client_name', $client_name, '=')
       ->condition('sub', $sub, '=')
-      ->execute()
-      ->fetchAll();
-    if ($result) {
-      $item = array_pop($result);
-      $account = User::load($item->uid);
+      ->execute();
+    foreach ($result as $record) {
+      $account = User::load($record->uid);
       if (is_object($account)) {
         return $account;
       }
@@ -112,18 +110,17 @@ class Authmap {
    *   An array of 'sub' properties keyed by the client name.
    */
   public function getConnectedAccounts($account) {
-    $auth_maps = $this->connection->select('openid_connect_authmap', 'a')
+    $result = $this->connection->select('openid_connect_authmap', 'a')
       ->fields('a', array('client_name', 'sub'))
       ->condition('uid', $account->id())
-      ->execute()
-      ->fetchAll();
-    $results = array();
-    foreach ($auth_maps as $auth_map) {
-      $client = $auth_map->client_name;
-      $sub = $auth_map->sub;
-      $results[$client] = $sub;
+      ->execute();
+    $authmaps = array();
+    foreach ($result as $record) {
+      $client = $record->client_name;
+      $sub = $record->sub;
+      $authmaps[$client] = $sub;
     }
-    return $results;
+    return $authmaps;
   }
 
 }

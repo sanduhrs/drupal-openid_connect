@@ -235,7 +235,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
     }
 
     if ($this->currentUser->id() && $this->currentUser->id() === $user->id() &&
-      $this->currentUser->hasPermission('manage own openid_connect accounts')) {
+      $this->currentUser->hasPermission('manage own openid connect accounts')) {
       return AccessResult::allowed();
     }
     return AccessResult::forbidden();

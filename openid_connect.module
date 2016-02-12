@@ -804,6 +804,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     if (variable_get('openid_connect_always_save_userinfo', TRUE)) {
       openid_connect_save_userinfo($account, $userinfo);
     }
+    $account_is_new = FALSE;
   }
   else {
     // Check whether there is an e-mail address conflict.
@@ -818,11 +819,12 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     // Reload $account in case it has been altered in a user hook elsewhere.
     $account = user_load($account->uid);
     openid_connect_save_userinfo($account, $userinfo);
+    $account_is_new = TRUE;
   }
 
   openid_connect_login_user($account, $destination);
 
-  module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
+  module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName(), $account_is_new);
 
   return TRUE;
 }
@@ -878,7 +880,7 @@ function openid_connect_connect_current_user($client, $tokens) {
     openid_connect_save_userinfo($account, $userinfo);
   }
 
-  module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName());
+  module_invoke_all('openid_connect_post_authorize', $tokens, $account, $userinfo, $client->getName(), FALSE);
 
   return TRUE;
 }

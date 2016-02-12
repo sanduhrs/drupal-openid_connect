@@ -22,9 +22,11 @@
  *   The user claims returned by the OpenID Connect provider.
  * @param string $client_name
  *   The machine name of the OpenID Connect client plugin.
+ * @param bool $is_new
+ *   Whether the account has just been created via OpenID Connect.
  */
-function hook_openid_connect_post_authorize($tokens, $account, $userinfo, $client_name) {
-  drupal_set_message('Welcome back!');
+function hook_openid_connect_post_authorize($tokens, $account, $userinfo, $client_name, $is_new) {
+  drupal_set_message($is_new ? t('Welcome!') : t('Welcome back!'));
 }
 
 /**

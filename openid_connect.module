@@ -78,11 +78,11 @@ function openid_connect_form_user_form_alter(&$form, &$form_state) {
 
   $account = \Drupal::currentUser();
   $access = openid_connect_set_password_access($account);
-  $account_form['pass']['#access'] = FALSE;
-  if (!empty($account_form['pass']['#access']) && !$access) {
+  if (!$access) {
     $account_form['current_pass']['#access'] = FALSE;
     $account_form['current_pass_required_values']['#value'] = array();
     $account_form['pass']['#access'] = FALSE;
+    $account_form['pass']['#required'] = FALSE;
   }
 }
 
@@ -326,8 +326,8 @@ function openid_connect_username_exists($name) {
  *   TRUE if access is granted, FALSE otherwise.
  */
 function openid_connect_set_password_access($account) {
-  if ($account->hasPermission('openid_connect set own password')) {
-    return FALSE;
+  if ($account->hasPermission('openid connect set own password')) {
+    return TRUE;
   }
 
   /* @var \Drupal\openid_connect\Authmap $authmap */

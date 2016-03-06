@@ -146,8 +146,13 @@ class RedirectController extends ControllerBase implements AccessInterface {
     $provider_param = array('@provider' => $client->getPluginDefinition()['label']);
 
     if ($query->get('error')) {
-      if ($query->get('error') == 'access_denied') {
-        // If we have an "access denied" error, that means the user hasn't
+      if (in_array($query->get('error'), [
+          'interaction_required',
+          'login_required',
+          'account_selection_required',
+          'consent_required',
+      ]))  {
+        // If we have an one of the above errors, that means the user hasn't
         // granted the authorization for the claims.
         drupal_set_message(t('Logging in with @provider has been canceled.', $provider_param), 'warning');
       }
@@ -158,7 +163,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
           '@details' => $query->get('error_description'),
         );
         $message = 'Authorization failed: @error. Details: @details';
-        $this->loggerFactory('openid_connect_' . $client_name)->error($message, $variables);
+        // @todo Calling loggerFactory here causes a fatal error.
+        //$this->loggerFactory('openid_connect_' . $client_name)->error($message, $variables);
       }
     }
     else {

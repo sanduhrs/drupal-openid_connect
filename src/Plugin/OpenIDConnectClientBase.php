@@ -69,8 +69,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     ClientInterface $http_client,
     LoggerChannelFactory $logger_factory
   ) {
+    parent::__construct(
+      $configuration,
+      $plugin_id,
+      $plugin_definition
+    );
 
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->requestStack = $request_stack;
     $this->httpClient = $http_client;
     $this->loggerFactory = $logger_factory;

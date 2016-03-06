@@ -172,7 +172,10 @@ class Claims implements ContainerInjectionInterface {
     $scopes = array('openid', 'email');
     $claims_info = Claims::getClaims();
     foreach ($claims as $claim) {
-      if (isset($claims_info[$claim]) && !isset($scopes[$claims_info[$claim]['scope']]) && $claim != 'email') {
+      if (isset($claims_info[$claim]) &&
+          !isset($scopes[$claims_info[$claim]['scope']]) &&
+          $claim != 'email') {
+
         $scopes[$claims_info[$claim]['scope']] = $claims_info[$claim]['scope'];
       }
     }

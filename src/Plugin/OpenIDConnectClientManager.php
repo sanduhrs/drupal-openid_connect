@@ -10,6 +10,7 @@ namespace Drupal\openid_connect\Plugin;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Traversable;
 
 /**
  * Provides the OpenID Connect client plugin manager.
@@ -27,11 +28,24 @@ class OpenIDConnectClientManager extends DefaultPluginManager {
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler to invoke the alter hook with.
    */
-  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
-    parent::__construct('Plugin/OpenIDConnectClient', $namespaces, $module_handler, 'Drupal\openid_connect\Plugin\OpenIDConnectClientInterface', 'Drupal\openid_connect\Annotation\OpenIDConnectClient');
+  public function __construct(
+    Traversable $namespaces,
+    CacheBackendInterface $cache_backend,
+    ModuleHandlerInterface $module_handler
+  ) {
+    parent::__construct(
+      'Plugin/OpenIDConnectClient',
+      $namespaces,
+      $module_handler,
+      'Drupal\openid_connect\Plugin\OpenIDConnectClientInterface',
+      'Drupal\openid_connect\Annotation\OpenIDConnectClient'
+    );
 
     $this->alterInfo('openid_connect_openid_connect_client_info');
-    $this->setCacheBackend($cache_backend, 'openid_connect_openid_connect_client_plugins');
+    $this->setCacheBackend(
+      $cache_backend,
+      'openid_connect_openid_connect_client_plugins'
+    );
   }
 
 }

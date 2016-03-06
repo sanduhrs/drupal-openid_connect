@@ -7,9 +7,6 @@ openid_connect.settings:
     always_save_userinfo:
       type: boolean
       label: 'Save user claims on every login'
-    user_pictures:
-      type: boolean
-      label: 'Fetch user profile picture from login provider'
     userinfo_mappings:
       type: mapping
       label: 'OpenID Connect settings'

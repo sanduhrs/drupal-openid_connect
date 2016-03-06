@@ -51,7 +51,6 @@ class SettingsFormTest extends WebTestBase {
     // Override the default values.
     $edit = [
       'always_save_userinfo' => FALSE,
-      'user_pictures' => FALSE,
     ];
 
     $this->drupalPostForm(NULL, $edit, 'Save configuration', [], [], 'openid-connect-admin-settings');
@@ -61,9 +60,7 @@ class SettingsFormTest extends WebTestBase {
     /* @var \Drupal\Core\Config\Config $config */
     $config = $config_factory->get('openid_connect.settings');
     $user_info = $config->get('always_save_userinfo');
-    $user_pictures = $config->get('user_pictures');
     $this->assertFalse($user_info);
-    $this->assertFalse($user_pictures);
   }
 
 }

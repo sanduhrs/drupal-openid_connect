@@ -152,12 +152,6 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       '#description' => $this->t('If disabled, user claims will only be saved when the account is first created.'),
       '#default_value' => $config->get('always_save_userinfo'),
     );
-    $form['user_pictures'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Fetch user profile picture from login provider'),
-      '#description' => $this->t('Whether the user profile picture from the login provider should be fetched and saved locally.'),
-      '#default_value' => $config->get('user_pictures'),
-    );
 
     $form['userinfo_mappings'] = array(
       '#title' => t('User claims mapping'),
@@ -207,7 +201,6 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
 
     $this->config('openid_connect.settings')
       ->set('always_save_userinfo', $form_state->getValue('always_save_userinfo'))
-      ->set('user_pictures', $form_state->getValue('user_pictures'))
       ->set('userinfo_mappings', $form_state->getValue('userinfo_mappings'))
       ->save();
     $clients_enabled = $form_state->getValue('clients_enabled');

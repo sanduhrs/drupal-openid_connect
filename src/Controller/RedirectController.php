@@ -163,8 +163,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
           '@details' => $query->get('error_description'),
         );
         $message = 'Authorization failed: @error. Details: @details';
-        // @todo Calling loggerFactory here causes a fatal error.
-        //$this->loggerFactory('openid_connect_' . $client_name)->error($message, $variables);
+        $this->loggerFactory->get('openid_connect_' . $client_name)->error($message, $variables);
       }
     }
     else {

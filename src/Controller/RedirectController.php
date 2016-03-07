@@ -164,6 +164,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
         );
         $message = 'Authorization failed: @error. Details: @details';
         $this->loggerFactory->get('openid_connect_' . $client_name)->error($message, $variables);
+        drupal_set_message(t('Could not authenticate with @provider.', $provider_param), 'error');
       }
     }
     else {

@@ -38,65 +38,122 @@ class Claims implements ContainerInjectionInterface {
    *
    * @var array
    */
-  protected $claims = array(
-    'name' => array(
+  protected $claims = [
+    'name' => [
       'scope' => 'profile',
-    ),
-    'family_name' => array(
+      'title' => 'Name',
+      'type' => 'string',
+      'description' => 'Full name',
+    ],
+    'given_name' => [
       'scope' => 'profile',
-    ),
-    'given_name' => array(
+      'title' => 'Given name',
+      'type' => 'string',
+      'description' => 'Given name(s) or first name(s)',
+    ],
+    'family_name' => [
       'scope' => 'profile',
-    ),
-    'middle_name' => array(
+      'title' => 'Family name',
+      'type' => 'string',
+      'description' => 'Surname(s) or last name(s)',
+    ],
+    'middle_name' => [
       'scope' => 'profile',
-    ),
-    'nickname' => array(
+      'title' => 'Middle name',
+      'type' => 'string',
+      'description' => 'Middle name(s)',
+    ],
+    'nickname' => [
       'scope' => 'profile',
-    ),
-    'preferred_username' => array(
+      'title' => 'Nickname',
+      'type' => 'string',
+      'description' => 'Casual name',
+    ],
+    'preferred_username' => [
       'scope' => 'profile',
-    ),
-    'profile' => array(
+      'title' => 'Preferred username',
+      'type' => 'string',
+      'description' => 'Shorthand name by which the End-User wishes to be referred to',
+    ],
+    'profile' => [
       'scope' => 'profile',
-    ),
-    'picture' => array(
+      'title' => 'Profile',
+      'type' => 'string',
+      'description' => 'Profile page URL',
+    ],
+    'picture' => [
       'scope' => 'profile',
-    ),
-    'website' => array(
+      'title' => 'Picture',
+      'type' => 'string',
+      'description' => 'Profile picture URL',
+    ],
+    'website' => [
       'scope' => 'profile',
-    ),
-    'gender' => array(
-      'scope' => 'profile',
-    ),
-    'birthdate' => array(
-      'scope' => 'profile',
-    ),
-    'zoneinfo' => array(
-      'scope' => 'profile',
-    ),
-    'locale' => array(
-      'scope' => 'profile',
-    ),
-    'updated_at' => array(
-      'scope' => 'profile',
-    ),
-    'email' => array(
+      'title' => 'Website',
+      'type' => 'string',
+      'description' => 'Web page or blog URL',
+    ],
+    'email' => [
       'scope' => 'email',
-    ),
-    'email_verified' => array(
+      'title' => 'Email',
+      'type' => 'string',
+      'description' => 'Preferred e-mail address',
+    ],
+    'email_verified' => [
       'scope' => 'email',
-    ),
-    'address' => array(
+      'title' => 'Email verified',
+      'type' => 'boolean',
+      'description' => 'True if the e-mail address has been verified; otherwise false',
+    ],
+    'gender' => [
+      'scope' => 'profile',
+      'title' => 'Gender',
+      'type' => 'string',
+      'description' => 'Gender',
+    ],
+    'birthdate' => [
+      'scope' => 'profile',
+      'title' => 'Birthdate',
+      'type' => 'string',
+      'description' => 'Birthday',
+    ],
+    'zoneinfo' => [
+      'scope' => 'profile',
+      'title' => 'Zoneinfo',
+      'type' => 'string',
+      'description' => 'Time zone',
+    ],
+    'locale' => [
+      'scope' => 'profile',
+      'title' => 'Locale',
+      'type' => 'string',
+      'description' => 'Locale',
+    ],
+    'phone_number' => [
+      'scope' => 'phone',
+      'title' => 'Phone number',
+      'type' => 'string',
+      'description' => 'Preferred telephone number',
+    ],
+    'phone_number_verified' => [
+      'scope' => 'phone',
+      'title' => 'Phone number verified',
+      'type' => 'boolean',
+      'description' => 'True if the phone number has been verified; otherwise false',
+    ],
+    'address' => [
       'scope' => 'address',
-    ),
-    'phone_number' => array(
-      'scope' => 'phone',
-    ),
-    'phone_number_verified' => array(
-      'scope' => 'phone',
-    ),
-  );
+      'title' => 'Address',
+      'type' => 'json',
+      'description' => 'Preferred postal address',
+    ],
+    'updated_at' => [
+      'scope' => 'profile',
+      'title' => 'Updated at',
+      'type' => 'number',
+      'description' => 'Time the information was last updated',
+    ],
+  ];
 
   /**
    * The constructor.
@@ -151,7 +208,7 @@ class Claims implements ContainerInjectionInterface {
   public function getOptions() {
     $options = array();
     foreach ($this->getClaims() as $claim_name => $claim) {
-      $options[$claim['scope']][$claim_name] = $claim_name;
+      $options[ucfirst($claim['scope'])][$claim_name] = $claim['title'];
     }
     return $options;
   }

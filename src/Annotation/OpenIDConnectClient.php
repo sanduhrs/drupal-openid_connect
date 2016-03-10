@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Annotation\OpenIDConnectClient.
- */
-
 namespace Drupal\openid_connect\Annotation;
 
 use Drupal\Component\Annotation\Plugin;

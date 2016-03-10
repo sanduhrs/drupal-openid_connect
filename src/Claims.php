@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Claims.
- */
-
 namespace Drupal\openid_connect;
 
 use Drupal\Core\Config\ConfigFactory;

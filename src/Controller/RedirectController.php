@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Controller\RedirectController.
- */
-
 namespace Drupal\openid_connect\Controller;
 
 use Drupal\Core\Access\AccessResult;
@@ -147,11 +142,11 @@ class RedirectController extends ControllerBase implements AccessInterface {
 
     if ($query->get('error')) {
       if (in_array($query->get('error'), [
-          'interaction_required',
-          'login_required',
-          'account_selection_required',
-          'consent_required',
-      ]))  {
+        'interaction_required',
+        'login_required',
+        'account_selection_required',
+        'consent_required',
+      ])) {
         // If we have an one of the above errors, that means the user hasn't
         // granted the authorization for the claims.
         drupal_set_message(t('Logging in with @provider has been canceled.', $provider_param), 'warning');

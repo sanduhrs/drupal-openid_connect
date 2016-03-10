@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Plugin\Block\LoginBlock.
- */
-
 namespace Drupal\openid_connect\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;

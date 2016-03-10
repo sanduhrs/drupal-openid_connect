@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\openid_connect\Plugin\OpenIDConnectClient\OpenIDConnectClientGoogle.
- */
-
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Form\LoginForm.
- */
-
 namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Access\AccessResult;

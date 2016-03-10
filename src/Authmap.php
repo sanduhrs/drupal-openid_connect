@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Authmap.
- */
-
 namespace Drupal\openid_connect;
 
 use Drupal\Core\Database\Connection;

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Plugin\OpenIDConnectClientManager.
- */
-
 namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Core\Plugin\DefaultPluginManager;

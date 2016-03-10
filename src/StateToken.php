@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\StateToken.
- */
-
 namespace Drupal\openid_connect;
 
 /**

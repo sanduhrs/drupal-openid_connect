@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Tests\SettingsFormTest.
- */
-
 namespace Drupal\openid_connect\Tests;
 
 use Drupal\simpletest\WebTestBase;

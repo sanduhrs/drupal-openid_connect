@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Plugin\OpenIDConnectClientInterface.
- */
-
 namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;

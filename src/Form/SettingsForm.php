@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\openid_connect\Form\SettingsForm.
- */
-
 namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;

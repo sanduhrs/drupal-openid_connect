@@ -1,13 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\openid_connect\Plugin\OpenIDConnectClient\OpenIDConnectClientGeneric.
- *
- * Used primarily to login to Drupal sites powered by oauth2_server or PHP
- * sites powered by oauth2-server-php.
- */
-
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
 use Drupal\Core\Form\FormStateInterface;

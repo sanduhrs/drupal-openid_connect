@@ -251,7 +251,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
 
     $client = $this->httpClient;
     try {
-      $response = $client->post($endpoints['userinfo'], $request_options);
+      $response = $client->get($endpoints['userinfo'], $request_options);
       $response_data = (string) $response->getBody();
 
       return json_decode($response_data, TRUE);

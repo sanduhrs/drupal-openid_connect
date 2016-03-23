@@ -14,7 +14,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
  *   label = @Translation("Google")
  * )
  */
-class OpenIDConnectClientGoogle extends OpenIDConnectClientBase {
+class Google extends OpenIDConnectClientBase {
 
   /**
    * Overrides OpenIDConnectClientBase::getEndpoints().

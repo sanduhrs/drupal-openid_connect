@@ -16,7 +16,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
  *   label = @Translation("Generic")
  * )
  */
-class OpenIDConnectClientGeneric extends OpenIDConnectClientBase {
+class Generic extends OpenIDConnectClientBase {
 
   /**
    * Overrides OpenIDConnectClientBase::settingsForm().

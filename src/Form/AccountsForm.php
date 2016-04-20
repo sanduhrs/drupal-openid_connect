@@ -71,11 +71,11 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
    *   The config factory.
    */
   public function __construct(
-    AccountProxy $current_user,
-    Authmap $authmap,
-    Claims $claims,
-    OpenIDConnectClientManager $plugin_manager,
-    ConfigFactory $config_factory
+      AccountProxy $current_user,
+      Authmap $authmap,
+      Claims $claims,
+      OpenIDConnectClientManager $plugin_manager,
+      ConfigFactory $config_factory
   ) {
 
     $this->currentUser = $current_user;

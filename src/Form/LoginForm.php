@@ -39,8 +39,8 @@ class LoginForm extends FormBase implements ContainerInjectionInterface {
    *   The OpenID Connect claims.
    */
   public function __construct(
-    OpenIDConnectClientManager $plugin_manager,
-    Claims $claims
+      OpenIDConnectClientManager $plugin_manager,
+      Claims $claims
   ) {
 
     $this->pluginManager = $plugin_manager;

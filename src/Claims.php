@@ -159,8 +159,8 @@ class Claims implements ContainerInjectionInterface {
    *   The module handler.
    */
   public function __construct(
-    ConfigFactory $config_factory,
-    ModuleHandler $module_handler
+      ConfigFactory $config_factory,
+      ModuleHandler $module_handler
   ) {
 
     $this->configFactory = $config_factory;

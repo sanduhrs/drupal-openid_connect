@@ -25,9 +25,7 @@ class Authmap {
    * @param \Drupal\Core\Database\Connection $connection
    *   A database connection.
    */
-  public function __construct(
-    Connection $connection
-  ) {
+  public function __construct(Connection $connection) {
     $this->connection = $connection;
   }
 

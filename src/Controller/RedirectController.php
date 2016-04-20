@@ -54,10 +54,10 @@ class RedirectController extends ControllerBase implements AccessInterface {
    * {@inheritdoc}
    */
   public function __construct(
-    OpenIDConnectClientManager $plugin_manager,
-    RequestStack $request_stack,
-    LoggerChannelFactory $logger_factory,
-    AccountInterface $current_user
+      OpenIDConnectClientManager $plugin_manager,
+      RequestStack $request_stack,
+      LoggerChannelFactory $logger_factory,
+      AccountInterface $current_user
   ) {
 
     $this->pluginManager = $plugin_manager;

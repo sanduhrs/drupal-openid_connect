@@ -52,10 +52,10 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
    *   The claims.
    */
   public function __construct(
-    ConfigFactoryInterface $config_factory,
-    OpenIDConnectClientManager $plugin_manager,
-    EntityFieldManagerInterface $entity_field_manager,
-    Claims $claims
+      ConfigFactoryInterface $config_factory,
+      OpenIDConnectClientManager $plugin_manager,
+      EntityFieldManagerInterface $entity_field_manager,
+      Claims $claims
   ) {
     parent::__construct($config_factory);
     $this->pluginManager = $plugin_manager;

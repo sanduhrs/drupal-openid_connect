@@ -47,11 +47,11 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
    *   The form builder.
    */
   public function __construct(
-        array $configuration,
-        $plugin_id,
-        $plugin_definition,
-        OpenIDConnectClientManager $plugin_manager,
-        FormBuilder $form_builder
+      array $configuration,
+      $plugin_id,
+      $plugin_definition,
+      OpenIDConnectClientManager $plugin_manager,
+      FormBuilder $form_builder
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 

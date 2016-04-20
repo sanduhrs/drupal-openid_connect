@@ -57,12 +57,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The logger factory.
    */
   public function __construct(
-    array $configuration,
-    $plugin_id,
-    $plugin_definition,
-    RequestStack $request_stack,
-    ClientInterface $http_client,
-    LoggerChannelFactory $logger_factory
+      array $configuration,
+      $plugin_id,
+      $plugin_definition,
+      RequestStack $request_stack,
+      ClientInterface $http_client,
+      LoggerChannelFactory $logger_factory
   ) {
     parent::__construct(
       $configuration,
@@ -79,11 +79,11 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public static function create(
-    ContainerInterface $container,
-    array $configuration,
-    $plugin_id,
-    $plugin_definition) {
-
+      ContainerInterface $container,
+      array $configuration,
+      $plugin_id,
+      $plugin_definition
+  ) {
     return new static(
       $configuration,
       $plugin_id,
@@ -147,14 +147,14 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $redirect_uri = Url::fromRoute(
       'openid_connect.redirect_controller_redirect',
       array('client_name' => $this->pluginId), array('absolute' => TRUE)
-    )->toString();
+    )->toString(TRUE);
 
     $url_options = array(
       'query' => array(
         'client_id' => $this->configuration['client_id'],
         'response_type' => 'code',
         'scope' => $scope,
-        'redirect_uri' => $redirect_uri,
+        'redirect_uri' => $redirect_uri->getGeneratedUrl(),
         'state' => StateToken::create(),
       ),
     );
@@ -162,9 +162,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $endpoints = $this->getEndpoints();
     // Clear _GET['destination'] because we need to override it.
     $this->requestStack->getCurrentRequest()->query->remove('destination');
-    $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString();
+    $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString(TRUE);
 
-    $response = new TrustedRedirectResponse($authorization_endpoint);
+    $response = new TrustedRedirectResponse($authorization_endpoint->getGeneratedUrl());
+    $response->addCacheableDependency($authorization_endpoint);
+    $response->addCacheableDependency($redirect_uri);
+
     return $response;
   }
 

@@ -93,7 +93,8 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('openid_connect.settings');
+    $settings = $this->configFactory()
+      ->getEditable('openid_connect.settings');
 
     $options = array();
     foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
@@ -117,7 +118,8 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       '#default_value' => $clients_enabled,
     );
     foreach ($this->pluginManager->getDefinitions() as $client_name => $client_plugin) {
-      $configuration = $this->config('openid_connect.settings.' . $client_name)
+      $configuration = $this->configFactory()
+        ->getEditable('openid_connect.settings.' . $client_name)
         ->get('settings');
 
       /* @var \Drupal\openid_connect\Plugin\OpenIDConnectClientInterface $client */
@@ -145,7 +147,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       '#type' => 'checkbox',
       '#title' => $this->t('Save user claims on every login'),
       '#description' => $this->t('If disabled, user claims will only be saved when the account is first created.'),
-      '#default_value' => $config->get('always_save_userinfo'),
+      '#default_value' => $settings->get('always_save_userinfo'),
     );
 
     $form['userinfo_mappings'] = array(
@@ -156,7 +158,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     $properties = $this->entityFieldManager->getFieldDefinitions('user', 'user');
     $properties_skip = _openid_connect_user_properties_to_skip();
     $claims = $this->claims->getOptions();
-    $mappings = $config->get('userinfo_mappings');
+    $mappings = $settings->get('userinfo_mappings');
     foreach ($properties as $property_name => $property) {
       if (isset($properties_skip[$property_name])) {
         continue;

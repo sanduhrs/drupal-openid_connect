@@ -46,7 +46,7 @@ function openid_connect_redirect_page($client_name) {
       // Any other error should be logged. E.g. invalid scope.
       $variables = array(
         '@error' => $_GET['error'],
-        '@details' => $_GET['error_description'],
+        '@details' => isset($_GET['error_description']) ? $_GET['error_description'] : t('None'),
       );
       watchdog('openid_connect_' . $client_name, 'Authorization failed: @error. Details: @details', $variables, WATCHDOG_ERROR);
     }

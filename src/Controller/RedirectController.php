@@ -155,7 +155,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
         // Any other error should be logged. E.g. invalid scope.
         $variables = array(
           '@error' => $query->get('error'),
-          '@details' => $query->get('error_description'),
+          '@details' => $query->get('error_description') ? $query->get('error_description') : $this->t('Unknown error.'),
         );
         $message = 'Authorization failed: @error. Details: @details';
         $this->loggerFactory->get('openid_connect_' . $client_name)->error($message, $variables);

@@ -13,6 +13,7 @@ use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Core\Language\LanguageInterface;
 
 /**
  * Base class for OpenID Connect client plugins.
@@ -144,9 +145,17 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   A trusted redirect response object.
    */
   public function authorize($scope = 'openid email') {
+    $language_none = \Drupal::languageManager()
+      ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
     $redirect_uri = Url::fromRoute(
       'openid_connect.redirect_controller_redirect',
-      array('client_name' => $this->pluginId), array('absolute' => TRUE)
+      array(
+        'client_name' => $this->pluginId,
+      ),
+      array(
+        'absolute' => TRUE,
+        'language' => $language_none,
+      )
     )->toString(TRUE);
 
     $url_options = array(
@@ -182,9 +191,17 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function retrieveTokens($authorization_code) {
     // Exchange `code` for access token and ID token.
+    $language_none = \Drupal::languageManager()
+      ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
     $redirect_uri = Url::fromRoute(
       'openid_connect.redirect_controller_redirect',
-      array('client_name' => $this->pluginId), array('absolute' => TRUE)
+      array(
+        'client_name' => $this->pluginId,
+      ),
+      array(
+        'absolute' => TRUE,
+        'language' => $language_none,
+      )
     )->toString();
     $endpoints = $this->getEndpoints();
 

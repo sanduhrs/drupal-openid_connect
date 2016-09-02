@@ -2,6 +2,8 @@
 
 namespace Drupal\openid_connect;
 
+use Drupal\Component\Utility\Crypt;
+
 /**
  * Class StateToken.
  *
@@ -16,7 +18,7 @@ class StateToken {
    *   A state token that later can be validated to prevent request forgery.
    */
   public static function create() {
-    $state = md5(rand());
+    $state = Crypt::randomBytesBase64();
     $_SESSION['openid_connect_state'] = $state;
     return $state;
   }

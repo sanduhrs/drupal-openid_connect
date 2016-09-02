@@ -107,6 +107,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $form['client_secret'] = array(
       '#title' => t('Client secret'),
       '#type' => 'textfield',
+      '#maxlength' => 1024,
       '#default_value' => $this->configuration['client_secret'],
     );
     return $form;

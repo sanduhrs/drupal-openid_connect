@@ -177,7 +177,6 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $trigger = $form_state->getTriggeringElement();
     list($op, $client_name) = explode('__', $form_state->getTriggeringElement()['#name'], 2);
 
     if ($op === 'disconnect') {

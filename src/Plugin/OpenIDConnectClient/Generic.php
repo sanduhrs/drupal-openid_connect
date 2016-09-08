@@ -19,7 +19,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 class Generic extends OpenIDConnectClientBase {
 
   /**
-   * Overrides OpenIDConnectClientBase::settingsForm().
+   * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
@@ -44,7 +44,7 @@ class Generic extends OpenIDConnectClientBase {
   }
 
   /**
-   * Overrides OpenIDConnectClientBase::getEndpoints().
+   * {@inheritdoc}
    */
   public function getEndpoints() {
     return array(

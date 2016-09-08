@@ -17,7 +17,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 class Google extends OpenIDConnectClientBase {
 
   /**
-   * Overrides OpenIDConnectClientBase::getEndpoints().
+   * {@inheritdoc}
    */
   public function getEndpoints() {
     return array(
@@ -28,7 +28,7 @@ class Google extends OpenIDConnectClientBase {
   }
 
   /**
-   * Overrides OpenIDConnectClientBase::retrieveUserInfo().
+   * {@inheritdoc}
    */
   public function retrieveUserInfo($access_token) {
     $userinfo = parent::retrieveUserInfo($access_token);

@@ -54,9 +54,9 @@ function openid_connect_user_delete(EntityInterface $entity) {
 }
 
 /**
- * Implements hook_username_alter().
+ * Implements hook_user_format_name_alter().
  */
-function openid_connect_username_alter(&$name, $account) {
+function openid_connect_user_format_name_alter(&$name, $account) {
   // Ensure that usernames are not displayed if they are email addresses, or if
   // they are generated names starting with 'oidc_'.
   $oidc_name = \Drupal::service('user.data')->get('openid_connect', $account->id(), 'oidc_name');

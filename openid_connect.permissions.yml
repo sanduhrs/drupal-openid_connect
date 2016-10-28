@@ -1,5 +1,5 @@
-configure openid connect clients:
-  title: 'Configure OpenID Connect clients'
+administer openid connect clients:
+  title: 'Administer OpenID Connect clients'
   restrict access: TRUE
 
 manage own openid connect accounts:

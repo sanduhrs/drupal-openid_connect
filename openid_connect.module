@@ -175,7 +175,7 @@ function openid_connect_block_view($delta = '') {
  *   A state token that later can be validated to prevent request forgery.
  */
 function openid_connect_create_state_token() {
-  $state = md5(rand());
+  $state = drupal_random_key();
   $_SESSION['openid_connect_state'] = $state;
 
   return $state;

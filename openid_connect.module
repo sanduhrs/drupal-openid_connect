@@ -229,7 +229,13 @@ function openid_connect_save_userinfo($account, $userinfo) {
     }
     $claim = variable_get('openid_connect_userinfo_mapping_property_' . $property_name, NULL);
     if ($claim && isset($userinfo[$claim])) {
-      $account_wrapper->{$property_name} = $userinfo[$claim];
+      // Set the user property, while ignoring exceptions from invalid values.
+      try {
+        $account_wrapper->{$property_name} = $userinfo[$claim];
+      }
+      catch (EntityMetadataWrapperException $e) {
+        watchdog_exception('openid_connect', $e);
+      }
     }
   }
 

@@ -813,9 +813,15 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     $account_is_new = FALSE;
   }
   else {
+    // Check whether the e-mail address is valid.
+    if (!filter_var($userinfo['mail'], FILTER_VALIDATE_EMAIL)) {
+      drupal_set_message(t('The e-mail address %mail is not valid.', array('%mail' => $userinfo['email'])), 'error');
+
+      return FALSE;
+    }
     // Check whether there is an e-mail address conflict.
     if (user_load_by_mail($userinfo['email'])) {
-      drupal_set_message(t('The e-mail address is already taken: @email', array('@email' => $userinfo['email'])), 'error');
+      drupal_set_message(t('The e-mail address %email is already taken.', array('%email' => $userinfo['email'])), 'error');
 
       return FALSE;
     }

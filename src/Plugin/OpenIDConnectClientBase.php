@@ -230,6 +230,9 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       if (array_key_exists('expires_in', $response_data)) {
         $tokens['expire'] = REQUEST_TIME + $response_data['expires_in'];
       }
+      if (array_key_exists('refresh_token', $response_data)) {
+        $tokens['refresh_token'] = $response_data['refresh_token'];
+      }
       return $tokens;
     }
     catch (Exception $e) {

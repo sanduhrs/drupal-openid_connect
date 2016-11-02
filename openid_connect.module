@@ -128,15 +128,21 @@ function openid_connect_save_userinfo($account, $userinfo) {
       if ($claim && isset($userinfo[$claim])) {
 
         $property_type = $property->getType();
-        if ($property_type === 'string') {
-          $account->set($property_name, $userinfo[$claim]);
+        // Set the user property, while ignoring exceptions from invalid values.
+        try {
+          if ($property_type === 'string') {
+            $account->set($property_name, $userinfo[$claim]);
+          }
+          elseif ($property_type === 'image') {
+            // Create file object from remote URL.
+            $basename = explode('?', drupal_basename($userinfo[$claim]))[0];
+            $data = file_get_contents($userinfo[$claim]);
+            $file = file_save_data($data, 'public://user-picture-' . $account->id() . '-' . $basename, FILE_EXISTS_REPLACE);
+            $account->set($property_name, ['target_id' => $file->id()]);
+          }
         }
-        elseif ($property_type === 'image') {
-          // Create file object from remote URL.
-          $basename = explode('?', drupal_basename($userinfo[$claim]))[0];
-          $data = file_get_contents($userinfo[$claim]);
-          $file = file_save_data($data, 'public://user-picture-' . $account->id() . '-' . $basename, FILE_EXISTS_REPLACE);
-          $account->set($property_name, ['target_id' => $file->id()]);
+        catch (\InvalidArgumentException $e) {
+          \Drupal::logger('openid_connect')->error($e->getMessage());
         }
       }
     }

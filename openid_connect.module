@@ -397,10 +397,28 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
     }
   }
   else {
+    // Check whether the e-mail address is valid.
+    if (!\Drupal::service('email.validator')->isValid($userinfo['email'])) {
+      drupal_set_message(
+        t('The e-mail address is not valid: @email',
+          array(
+            '@email' => $userinfo['email'],
+          )
+        ),
+        'error'
+      );
+      return FALSE;
+    }
     // Check whether there is an e-mail address conflict.
     if (user_load_by_mail($userinfo['email'])) {
-      drupal_set_message(t('The e-mail address is already taken: @email', array('@email' => $userinfo['email'])), 'error');
-
+      drupal_set_message(
+        t('The e-mail address is already taken: @email',
+          array(
+            '@email' => $userinfo['email'],
+          )
+        ),
+        'error'
+      );
       return FALSE;
     }
 

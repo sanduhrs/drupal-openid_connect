@@ -814,7 +814,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
   }
   else {
     // Check whether the e-mail address is valid.
-    if (!filter_var($userinfo['mail'], FILTER_VALIDATE_EMAIL)) {
+    if (!filter_var($userinfo['email'], FILTER_VALIDATE_EMAIL)) {
       drupal_set_message(t('The e-mail address %mail is not valid.', array('%mail' => $userinfo['email'])), 'error');
 
       return FALSE;

@@ -140,14 +140,14 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
 
       $form[$client['id']] = array(
         '#type' => 'fieldset',
-        '#title' => t('Provider: @title', array('@title' => $client['label'])),
+        '#title' => $this->t('Provider: @title', array('@title' => $client['label'])),
       );
       $fieldset = &$form[$client['id']];
       $connected = isset($connected_accounts[$client['id']]);
       $fieldset['status'] = array(
         '#type' => 'item',
-        '#title' => t('Status'),
-        '#markup' => t('Not connected'),
+        '#title' => $this->t('Status'),
+        '#markup' => $this->t('Not connected'),
       );
       if ($connected) {
         $fieldset['status']['#markup'] = t('Connected as %sub', array(
@@ -155,7 +155,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
         ));
         $fieldset['openid_connect_client_' . $client['id'] . '_disconnect'] = array(
           '#type' => 'submit',
-          '#value' => t('Disconnect from @client_title', array('@client_title' => $client['label'])),
+          '#value' => $this->t('Disconnect from @client_title', array('@client_title' => $client['label'])),
           '#name' => 'disconnect__' . $client['id'],
           '#access' => !$read_only,
         );
@@ -164,7 +164,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
         $fieldset['status']['#markup'] = t('Not connected');
         $fieldset['openid_connect_client_' . $client['id'] . '_connect'] = array(
           '#type' => 'submit',
-          '#value' => t('Connect with @client_title', array('@client_title' => $client['label'])),
+          '#value' => $this->t('Connect with @client_title', array('@client_title' => $client['label'])),
           '#name' => 'connect__' . $client['id'],
           '#access' => !$read_only,
         );
@@ -187,7 +187,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
     }
 
     if ($this->currentUser->id() !== $form_state->get('account')->id()) {
-      drupal_set_message(t("You cannot connect another user's account."), 'error');
+      drupal_set_message($this->t("You cannot connect another user's account."), 'error');
       return;
     }
 

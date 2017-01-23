@@ -100,12 +100,12 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form['client_id'] = array(
-      '#title' => t('Client ID'),
+      '#title' => $this->t('Client ID'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['client_id'],
     );
     $form['client_secret'] = array(
-      '#title' => t('Client secret'),
+      '#title' => $this->t('Client secret'),
       '#type' => 'textfield',
       '#maxlength' => 1024,
       '#default_value' => $this->configuration['client_secret'],

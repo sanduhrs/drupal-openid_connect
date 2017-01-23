@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\openid_connect\StateToken;
 use Exception;
@@ -19,6 +20,8 @@ use Drupal\Core\Language\LanguageInterface;
  * Base class for OpenID Connect client plugins.
  */
 abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConnectClientInterface, ContainerFactoryPluginInterface {
+
+  use StringTranslationTrait;
 
   /**
    * The request stack used to access request globals.

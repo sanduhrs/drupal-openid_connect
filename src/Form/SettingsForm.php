@@ -111,8 +111,8 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
 
     $form['#tree'] = TRUE;
     $form['clients_enabled'] = array(
-      '#title' => t('Enabled OpenID Connect clients'),
-      '#description' => t('Choose enabled OpenID Connect clients.'),
+      '#title' => $this->t('Enabled OpenID Connect clients'),
+      '#description' => $this->t('Choose enabled OpenID Connect clients.'),
       '#type' => 'checkboxes',
       '#options' => $options,
       '#default_value' => $clients_enabled,
@@ -151,7 +151,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     );
 
     $form['userinfo_mappings'] = array(
-      '#title' => t('User claims mapping'),
+      '#title' => $this->t('User claims mapping'),
       '#type' => 'fieldset',
     );
 

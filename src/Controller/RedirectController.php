@@ -175,10 +175,10 @@ class RedirectController extends ControllerBase implements AccessInterface {
         elseif ($parameters['op'] === 'connect' && $parameters['connect_uid'] === $this->currentUser->id()) {
           $success = openid_connect_connect_current_user($client, $tokens);
           if ($success) {
-            drupal_set_message(t('Account successfully connected with @provider.', $provider_param));
+            drupal_set_message($this->t('Account successfully connected with @provider.', $provider_param));
           }
           else {
-            drupal_set_message(t('Connecting with @provider could not be completed due to an error.', $provider_param), 'error');
+            drupal_set_message($this->t('Connecting with @provider could not be completed due to an error.', $provider_param), 'error');
           }
         }
       }

@@ -25,17 +25,17 @@ class Generic extends OpenIDConnectClientBase {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $form['authorization_endpoint'] = array(
-      '#title' => t('Authorization endpoint'),
+      '#title' => $this->t('Authorization endpoint'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['authorization_endpoint'],
     );
     $form['token_endpoint'] = array(
-      '#title' => t('Token endpoint'),
+      '#title' => $this->t('Token endpoint'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['token_endpoint'],
     );
     $form['userinfo_endpoint'] = array(
-      '#title' => t('UserInfo endpoint'),
+      '#title' => $this->t('UserInfo endpoint'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['userinfo_endpoint'],
     );

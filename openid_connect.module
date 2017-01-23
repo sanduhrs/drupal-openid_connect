@@ -137,8 +137,26 @@ function openid_connect_save_userinfo($account, $userinfo) {
             // Create file object from remote URL.
             $basename = explode('?', drupal_basename($userinfo[$claim]))[0];
             $data = file_get_contents($userinfo[$claim]);
-            $file = file_save_data($data, 'public://user-picture-' . $account->id() . '-' . $basename, FILE_EXISTS_REPLACE);
-            $account->set($property_name, ['target_id' => $file->id()]);
+            $file = file_save_data(
+              $data,
+              'public://user-picture-' . $account->id() . '-' . $basename,
+              FILE_EXISTS_RENAME
+            );
+
+            // Cleanup the old file.
+            if ($file) {
+              $old_file = $account->$property_name->entity;
+              if ($old_file) {
+                $old_file->delete();
+              }
+            }
+
+            $account->set(
+              $property_name,
+              [
+                'target_id' => $file->id(),
+              ]
+            );
           }
         }
         catch (\InvalidArgumentException $e) {

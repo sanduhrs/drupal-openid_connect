@@ -54,19 +54,3 @@ function openid_connect_schema() {
 
   return $schema;
 }
-
-/**
- * Converts client settings to the new format.
- */
-function openid_connect_update_7100() {
-  foreach (openid_connect_get_plugins(TRUE) as $client) {
-    $client_id = variable_get('openid_connect_client_' . $client['name'] . '_client_id', '');
-    $client_secret = variable_get('openid_connect_client_' . $client['name'] . '_client_secret', '');
-
-    $new_configuration = array(
-      'client_id' => $client_id,
-      'client_secret' => $client_secret,
-    );
-    variable_set('openid_connect_client_' . $client['name'], $new_configuration);
-  }
-}

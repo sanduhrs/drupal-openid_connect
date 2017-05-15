@@ -2,11 +2,14 @@
 
 namespace Drupal\openid_connect\Plugin\Block;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormBuilder;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a 'OpenID Connect login' block.
@@ -33,6 +36,13 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
   protected $formBuilder;
 
   /**
+   * The route match.
+   *
+   * @var \Drupal\Core\Routing\RouteMatchInterface
+   */
+  protected $routeMatch;
+
+  /**
    * Construct.
    *
    * @param array $configuration
@@ -41,6 +51,8 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
    *   The plugin_id for the plugin instance.
    * @param string $plugin_definition
    *   The plugin implementation definition.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   *   The route match.
    * @param \Drupal\openid_connect\Plugin\OpenIDConnectClientManager $plugin_manager
    *   The OpenID Connect client manager.
    * @param \Drupal\Core\Form\FormBuilder $form_builder
@@ -50,6 +62,7 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
       array $configuration,
       $plugin_id,
       $plugin_definition,
+      RouteMatchInterface $route_match,
       OpenIDConnectClientManager $plugin_manager,
       FormBuilder $form_builder
   ) {
@@ -57,6 +70,8 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
     $this->pluginManager = $plugin_manager;
     $this->formBuilder = $form_builder;
+    $this->routeMatch = $route_match;
+
   }
 
   /**
@@ -67,9 +82,25 @@ class LoginBlock extends BlockBase implements ContainerFactoryPluginInterface {
       $configuration,
       $plugin_id,
       $plugin_definition,
+      $container->get('current_route_match'),
       $container->get('plugin.manager.openid_connect_client.processor'),
       $container->get('form_builder')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function blockAccess(AccountInterface $account) {
+    $route_name = $this->routeMatch->getRouteName();
+    if ($account->isAnonymous() && !in_array($route_name, ['user.login', 'user.logout'])) {
+      return AccessResult::allowed()
+        ->addCacheContexts([
+          'route.name',
+          'user.roles:anonymous',
+        ]);
+    }
+    return AccessResult::forbidden();
   }
 
   /**

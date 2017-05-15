@@ -211,18 +211,20 @@ function openid_connect_save_destination() {
  *   The user claims, containing at least 'email'.
  * @param string $client_name
  *   The machine name of the client.
+ * @param int $status
+ *   The initial user status.
  *
  * @return object|FALSE
  *   The user object or FALSE on failure.
  */
-function openid_connect_create_user($sub, $userinfo, $client_name) {
+function openid_connect_create_user($sub, $userinfo, $client_name, $status = 1) {
   /** @var \Drupal\user\Entity\User $account */
   $account = User::create([
     'name' => openid_connect_generate_username($sub, $userinfo, $client_name),
     'pass' => user_password(),
     'mail' => $userinfo['email'],
     'init' => $userinfo['email'],
-    'status' => 1,
+    'status' => $status,
     'openid_connect_client' => $client_name,
     'openid_connect_sub' => $sub,
   ]);
@@ -429,6 +431,7 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
       );
       return FALSE;
     }
+
     // Check whether there is an e-mail address conflict.
     if (user_load_by_mail($userinfo['email'])) {
       drupal_set_message(
@@ -442,10 +445,27 @@ function openid_connect_complete_authorization($client, $tokens, &$destination) 
       return FALSE;
     }
 
-    // Create a new account.
-    $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId());
-    openid_connect_save_userinfo($account, $userinfo);
+    // Check Drupal user register settings before saving.
+    $register = \Drupal::config('user.settings')->get('register');
+    switch ($register) {
+      case USER_REGISTER_ADMINISTRATORS_ONLY:
+        drupal_set_message(t('Only administrators can register new accounts.'), 'error');
+        return FALSE;
 
+      case USER_REGISTER_VISITORS:
+        // Create a new account.
+        $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId(), 1);
+        break;
+
+      case USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL:
+        // Create a new account.
+        $account = openid_connect_create_user($sub, $userinfo, $client->getPluginId(), 0);
+        drupal_set_message(t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.'));
+        break;
+    }
+
+    // Store the newly created account.
+    openid_connect_save_userinfo($account, $userinfo);
     $authmap->createAssociation($account, $client->getPluginId(), $sub);
   }
 

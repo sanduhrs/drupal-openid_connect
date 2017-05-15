@@ -168,7 +168,9 @@ class RedirectController extends ControllerBase implements AccessInterface {
       if ($tokens) {
         if ($parameters['op'] === 'login') {
           $success = openid_connect_complete_authorization($client, $tokens, $destination);
-          if (!$success) {
+
+          $register = \Drupal::config('user.settings')->get('register');
+          if (!$success && $register !== USER_REGISTER_ADMINISTRATORS_ONLY) {
             drupal_set_message(t('Logging in with @provider could not be completed due to an error.', $provider_param), 'error');
           }
         }

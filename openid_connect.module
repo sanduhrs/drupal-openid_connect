@@ -189,15 +189,17 @@ function openid_connect_login_user($account) {
  * Save the current path in the session, for redirecting after authorization.
  */
 function openid_connect_save_destination() {
-  $destination = \Drupal::destination()->getAsArray();
-  $destination = $destination['destination'] == 'user/login' ? 'user' : $destination['destination'];
+  $current_path = \Drupal::service('path.current')->getPath();
+  $path = $current_path == '/user/login' ? '/user' : $current_path;
 
   // The destination could contain query parameters. Ensure that they are
   // preserved.
-  $parsed = parse_url($destination);
-  $_SESSION['openid_connect_destination'] = array(
-    $parsed['path'], array('query' => isset($parsed['query']) ? $parsed['query'] : ''),
-  );
+  $query = \Drupal::request()->getQueryString();
+
+  $_SESSION['openid_connect_destination'] = [
+    $path,
+    ['query' => $query],
+  ];
 }
 
 /**

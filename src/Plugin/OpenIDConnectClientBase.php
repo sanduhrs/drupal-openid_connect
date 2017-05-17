@@ -10,9 +10,11 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\openid_connect\StateToken;
+use Drupal\openid_connect\Event\AuthorizeUrlOptionsAlterEvent;
 use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Language\LanguageInterface;
 
@@ -45,6 +47,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   protected $loggerFactory;
 
   /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $dispatcher;
+
+  /**
    * The constructor.
    *
    * @param array $configuration
@@ -59,6 +68,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The http client.
    * @param \Drupal\Core\Logger\LoggerChannelFactory $logger_factory
    *   The logger factory.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher.
    */
   public function __construct(
       array $configuration,
@@ -66,7 +77,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $plugin_definition,
       RequestStack $request_stack,
       ClientInterface $http_client,
-      LoggerChannelFactory $logger_factory
+      LoggerChannelFactory $logger_factory,
+      EventDispatcherInterface $event_dispatcher
   ) {
     parent::__construct(
       $configuration,
@@ -77,6 +89,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $this->requestStack = $request_stack;
     $this->httpClient = $http_client;
     $this->loggerFactory = $logger_factory;
+    $this->dispatcher = $event_dispatcher;
   }
 
   /**
@@ -94,7 +107,8 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $plugin_definition,
       $container->get('request_stack'),
       $container->get('http_client'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('event_dispatcher')
     );
   }
 
@@ -102,17 +116,19 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-    $form['client_id'] = array(
+    $form['client_id'] = [
       '#title' => $this->t('Client ID'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['client_id'],
-    );
-    $form['client_secret'] = array(
+    ];
+
+    $form['client_secret'] = [
       '#title' => $this->t('Client secret'),
       '#type' => 'textfield',
       '#maxlength' => 1024,
       '#default_value' => $this->configuration['client_secret'],
-    );
+    ];
+
     return $form;
   }
 
@@ -144,33 +160,37 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *
    * @param string $scope
    *   A string of scopes.
+   * @param FormStateInterface $form_state
+   *   Optional FormState.
    *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   A trusted redirect response object.
    */
-  public function authorize($scope = 'openid email') {
+  public function authorize($scope = 'openid email', FormStateInterface $form_state = NULL) {
     $language_none = \Drupal::languageManager()
       ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
     $redirect_uri = Url::fromRoute(
       'openid_connect.redirect_controller_redirect',
-      array(
+      [
         'client_name' => $this->pluginId,
-      ),
-      array(
+      ],
+      [
         'absolute' => TRUE,
         'language' => $language_none,
-      )
+      ]
     )->toString(TRUE);
 
-    $url_options = array(
-      'query' => array(
+    $url_options = [
+      'query' => [
         'client_id' => $this->configuration['client_id'],
         'response_type' => 'code',
         'scope' => $scope,
         'redirect_uri' => $redirect_uri->getGeneratedUrl(),
         'state' => StateToken::create(),
-      ),
-    );
+      ],
+    ];
+
+    $this->dispatcher->dispatch(AuthorizeUrlOptionsAlterEvent::AUTHORIZE_URL_OPTIONS_ALTER, new AuthorizeUrlOptionsAlterEvent($url_options, $form_state));
 
     $endpoints = $this->getEndpoints();
     // Clear _GET['destination'] because we need to override it.
@@ -199,25 +219,25 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
     $redirect_uri = Url::fromRoute(
       'openid_connect.redirect_controller_redirect',
-      array(
+      [
         'client_name' => $this->pluginId,
-      ),
-      array(
+      ],
+      [
         'absolute' => TRUE,
         'language' => $language_none,
-      )
+      ]
     )->toString();
     $endpoints = $this->getEndpoints();
 
-    $request_options = array(
-      'form_params' => array(
+    $request_options = [
+      'form_params' => [
         'code' => $authorization_code,
         'client_id' => $this->configuration['client_id'],
         'client_secret' => $this->configuration['client_secret'],
         'redirect_uri' => $redirect_uri,
         'grant_type' => 'authorization_code',
-      ),
-    );
+      ],
+    ];
 
     /* @var \GuzzleHttp\ClientInterface $client */
     $client = $this->httpClient;
@@ -226,10 +246,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $response_data = json_decode((string) $response->getBody(), TRUE);
 
       // Expected result.
-      $tokens = array(
+      $tokens = [
         'id_token' => $response_data['id_token'],
         'access_token' => $response_data['access_token'],
-      );
+      ];
       if (array_key_exists('expires_in', $response_data)) {
         $tokens['expire'] = REQUEST_TIME + $response_data['expires_in'];
       }
@@ -239,10 +259,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       return $tokens;
     }
     catch (Exception $e) {
-      $variables = array(
+      $variables = [
         '@message' => 'Could not retrieve tokens',
         '@error_message' => $e->getMessage(),
-      );
+      ];
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
       return FALSE;
@@ -254,7 +274,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    */
   public function decodeIdToken($id_token) {
     list($headerb64, $claims64, $signatureb64) = explode('.', $id_token);
-    $claims64 = str_replace(array('-', '_'), array('+', '/'), $claims64);
+    $claims64 = str_replace(['-', '_'], ['+', '/'], $claims64);
     $claims64 = base64_decode($claims64);
     return json_decode($claims64, TRUE);
   }
@@ -269,11 +289,11 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   A result array or false.
    */
   public function retrieveUserInfo($access_token) {
-    $request_options = array(
-      'headers' => array(
+    $request_options = [
+      'headers' => [
         'Authorization' => 'Bearer ' . $access_token,
-      ),
-    );
+      ],
+    ];
     $endpoints = $this->getEndpoints();
 
     $client = $this->httpClient;
@@ -284,10 +304,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       return json_decode($response_data, TRUE);
     }
     catch (Exception $e) {
-      $variables = array(
+      $variables = [
         '@message' => 'Could not retrieve user profile information',
         '@error_message' => $e->getMessage(),
-      );
+      ];
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
       return FALSE;

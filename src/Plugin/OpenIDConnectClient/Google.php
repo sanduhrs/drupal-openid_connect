@@ -2,6 +2,7 @@
 
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 
 /**
@@ -15,6 +16,20 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
  * )
  */
 class Google extends OpenIDConnectClientBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
+
+    $url = 'https://console.developers.google.com/project/_/apiui/apis/library';
+    $form['description'] = [
+      '#markup' => '<div class="description">' . $this->t('Set up your app in <a href="@url" target="_blank">Google API Console</a>.', ['@url' => $url]) . '</div>',
+    ];
+
+    return $form;
+  }
 
   /**
    * {@inheritdoc}

@@ -54,3 +54,27 @@ function openid_connect_schema() {
 
   return $schema;
 }
+
+/**
+ * Add default config for Facebook and Linkedin provider.
+ */
+function openid_connect_update_8101() {
+  $config_factory = \Drupal::configFactory();
+
+  $config = $config_factory->getEditable('openid_connect.settings.facebook');
+  $config->set('enabled', false);
+  $config->set('settings', [
+    'client_id' => '',
+    'client_secret' => '',
+    'api_version' => '',
+  ]);
+  $config->save(TRUE);
+
+  $config = $config_factory->getEditable('openid_connect.settings.linkedin');
+  $config->set('enabled', false);
+  $config->set('settings', [
+    'client_id' => '',
+    'client_secret' => '',
+  ]);
+  $config->save(TRUE);
+}

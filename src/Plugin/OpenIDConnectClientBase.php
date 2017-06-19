@@ -4,7 +4,7 @@ namespace Drupal\openid_connect\Plugin;
 
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Logger\LoggerChannelFactory;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -40,7 +40,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
   /**
    * The logger factory used for logging.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected $loggerFactory;
 
@@ -57,7 +57,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    *   The request stack.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   The http client.
-   * @param \Drupal\Core\Logger\LoggerChannelFactory $logger_factory
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
    */
   public function __construct(
@@ -66,7 +66,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
       $plugin_definition,
       RequestStack $request_stack,
       ClientInterface $http_client,
-      LoggerChannelFactory $logger_factory
+      LoggerChannelFactoryInterface $logger_factory
   ) {
     parent::__construct(
       $configuration,

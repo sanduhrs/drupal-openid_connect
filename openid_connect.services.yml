@@ -14,4 +14,3 @@ services:
   openid_connect.state_token:
     class: Drupal\openid_connect\StateToken
     arguments: []
-

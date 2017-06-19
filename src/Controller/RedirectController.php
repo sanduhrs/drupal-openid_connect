@@ -4,7 +4,7 @@ namespace Drupal\openid_connect\Controller;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Logger\LoggerChannelFactory;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
@@ -56,7 +56,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
   public function __construct(
       OpenIDConnectClientManager $plugin_manager,
       RequestStack $request_stack,
-      LoggerChannelFactory $logger_factory,
+      LoggerChannelFactoryInterface $logger_factory,
       AccountInterface $current_user
   ) {
 

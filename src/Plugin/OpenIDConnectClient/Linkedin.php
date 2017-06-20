@@ -8,8 +8,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 /**
  * Linkedin OpenID Connect client.
  *
- * Used primarily to login to Drupal sites powered by oauth2_server or PHP
- * sites powered by oauth2-server-php.
+ * Implements OpenID Connect Client plugin for Linkedin.
  *
  * @OpenIDConnectClient(
  *   id = "linkedin",
@@ -47,7 +46,7 @@ class Linkedin extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function authorize($scope = 'openid email') {
-    // Use Linkedin specific autorisations.
+    // Use Linkedin specific authorisations.
     return parent::authorize('r_basicprofile r_emailaddress');
   }
 

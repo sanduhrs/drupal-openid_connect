@@ -6,7 +6,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 
 /**
- * OpenID Connect client for Google.
+ * Google OpenID Connect client.
  *
  * Implements OpenID Connect Client plugin for Google.
  *

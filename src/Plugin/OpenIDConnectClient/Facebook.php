@@ -8,8 +8,7 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 /**
  * Facebook OpenID Connect client.
  *
- * Used primarily to login to Drupal sites powered by oauth2_server or PHP
- * sites powered by oauth2-server-php.
+ * Implements OpenID Connect Client plugin for Facebook.
  *
  * @OpenIDConnectClient(
  *   id = "facebook",
@@ -28,18 +27,27 @@ class Facebook extends OpenIDConnectClientBase {
   ];
 
   /**
+   * Facebook fields.
+   *
+   * @var array
+   */
+  protected $fields = [
+    'id', 'name', 'email', 'first_name', 'last_name', 'gender', 'locale',
+    'timezone', 'picture',
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
+
     $form['api_version'] = [
       '#title' => $this->t('API Version'),
       '#type' => 'select',
       '#options' => array_combine($this->versions, $this->versions),
       '#default_value' => $this->configuration['api_version'],
     ];
-
-    $form = parent::buildConfigurationForm($form, $form_state);
-
     $url = 'https://developers.facebook.com/apps/';
     $form['description'] = [
       '#markup' => '<div class="description">' . $this->t('Set up your app in <a href="@url" target="_blank">my apps</a> on Facebook.', ['@url' => $url]) . '</div>',
@@ -87,7 +95,7 @@ class Facebook extends OpenIDConnectClientBase {
     $request_options = [
       'query' => [
         'access_token' => $access_token,
-        'fields' => 'id,name,email,first_name,last_name,gender,locale,timezone,picture',
+        'fields' => implode(',', $this->fields),
       ],
     ];
     $endpoints = $this->getEndpoints();

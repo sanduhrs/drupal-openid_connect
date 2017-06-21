@@ -102,6 +102,20 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $redirect_url = URL::fromRoute(
+      'openid_connect.redirect_controller_redirect',
+      [
+        'client_name' => $this->pluginId,
+      ],
+      [
+        'absolute' => TRUE,
+      ]
+    );
+    $form['redirect_url'] = array(
+      '#title' => $this->t('Redirect URL'),
+      '#type' => 'item',
+      '#markup' => $redirect_url->toString(),
+    );
     $form['client_id'] = array(
       '#title' => $this->t('Client ID'),
       '#type' => 'textfield',

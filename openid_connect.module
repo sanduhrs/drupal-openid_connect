@@ -32,8 +32,8 @@ function openid_connect_entity_property_info_alter(&$info) {
  * Implements hook_user_insert().
  */
 function openid_connect_user_insert(EntityInterface $entity) {
-  if (isset($edit['openid_connect_client'])) {
-    openid_connect_connect_account($entity, $edit['openid_connect_client'], $edit['openid_connect_sub']);
+  if (isset($entity->openid_connect_client) && isset($entity->openid_connect_sub)) {
+    openid_connect_connect_account($entity, $entity->openid_connect_client, $entity->openid_connect_sub);
   }
 }
 

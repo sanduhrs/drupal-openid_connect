@@ -96,13 +96,13 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     $settings = $this->configFactory()
       ->getEditable('openid_connect.settings');
 
-    $options = array();
+    $options = [];
     foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
       $options[$client_plugin['id']] = $client_plugin['label'];
     }
     ksort($options);
 
-    $clients_enabled = array();
+    $clients_enabled = [];
     foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
       $enabled = $this->configFactory()
         ->getEditable('openid_connect.settings.' . $client_plugin['id'])
@@ -111,13 +111,13 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     }
 
     $form['#tree'] = TRUE;
-    $form['clients_enabled'] = array(
+    $form['clients_enabled'] = [
       '#title' => $this->t('Enabled OpenID Connect clients'),
       '#description' => $this->t('Choose enabled OpenID Connect clients.'),
       '#type' => 'checkboxes',
       '#options' => $options,
       '#default_value' => $clients_enabled,
-    );
+    ];
     $definitions = $this->pluginManager->getDefinitions();
     ksort($definitions);
     foreach ($definitions as $client_name => $client_plugin) {
@@ -132,31 +132,31 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       );
 
       $element = 'clients_enabled[' . $client_plugin['id'] . ']';
-      $form['clients'][$client_plugin['id']] = array(
+      $form['clients'][$client_plugin['id']] = [
         '#title' => $client_plugin['label'],
         '#type' => 'fieldset',
         '#tree' => TRUE,
-        '#states' => array(
-          'visible' => array(
-            ':input[name="' . $element . '"]' => array('checked' => TRUE),
-          ),
-        ),
-      );
-      $form['clients'][$client_plugin['id']]['settings'] = array();
+        '#states' => [
+          'visible' => [
+            ':input[name="' . $element . '"]' => ['checked' => TRUE],
+          ],
+        ],
+      ];
+      $form['clients'][$client_plugin['id']]['settings'] = [];
       $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm([], $form_state);
     }
 
-    $form['always_save_userinfo'] = array(
+    $form['always_save_userinfo'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Save user claims on every login'),
       '#description' => $this->t('If disabled, user claims will only be saved when the account is first created.'),
       '#default_value' => $settings->get('always_save_userinfo'),
-    );
+    ];
 
-    $form['userinfo_mappings'] = array(
+    $form['userinfo_mappings'] = [
       '#title' => $this->t('User claims mapping'),
       '#type' => 'fieldset',
-    );
+    ];
 
     $properties = $this->entityFieldManager->getFieldDefinitions('user', 'user');
     $properties_skip = _openid_connect_user_properties_to_skip();
@@ -172,7 +172,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
         $default_value = 'zoneinfo';
       }
 
-      $form['userinfo_mappings'][$property_name] = array(
+      $form['userinfo_mappings'][$property_name] = [
         '#type' => 'select',
         '#title' => $property->getLabel(),
         '#description' => $property->getDescription(),
@@ -180,7 +180,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
         '#empty_value' => 0,
         '#empty_option' => t('- No mapping -'),
         '#default_value' => isset($mappings[$property_name]) ? $mappings[$property_name] : $default_value,
-      );
+      ];
     }
 
     return parent::buildForm($form, $form_state);
@@ -212,11 +212,11 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       if ((bool) $status) {
         $this->configFactory()
           ->getEditable('openid_connect.settings.' . $client_name)
-          ->set('settings', $form_state->getValue(array(
+          ->set('settings', $form_state->getValue([
             'clients',
             $client_name,
             'settings',
-          )))
+          ]))
           ->save();
       }
     }

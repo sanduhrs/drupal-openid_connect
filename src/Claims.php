@@ -201,7 +201,7 @@ class Claims implements ContainerInjectionInterface {
    *   List of claims as options
    */
   public function getOptions() {
-    $options = array();
+    $options = [];
     foreach ($this->getClaims() as $claim_name => $claim) {
       $options[ucfirst($claim['scope'])][$claim_name] = $claim['title'];
     }
@@ -221,7 +221,7 @@ class Claims implements ContainerInjectionInterface {
       ->getEditable('openid_connect.settings')
       ->get('userinfo_mappings');
 
-    $scopes = array('openid', 'email');
+    $scopes = ['openid', 'email'];
     $claims_info = Claims::getClaims();
     foreach ($claims as $claim) {
       if (isset($claims_info[$claim]) &&

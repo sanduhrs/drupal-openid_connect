@@ -24,21 +24,21 @@ class Generic extends OpenIDConnectClientBase {
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    $form['authorization_endpoint'] = array(
+    $form['authorization_endpoint'] = [
       '#title' => $this->t('Authorization endpoint'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['authorization_endpoint'],
-    );
-    $form['token_endpoint'] = array(
+    ];
+    $form['token_endpoint'] = [
       '#title' => $this->t('Token endpoint'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['token_endpoint'],
-    );
-    $form['userinfo_endpoint'] = array(
+    ];
+    $form['userinfo_endpoint'] = [
       '#title' => $this->t('UserInfo endpoint'),
       '#type' => 'textfield',
       '#default_value' => $this->configuration['userinfo_endpoint'],
-    );
+    ];
 
     return $form;
   }
@@ -47,11 +47,11 @@ class Generic extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function getEndpoints() {
-    return array(
+    return [
       'authorization' => $this->configuration['authorization_endpoint'],
       'token' => $this->configuration['token_endpoint'],
       'userinfo' => $this->configuration['userinfo_endpoint'],
-    );
+    ];
   }
 
 }

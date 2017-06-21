@@ -3,8 +3,6 @@
 namespace Drupal\openid_connect\Plugin\OpenIDConnectClient;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Language\LanguageInterface;
-use Drupal\Core\Url;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 use Exception;
 
@@ -23,11 +21,11 @@ class Github extends OpenIDConnectClientBase {
   /**
    * A mapping of OpenID Connect user claims to GitHub user properties.
    *
-   * https://developer.github.com/v3/users
+   * See https://developer.github.com/v3/users .
    *
    * @var array
    */
-  protected $userInfoMapping = array(
+  protected $userInfoMapping = [
     'name' => 'name',
     'sub' => 'id',
     'email' => 'email',
@@ -35,7 +33,7 @@ class Github extends OpenIDConnectClientBase {
     'picture' => 'avatar_url',
     'profile' => 'html_url',
     'website' => 'blog',
-  );
+  ];
 
   /**
    * {@inheritdoc}
@@ -81,12 +79,12 @@ class Github extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function retrieveUserInfo($access_token) {
-    $request_options = array(
-      'headers' => array(
+    $request_options = [
+      'headers' => [
         'Authorization' => 'token ' . $access_token,
         'Accept' => 'application/json',
-      ),
-    );
+      ],
+    ];
     $endpoints = $this->getEndpoints();
 
     $client = $this->httpClient;
@@ -130,10 +128,10 @@ class Github extends OpenIDConnectClientBase {
       return $claims;
     }
     catch (Exception $e) {
-      $variables = array(
+      $variables = [
         '@message' => 'Could not retrieve user profile information',
         '@error_message' => $e->getMessage(),
-      );
+      ];
       $this->loggerFactory->get('openid_connect_' . $this->pluginId)
         ->error('@message. Details: @error_message', $variables);
       return FALSE;

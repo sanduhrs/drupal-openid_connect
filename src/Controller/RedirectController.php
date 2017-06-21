@@ -112,11 +112,11 @@ class RedirectController extends ControllerBase implements AccessInterface {
     unset($_SESSION['openid_connect_state']);
 
     // Get parameters from the session, and then clean up.
-    $parameters = array(
+    $parameters = [
       'destination' => 'user',
       'op' => 'login',
       'connect_uid' => NULL,
-    );
+    ];
     foreach ($parameters as $key => $default) {
       if (isset($_SESSION['openid_connect_' . $key])) {
         $parameters[$key] = $_SESSION['openid_connect_' . $key];
@@ -138,7 +138,7 @@ class RedirectController extends ControllerBase implements AccessInterface {
       throw new NotFoundHttpException();
     }
 
-    $provider_param = array('@provider' => $client->getPluginDefinition()['label']);
+    $provider_param = ['@provider' => $client->getPluginDefinition()['label']];
 
     if ($query->get('error')) {
       if (in_array($query->get('error'), [
@@ -153,10 +153,10 @@ class RedirectController extends ControllerBase implements AccessInterface {
       }
       else {
         // Any other error should be logged. E.g. invalid scope.
-        $variables = array(
+        $variables = [
           '@error' => $query->get('error'),
           '@details' => $query->get('error_description') ? $query->get('error_description') : $this->t('Unknown error.'),
-        );
+        ];
         $message = 'Authorization failed: @error. Details: @details';
         $this->loggerFactory->get('openid_connect_' . $client_name)->error($message, $variables);
         drupal_set_message(t('Could not authenticate with @provider.', $provider_param), 'error');

@@ -35,11 +35,11 @@ class Google extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function getEndpoints() {
-    return array(
+    return [
       'authorization' => 'https://accounts.google.com/o/oauth2/auth',
       'token' => 'https://accounts.google.com/o/oauth2/token',
       'userinfo' => 'https://www.googleapis.com/plus/v1/people/me/openIdConnect',
-    );
+    ];
   }
 
   /**

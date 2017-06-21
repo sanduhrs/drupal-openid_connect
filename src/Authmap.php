@@ -40,11 +40,11 @@ class Authmap {
    *   The remote subject identifier.
    */
   public function createAssociation($account, $client_name, $sub) {
-    $fields = array(
+    $fields = [
       'uid' => $account->id(),
       'client_name' => $client_name,
       'sub' => $sub,
-    );
+    ];
     $this->connection->insert('openid_connect_authmap')
       ->fields($fields)
       ->execute();
@@ -80,7 +80,7 @@ class Authmap {
    */
   public function userLoadBySub($sub, $client_name) {
     $result = $this->connection->select('openid_connect_authmap', 'a')
-      ->fields('a', array('uid'))
+      ->fields('a', ['uid'])
       ->condition('client_name', $client_name, '=')
       ->condition('sub', $sub, '=')
       ->execute();
@@ -104,10 +104,10 @@ class Authmap {
    */
   public function getConnectedAccounts($account) {
     $result = $this->connection->select('openid_connect_authmap', 'a')
-      ->fields('a', array('client_name', 'sub'))
+      ->fields('a', ['client_name', 'sub'])
       ->condition('uid', $account->id())
       ->execute();
-    $authmaps = array();
+    $authmaps = [];
     foreach ($result as $record) {
       $client = $record->client_name;
       $sub = $record->sub;

@@ -115,10 +115,10 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
 
     $read_only = $this->currentUser->id() != $user->id();
 
-    $form['help'] = array(
+    $form['help'] = [
       '#prefix' => '<p class="description">',
       '#suffix' => '</p>',
-    );
+    ];
 
     if (empty($clients)) {
       $form['help']['#markup'] = t('No external account providers are available.');
@@ -138,36 +138,36 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
         continue;
       }
 
-      $form[$client['id']] = array(
+      $form[$client['id']] = [
         '#type' => 'fieldset',
-        '#title' => $this->t('Provider: @title', array('@title' => $client['label'])),
-      );
+        '#title' => $this->t('Provider: @title', ['@title' => $client['label']]),
+      ];
       $fieldset = &$form[$client['id']];
       $connected = isset($connected_accounts[$client['id']]);
-      $fieldset['status'] = array(
+      $fieldset['status'] = [
         '#type' => 'item',
         '#title' => $this->t('Status'),
         '#markup' => $this->t('Not connected'),
-      );
+      ];
       if ($connected) {
-        $fieldset['status']['#markup'] = t('Connected as %sub', array(
+        $fieldset['status']['#markup'] = t('Connected as %sub', [
           '%sub' => $connected_accounts[$client['id']],
-        ));
-        $fieldset['openid_connect_client_' . $client['id'] . '_disconnect'] = array(
+        ]);
+        $fieldset['openid_connect_client_' . $client['id'] . '_disconnect'] = [
           '#type' => 'submit',
-          '#value' => $this->t('Disconnect from @client_title', array('@client_title' => $client['label'])),
+          '#value' => $this->t('Disconnect from @client_title', ['@client_title' => $client['label']]),
           '#name' => 'disconnect__' . $client['id'],
           '#access' => !$read_only,
-        );
+        ];
       }
       else {
         $fieldset['status']['#markup'] = t('Not connected');
-        $fieldset['openid_connect_client_' . $client['id'] . '_connect'] = array(
+        $fieldset['openid_connect_client_' . $client['id'] . '_connect'] = [
           '#type' => 'submit',
-          '#value' => $this->t('Connect with @client_title', array('@client_title' => $client['label'])),
+          '#value' => $this->t('Connect with @client_title', ['@client_title' => $client['label']]),
           '#name' => 'connect__' . $client['id'],
           '#access' => !$read_only,
-        );
+        ];
       }
     }
     return $form;
@@ -182,7 +182,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
     if ($op === 'disconnect') {
       $this->authmap->deleteAssociation($form_state->get('account')->id(), $client_name);
       $client = $this->pluginManager->getDefinition($client_name);
-      drupal_set_message(t('Account successfully disconnected from @client.', array('@client' => $client['label'])));
+      drupal_set_message(t('Account successfully disconnected from @client.', ['@client' => $client['label']]));
       return;
     }
 

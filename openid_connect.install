@@ -93,3 +93,18 @@ function openid_connect_update_8102() {
   ]);
   $config->save(TRUE);
 }
+
+/**
+ * Add default config for Microsoft provider.
+ */
+function openid_connect_update_8103() {
+  $config_factory = \Drupal::configFactory();
+
+  $config = $config_factory->getEditable('openid_connect.settings.microsoft');
+  $config->set('enabled', false);
+  $config->set('settings', [
+    'client_id' => '',
+    'client_secret' => '',
+  ]);
+  $config->save(TRUE);
+}

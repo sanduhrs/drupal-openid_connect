@@ -100,6 +100,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
     foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
       $options[$client_plugin['id']] = $client_plugin['label'];
     }
+    ksort($options);
 
     $clients_enabled = array();
     foreach ($this->pluginManager->getDefinitions() as $client_plugin) {
@@ -117,7 +118,9 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       '#options' => $options,
       '#default_value' => $clients_enabled,
     );
-    foreach ($this->pluginManager->getDefinitions() as $client_name => $client_plugin) {
+    $definitions = $this->pluginManager->getDefinitions();
+    ksort($definitions);
+    foreach ($definitions as $client_name => $client_plugin) {
       $configuration = $this->configFactory()
         ->getEditable('openid_connect.settings.' . $client_name)
         ->get('settings');

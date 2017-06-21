@@ -231,6 +231,9 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
         'redirect_uri' => $redirect_uri,
         'grant_type' => 'authorization_code',
       ),
+      'headers' => array(
+        'Accept' => 'application/json',
+      ),
     );
 
     /* @var \GuzzleHttp\ClientInterface $client */
@@ -286,6 +289,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $request_options = array(
       'headers' => array(
         'Authorization' => 'Bearer ' . $access_token,
+        'Accept' => 'application/json',
       ),
     );
     $endpoints = $this->getEndpoints();

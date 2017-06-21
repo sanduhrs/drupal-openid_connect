@@ -98,6 +98,9 @@ class Facebook extends OpenIDConnectClientBase {
         'access_token' => $access_token,
         'fields' => implode(',', $this->fields),
       ],
+      'headers' => [
+        'Accept' => 'application/json',
+      ],
     ];
     $endpoints = $this->getEndpoints();
 

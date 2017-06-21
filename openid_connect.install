@@ -78,3 +78,18 @@ function openid_connect_update_8101() {
   ]);
   $config->save(TRUE);
 }
+
+/**
+ * Add default config for Github provider.
+ */
+function openid_connect_update_8102() {
+  $config_factory = \Drupal::configFactory();
+
+  $config = $config_factory->getEditable('openid_connect.settings.github');
+  $config->set('enabled', false);
+  $config->set('settings', [
+    'client_id' => '',
+    'client_secret' => '',
+  ]);
+  $config->save(TRUE);
+}

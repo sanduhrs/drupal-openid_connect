@@ -18,6 +18,26 @@ openid_connect.settings:
           type: string
           label: 'Picture'
 
+openid_connect.settings.facebook:
+  type: config_object
+  label: 'OpenID Connect Facebook settings'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Enable client'
+    settings:
+      type: mapping
+      mapping:
+        client_id:
+          type: string
+          label: 'Client ID'
+        client_secret:
+          type: string
+          label: 'Client secret'
+        client_secret:
+          type: string
+          label: 'API Version'
+
 openid_connect.settings.generic:
   type: config_object
   label: 'OpenID Connect Generic settings'
@@ -44,9 +64,9 @@ openid_connect.settings.generic:
           type: string
           label: 'Userinfo endpoint'
 
-openid_connect.settings.facebook:
+openid_connect.settings.github:
   type: config_object
-  label: 'OpenID Connect Facebook settings'
+  label: 'OpenID Connect Github settings'
   mapping:
     enabled:
       type: boolean
@@ -60,9 +80,6 @@ openid_connect.settings.facebook:
         client_secret:
           type: string
           label: 'Client secret'
-        client_secret:
-          type: string
-          label: 'API Version'
 
 openid_connect.settings.google:
   type: config_object

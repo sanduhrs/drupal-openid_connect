@@ -2,9 +2,9 @@
 
 namespace Drupal\openid_connect\Form;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\openid_connect\Claims;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;

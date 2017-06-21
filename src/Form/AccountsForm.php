@@ -4,11 +4,11 @@ namespace Drupal\openid_connect\Form;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
-use Drupal\Core\Session\AccountProxy;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Session\AccountProxy;
 use Drupal\openid_connect\Authmap;
 use Drupal\openid_connect\Claims;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientManager;

@@ -151,7 +151,7 @@ function openid_connect_admin_form_submit($form, &$form_state) {
     'openid_connect_user_pictures',
   );
   foreach ($default_enabled as $variable) {
-    if (isset($form_state['values'][$variable]) && empty($form_state['values'][$variable])) {
+    if (isset($form_state['values'][$variable])) {
       variable_set($variable, $form_state['values'][$variable]);
     }
   }

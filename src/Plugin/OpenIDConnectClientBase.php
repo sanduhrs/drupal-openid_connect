@@ -192,8 +192,10 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $authorization_endpoint = Url::fromUri($endpoints['authorization'], $url_options)->toString(TRUE);
 
     $response = new TrustedRedirectResponse($authorization_endpoint->getGeneratedUrl());
-    $response->addCacheableDependency($authorization_endpoint);
-    $response->addCacheableDependency($redirect_uri);
+    // We can't cache the response, since this will prevent the state to be
+    // added to the session. The kill switch will prevent the page getting
+    // cached for anonymous users when page cache is active.
+    \Drupal::service('page_cache_kill_switch')->trigger();
 
     return $response;
   }

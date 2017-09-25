@@ -130,7 +130,8 @@ function openid_connect_save_userinfo($account, $userinfo) {
         $property_type = $property->getType();
         // Set the user property, while ignoring exceptions from invalid values.
         try {
-          if ($property_type === 'string') {
+          if ($property_type === 'string' || $property_type === 'string_long'
+              || $property_type === 'datetime') {
             $account->set($property_name, $userinfo[$claim]);
           }
           elseif ($property_type === 'image') {

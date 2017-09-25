@@ -113,8 +113,6 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
 
     $clients = $this->pluginManager->getDefinitions();
 
-    $read_only = $this->currentUser->id() != $user->id();
-
     $form['help'] = [
       '#prefix' => '<p class="description">',
       '#suffix' => '</p>',
@@ -157,7 +155,6 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
           '#type' => 'submit',
           '#value' => $this->t('Disconnect from @client_title', ['@client_title' => $client['label']]),
           '#name' => 'disconnect__' . $client['id'],
-          '#access' => !$read_only,
         ];
       }
       else {
@@ -166,7 +163,7 @@ class AccountsForm extends FormBase implements ContainerInjectionInterface {
           '#type' => 'submit',
           '#value' => $this->t('Connect with @client_title', ['@client_title' => $client['label']]),
           '#name' => 'connect__' . $client['id'],
-          '#access' => !$read_only,
+          '#access' => $this->currentUser->id() == $user->id(),
         ];
       }
     }

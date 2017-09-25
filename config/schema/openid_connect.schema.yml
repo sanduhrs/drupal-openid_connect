@@ -34,7 +34,7 @@ openid_connect.settings.facebook:
         client_secret:
           type: string
           label: 'Client secret'
-        client_secret:
+        api_version:
           type: string
           label: 'API Version'
 

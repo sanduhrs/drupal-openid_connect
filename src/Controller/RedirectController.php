@@ -188,7 +188,8 @@ class RedirectController extends ControllerBase implements AccessInterface {
 
     // It's possible to set 'options' in the redirect destination.
     if (is_array($destination)) {
-      $redirect = Url::fromUri('internal:/' . ltrim($destination[0], '/'), $destination[1])->toString();
+      $query = !empty($destination[1]['query']) ? '?' . $destination[1]['query'] : '';
+      $redirect = Url::fromUri('internal:/' . ltrim($destination[0], '/') . $query)->toString();
     }
     else {
       $redirect = Url::fromUri('internal:/' . ltrim($destination, '/'))->toString();

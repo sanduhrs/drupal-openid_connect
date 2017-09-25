@@ -130,35 +130,51 @@ function openid_connect_save_userinfo($account, $userinfo) {
         $property_type = $property->getType();
         // Set the user property, while ignoring exceptions from invalid values.
         try {
-          if ($property_type === 'string') {
-            $account->set($property_name, $userinfo[$claim]);
-          }
-          elseif ($property_type === 'image') {
-            // Create file object from remote URL.
-            $basename = explode('?', drupal_basename($userinfo[$claim]))[0];
-            $data = file_get_contents($userinfo[$claim]);
-            $file = file_save_data(
-              $data,
-              'public://user-picture-' . $account->id() . '-' . $basename,
-              FILE_EXISTS_RENAME
-            );
+          switch ($property_type) {
+            case 'string':
+            case 'string_long':
+            case 'datetime':
+              $account->set($property_name, $userinfo[$claim]);
+              break;
 
-            // Cleanup the old file.
-            if ($file) {
-              $old_file = $account->$property_name->entity;
-              if ($old_file) {
-                $old_file->delete();
+            case 'image':
+              // Create file object from remote URL.
+              $basename = explode('?', drupal_basename($userinfo[$claim]))[0];
+              $data = file_get_contents($userinfo[$claim]);
+              $file = file_save_data(
+                $data,
+                'public://user-picture-' . $account->id() . '-' . $basename,
+                FILE_EXISTS_RENAME
+              );
+
+              // Cleanup the old file.
+              if ($file) {
+                $old_file = $account->$property_name->entity;
+                if ($old_file) {
+                  $old_file->delete();
+                }
               }
-            }
 
-            $account->set(
-              $property_name,
-              [
-                'target_id' => $file->id(),
-              ]
-            );
+              $account->set(
+                $property_name,
+                [
+                  'target_id' => $file->id(),
+                ]
+              );
+              break;
+
+            default:
+              \Drupal::logger('openid_connect')->error(
+                'Could not save user info, property type not implemented: %property_type',
+                [
+                  '%property_type' => $property_type,
+                ]
+              );
+              break;
+
           }
         }
+        // Catch the error if the field does not exist.
         catch (\InvalidArgumentException $e) {
           \Drupal::logger('openid_connect')->error($e->getMessage());
         }

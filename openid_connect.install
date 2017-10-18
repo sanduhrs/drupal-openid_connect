@@ -93,3 +93,13 @@ function openid_connect_update_8102() {
   ]);
   $config->save(TRUE);
 }
+
+/**
+ * Update the active config with the registration override value.
+ */
+function openid_connect_update_8103() {
+ $config_factory = \Drupal::configFactory();
+ $config = $config_factory->getEditable('openid_connect.settings');
+ $config->set('override_registration_settings', FALSE);
+ $config->save(TRUE);
+ }

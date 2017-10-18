@@ -7,6 +7,9 @@ openid_connect.settings:
     always_save_userinfo:
       type: boolean
       label: 'Save user claims on every login'
+    override_registration_settings:
+      type: boolean
+      label: 'Override registration settings'
     userinfo_mappings:
       type: mapping
       label: 'OpenID Connect settings'

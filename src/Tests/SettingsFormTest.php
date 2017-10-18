@@ -55,10 +55,12 @@ class SettingsFormTest extends WebTestBase {
     $config_factory = $this->container->get('config.factory');
     /* @var \Drupal\Core\Config\Config $config */
     $config = $config_factory->get('openid_connect.settings');
+
     $user_info = $config->get('always_save_userinfo');
     $this->assertFalse($user_info);
+
     $override_registration_settings = $config->get('override_registration_settings');
-    $this->assertTrue($override_registration_settings)
+    $this->assertTrue($override_registration_settings);
   }
 
 }

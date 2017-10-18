@@ -146,6 +146,13 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       $form['clients'][$client_plugin['id']]['settings'] += $client->buildConfigurationForm([], $form_state);
     }
 
+    $form['override_registration_settings'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Override registration settings'),
+      '#description' => $this->t('If enabled, a user will be registered even if registration is set to "Administrators only".'),
+      '#default_value' => $settings->get('override_registration_settings'),
+    ];
+
     $form['always_save_userinfo'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Save user claims on every login'),

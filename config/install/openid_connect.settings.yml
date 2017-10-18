@@ -1,3 +1,4 @@
 always_save_userinfo: true
+override_registration_settings: false
 userinfo_mappings:
   timezone: zoneinfo

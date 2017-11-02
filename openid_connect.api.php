@@ -52,7 +52,7 @@ function hook_openid_connect_openid_connect_client_info_alter(&$client_info) {
  *
  * @ingroup openid_connect_api
  */
-function hook_openid_connect_user_properties_to_skip(&$properties_to_skip) {
+function hook_openid_connect_user_properties_to_skip_alter(&$properties_to_skip) {
   // Allow to map the username to a property from the provider.
   unset($properties_to_skip['name']);
 }

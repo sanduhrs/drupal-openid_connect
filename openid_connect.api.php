@@ -5,14 +5,17 @@
  * Documentation for OpenID Connect module APIs.
  */
 
+use Drupal\user\UserInterface;
+
 /**
  * Modify the list of claims.
  *
  * @param array $claims
+ *   A array of claims.
  *
  * @ingroup openid_connect_api
  */
-function hook_openid_connect_claims_alter(&$claims) {
+function hook_openid_connect_claims_alter(array &$claims) {
   $claims['custom_claim'] = [
     'scope' => 'profile',
     'title' => 'Custom Claim',
@@ -29,14 +32,14 @@ function hook_openid_connect_claims_alter(&$claims) {
  *
  * @ingroup openid_connect_api
  */
-function hook_openid_connect_openid_connect_client_info_alter(&$client_info) {
+function hook_openid_connect_openid_connect_client_info_alter(array &$client_info) {
   $client_info['generic'] = [
     'id' => 'generic',
     'label' => [
       'string' => 'Generic',
-      'translatableMarkup' => null,
+      'translatableMarkup' => NULL,
       'options' => [],
-      'stringTranslation' => null,
+      'stringTranslation' => NULL,
       'arguments' => [],
     ],
     'class' => 'Drupal\openid_connect\Plugin\OpenIDConnectClient\Generic',
@@ -47,12 +50,12 @@ function hook_openid_connect_openid_connect_client_info_alter(&$client_info) {
 /**
  * Alter hook to alter the user properties to be skipped for mapping.
  *
- * @param $properties_to_skip
+ * @param array $properties_to_skip
  *   An array of of properties to skip.
  *
  * @ingroup openid_connect_api
  */
-function hook_openid_connect_user_properties_to_skip_alter(&$properties_to_skip) {
+function hook_openid_connect_user_properties_to_skip_alter(array &$properties_to_skip) {
   // Allow to map the username to a property from the provider.
   unset($properties_to_skip['name']);
 }
@@ -71,4 +74,5 @@ function hook_openid_connect_user_properties_to_skip_alter(&$properties_to_skip)
  *
  * @ingroup openid_connect_api
  */
-function hook_openid_connect_post_authorize($tokens, $account, $userinfo, $plugin_id) {}
+function hook_openid_connect_post_authorize(array $tokens, UserInterface $account, array $userinfo, $plugin_id) {
+}

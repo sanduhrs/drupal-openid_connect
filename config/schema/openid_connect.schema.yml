@@ -72,7 +72,7 @@ openid_connect.settings.generic:
 
 openid_connect.settings.github:
   type: config_object
-  label: 'OpenID Connect Github settings'
+  label: 'OpenID Connect GitHub settings'
   mapping:
     enabled:
       type: boolean
@@ -106,7 +106,7 @@ openid_connect.settings.google:
 
 openid_connect.settings.linkedin:
   type: config_object
-  label: 'OpenID Connect Linkedin settings'
+  label: 'OpenID Connect LinkedIn settings'
   mapping:
     enabled:
       type: boolean

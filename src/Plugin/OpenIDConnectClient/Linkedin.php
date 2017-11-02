@@ -6,13 +6,13 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 
 /**
- * Linkedin OpenID Connect client.
+ * LinkedIn OpenID Connect client.
  *
- * Implements OpenID Connect Client plugin for Linkedin.
+ * Implements OpenID Connect Client plugin for LinkedIn.
  *
  * @OpenIDConnectClient(
  *   id = "linkedin",
- *   label = @Translation("Linkedin")
+ *   label = @Translation("LinkedIn")
  * )
  */
 class Linkedin extends OpenIDConnectClientBase {
@@ -25,7 +25,7 @@ class Linkedin extends OpenIDConnectClientBase {
 
     $url = 'https://www.linkedin.com/developer/apps';
     $form['description'] = [
-      '#markup' => '<div class="description">' . $this->t('Set up your app in <a href="@url" target="_blank">my apps</a> on Linkedin.', ['@url' => $url]) . '</div>',
+      '#markup' => '<div class="description">' . $this->t('Set up your app in <a href="@url" target="_blank">my apps</a> on LinkedIn.', ['@url' => $url]) . '</div>',
     ];
 
     return $form;
@@ -46,7 +46,7 @@ class Linkedin extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function authorize($scope = 'openid email') {
-    // Use Linkedin specific authorisations.
+    // Use LinkedIn specific authorisations.
     return parent::authorize('r_basicprofile r_emailaddress');
   }
 

@@ -56,7 +56,7 @@ function openid_connect_schema() {
 }
 
 /**
- * Add default config for Facebook and Linkedin provider.
+ * Add default config for Facebook and LinkedIn provider.
  */
 function openid_connect_update_8101() {
   $config_factory = \Drupal::configFactory();
@@ -80,7 +80,7 @@ function openid_connect_update_8101() {
 }
 
 /**
- * Add default config for Github provider.
+ * Add default config for GitHub provider.
  */
 function openid_connect_update_8102() {
   $config_factory = \Drupal::configFactory();

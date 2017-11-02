@@ -7,13 +7,13 @@ use Drupal\openid_connect\Plugin\OpenIDConnectClientBase;
 use Exception;
 
 /**
- * Github OpenID Connect client.
+ * GitHub OpenID Connect client.
  *
- * Implements OpenID Connect Client plugin for Github.
+ * Implements OpenID Connect Client plugin for GitHub.
  *
  * @OpenIDConnectClient(
  *   id = "github",
- *   label = @Translation("Github")
+ *   label = @Translation("GitHub")
  * )
  */
 class Github extends OpenIDConnectClientBase {
@@ -43,7 +43,7 @@ class Github extends OpenIDConnectClientBase {
 
     $url = 'https://github.com/settings/developers';
     $form['description'] = [
-      '#markup' => '<div class="description">' . $this->t('Set up your app in <a href="@url" target="_blank">developer applications</a> on Github.', ['@url' => $url]) . '</div>',
+      '#markup' => '<div class="description">' . $this->t('Set up your app in <a href="@url" target="_blank">developer applications</a> on GitHub.', ['@url' => $url]) . '</div>',
     ];
 
     return $form;
@@ -64,7 +64,7 @@ class Github extends OpenIDConnectClientBase {
    * {@inheritdoc}
    */
   public function authorize($scope = 'openid email') {
-    // Use Github specific authorisations.
+    // Use GitHub specific authorisations.
     return parent::authorize('user:email');
   }
 

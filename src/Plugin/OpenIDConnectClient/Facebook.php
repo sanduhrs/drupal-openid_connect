@@ -24,7 +24,7 @@ class Facebook extends OpenIDConnectClientBase {
    * @var array
    */
   protected $versions = [
-    'v2.9', 'v2.8', 'v2.7', 'v2.6', 'v2.5', 'v2.4', 'v2.3',
+    'v2.10', 'v2.9', 'v2.8', 'v2.7', 'v2.6', 'v2.5', 'v2.4', 'v2.3',
   ];
 
   /**

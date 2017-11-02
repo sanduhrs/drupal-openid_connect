@@ -159,10 +159,13 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
    * @param string $scope
    *   A string of scopes.
    *
+   * @param string $response_type
+   *   A string representing the response type.
+   *
    * @return \Drupal\Core\Routing\TrustedRedirectResponse
    *   A trusted redirect response object.
    */
-  public function authorize($scope = 'openid email') {
+  public function authorize($scope = 'openid email', $response_type = 'code') {
     $language_none = \Drupal::languageManager()
       ->getLanguage(LanguageInterface::LANGCODE_NOT_APPLICABLE);
     $redirect_uri = Url::fromRoute(
@@ -179,7 +182,7 @@ abstract class OpenIDConnectClientBase extends PluginBase implements OpenIDConne
     $url_options = [
       'query' => [
         'client_id' => $this->configuration['client_id'],
-        'response_type' => 'code',
+        'response_type' => $response_type,
         'scope' => $scope,
         'redirect_uri' => $redirect_uri->getGeneratedUrl(),
         'state' => StateToken::create(),

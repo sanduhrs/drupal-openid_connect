@@ -432,13 +432,13 @@ function openid_connect_complete_authorization($client, array $tokens, &$destina
 
   /* @var \Drupal\user\UserInterface $account */
   $account = $authmap->userLoadBySub($sub, $client->getPluginId());
-  $results = \Drupal::moduleHandler()->invokeAll('openid_connect_pre_login', [
+  $results = \Drupal::moduleHandler()->invokeAll('openid_connect_pre_authorize', [
     $tokens, $account, $userinfo, $client->getPluginId(), $sub,
   ]);
 
   // Deny access if any module returns FALSE.
   if (in_array(FALSE, $results, TRUE)) {
-    $message = 'Login denied for @email via pre-login hook.';
+    $message = 'Login denied for @email via pre-authorize hook.';
     $variables = ['@email' => $userinfo['email']];
     $logger->error($message, $variables);
     return FALSE;
@@ -586,13 +586,13 @@ function openid_connect_connect_current_user($client, array $tokens) {
 
   /* @var \Drupal\user\UserInterface $account */
   $account = $authmap->userLoadBySub($sub, $client->getPluginId());
-  $results = \Drupal::moduleHandler()->invokeAll('openid_connect_pre_login', [
+  $results = \Drupal::moduleHandler()->invokeAll('openid_connect_pre_authorize', [
     $tokens, $account, $userinfo, $client->getPluginId(), $sub
   ]);
 
   // Deny access if any module returns FALSE.
   if (in_array(FALSE, $results, TRUE)) {
-    $message = 'Login denied for @email via pre-login hook.';
+    $message = 'Login denied for @email via pre-authorize hook.';
     $variables = ['@email' => $userinfo['email']];
     $logger->error($message, $variables);
     return FALSE;

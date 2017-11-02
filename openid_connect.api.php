@@ -76,3 +76,20 @@ function hook_openid_connect_user_properties_to_skip_alter(array &$properties_to
  */
 function hook_openid_connect_post_authorize(array $tokens, UserInterface $account, array $userinfo, $plugin_id) {
 }
+
+/**
+ * Pre authorize hook that runs before a user is authorized.
+ *
+ * @param array $tokens
+ *   An array of tokens.
+ * @param \Drupal\user\UserInterface $account
+ *   A user account object.
+ * @param array $userinfo
+ *   An array of user information.
+ * @param string $plugin_id
+ *   The plugin identifier.
+ * @param string $sub
+ *   The remote user identifier.
+ */
+function hook_openid_connect_pre_authorize(array $tokens, UserInterface $account, array $userinfo, $plugin_id, $sub) {
+}

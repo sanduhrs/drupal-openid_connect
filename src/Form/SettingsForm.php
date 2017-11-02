@@ -160,6 +160,13 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
       '#default_value' => $settings->get('always_save_userinfo'),
     ];
 
+    $form['connect_existing_users'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Automatically connect existing users'),
+      '#description' => $this->t('If disabled, authentication will fail for existing email addresses.'),
+      '#default_value' => $settings->get('connect_existing_users'),
+    );
+
     $form['userinfo_mappings'] = [
       '#title' => $this->t('User claims mapping'),
       '#type' => 'fieldset',
@@ -215,6 +222,7 @@ class SettingsForm extends ConfigFormBase implements ContainerInjectionInterface
 
     $this->config('openid_connect.settings')
       ->set('always_save_userinfo', $form_state->getValue('always_save_userinfo'))
+      ->set('connect_existing_users', $form_state->getValue('connect_existing_users'))
       ->set('override_registration_settings', $form_state->getValue('override_registration_settings'))
       ->set('userinfo_mappings', $form_state->getValue('userinfo_mappings'))
       ->save();

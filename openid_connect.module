@@ -432,6 +432,26 @@ function openid_connect_complete_authorization($client, array $tokens, &$destina
 
   /* @var \Drupal\user\UserInterface $account */
   $account = $authmap->userLoadBySub($sub, $client->getPluginId());
+  $results = \Drupal::moduleHandler()->invokeAll('openid_connect_pre_login', [
+    $tokens, $account, $userinfo, $client->getPluginId(), $sub,
+  ]);
+
+  // Deny access if any module returns FALSE.
+  if (in_array(FALSE, $results, TRUE)) {
+    $message = 'Login denied for @email via pre-login hook.';
+    $variables = ['@email' => $userinfo['email']];
+    $logger->error($message, $variables);
+    return FALSE;
+  }
+
+  // If any module returns an account, set local $account to that.
+  foreach ($results as $result) {
+    if ($result instanceof UserInterface) {
+      $account = $result;
+      break;
+    }
+  }
+
   if ($account) {
     // An existing account was found. Save user claims.
     if (\Drupal::config('openid_connect.settings')->get('always_save_userinfo')) {
@@ -566,6 +586,26 @@ function openid_connect_connect_current_user($client, array $tokens) {
 
   /* @var \Drupal\user\UserInterface $account */
   $account = $authmap->userLoadBySub($sub, $client->getPluginId());
+    $results = \Drupal::moduleHandler()->invokeAll('openid_connect_pre_login', [
+    $tokens, $account, $userinfo, $client->getPluginId(), $sub
+  ]);
+
+  // Deny access if any module returns FALSE.
+  if (in_array(FALSE, $results, TRUE)) {
+    $message = 'Login denied for @email via pre-login hook.';
+    $variables = ['@email' => $userinfo['email']];
+    $logger->error($message, $variables);
+    return FALSE;
+  }
+
+  // If any module returns an account, set local $account to that.
+  foreach ($results as $result) {
+    if ($result instanceof UserInterface) {
+      $account = $result;
+      break;
+    }
+  }
+
   if ($account && $account->id() !== $user->id()) {
     drupal_set_message(t('Another user is already connected to this @provider account.', $provider_param), 'error');
     return FALSE;

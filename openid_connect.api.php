@@ -61,6 +61,17 @@ function hook_openid_connect_user_properties_to_skip_alter(array &$properties_to
 }
 
 /**
+ * Alter hook to alter userinfo before authorization or connecting a user.
+ *
+ * @param array $userinfo
+ *   An array of returned user information.
+ * @param array $context
+ *   - user_data: An array of user_data.
+ */
+function hook_openid_connect_userinfo_alter(array &$userinfo, array $context) {
+}
+
+/**
  * Post authorize hook that runs after the user logged in via OpenID Connect.
  *
  * @param array $tokens

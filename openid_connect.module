@@ -413,6 +413,12 @@ function openid_connect_complete_authorization($client, array $tokens, &$destina
   $authmap = \Drupal::service('openid_connect.authmap');
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
+
+  $context = [
+    'user_data' => $user_data,
+  ];
+  \Drupal::moduleHandler()->alter('openid_connect_userinfo', $userinfo, $context);
+
   $logger = \Drupal::logger('openid_connect');
 
   if ($userinfo && empty($userinfo['email'])) {
@@ -565,7 +571,11 @@ function openid_connect_connect_current_user($client, array $tokens) {
   $user_data = $client->decodeIdToken($tokens['id_token']);
   $userinfo = $client->retrieveUserInfo($tokens['access_token']);
 
-  /* @var \Psr\Log\LoggerInterface $logger */
+  $context = [
+    'user_data' => $user_data,
+  ];
+  \Drupal::moduleHandler()->alter('openid_connect_userinfo', $userinfo, $context);
+
   $logger = \Drupal::logger('openid_connect');
   $provider_param = ['@provider' => $client->getPluginId()];
 
